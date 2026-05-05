@@ -1,39 +1,33 @@
-import { useEffect, useState } from "react";
-import type { Schema } from "../amplify/data/resource";
-import { generateClient } from "aws-amplify/data";
-
-const client = generateClient<Schema>();
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import Layout from './components/Layout';
+import DashboardPage from './pages/DashboardPage';
+import { FarmProvider } from './contexts/FarmContext';
 
 function App() {
-  const [todos, setTodos] = useState<Array<Schema["Todo"]["type"]>>([]);
-
-  useEffect(() => {
-    client.models.Todo.observeQuery().subscribe({
-      next: (data) => setTodos([...data.items]),
-    });
-  }, []);
-
-  function createTodo() {
-    client.models.Todo.create({ content: window.prompt("Todo content") });
-  }
-
   return (
-    <main>
-      <h1>My todos</h1>
-      <button onClick={createTodo}>+ new</button>
-      <ul>
-        {todos.map((todo) => (
-          <li key={todo.id}>{todo.content}</li>
-        ))}
-      </ul>
-      <div>
-        🥳 App successfully hosted. Try creating a new todo.
-        <br />
-        <a href="https://docs.amplify.aws/react/start/quickstart/#make-frontend-updates">
-          Review next step of this tutorial.
-        </a>
-      </div>
-    </main>
+    <FarmProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route element={<Layout />}>
+            <Route index element={<DashboardPage />} />
+            <Route path="/monitor"  element={<Placeholder title="환경 모니터링" />} />
+            <Route path="/control"  element={<Placeholder title="장비 제어" />} />
+            <Route path="/logs"     element={<Placeholder title="활동 로그" />} />
+            <Route path="/todos"    element={<Placeholder title="작업 관리" />} />
+            <Route path="/mypage"   element={<Placeholder title="마이페이지" />} />
+          </Route>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </FarmProvider>
+  );
+}
+
+function Placeholder({ title }: { title: string }) {
+  return (
+    <div style={{ padding: 32, color: '#6B7280', fontSize: 18 }}>
+      {title} — 준비 중입니다.
+    </div>
   );
 }
 

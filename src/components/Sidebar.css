@@ -1,0 +1,125 @@
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  width: 220px;
+  min-height: 100vh;
+  background: #ffffff;
+  border-right: 1px solid #E5E7EB;
+  transition: width 0.2s ease;
+  flex-shrink: 0;
+}
+
+.sidebar--collapsed {
+  width: 64px;
+}
+
+/* 로고 */
+.sidebar__logo {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  border-bottom: 1px solid #F3F4F6;
+  flex-shrink: 0;
+}
+
+.sidebar__logo-img {
+  height: 32px;
+  object-fit: contain;
+  max-width: 160px;
+}
+
+/* 네비게이션 */
+.sidebar__nav {
+  flex: 1;
+  padding: 12px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-y: auto;
+}
+
+/* 메뉴 아이템 공통 */
+.sidebar__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #6B7280;
+  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.sidebar__item:hover {
+  background: #F3F4F6;
+  color: #111827;
+}
+
+.sidebar__item--active {
+  background: #ECFDF5;
+  color: #10B981;
+}
+
+.sidebar__item--active .sidebar__icon {
+  color: #10B981;
+}
+
+.sidebar__item--danger {
+  color: #EF4444;
+}
+
+.sidebar__item--danger:hover {
+  background: #FEF2F2;
+  color: #DC2626;
+}
+
+.sidebar__icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.sidebar__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 하단 메뉴 */
+.sidebar__bottom {
+  padding: 8px 8px 12px;
+  border-top: 1px solid #F3F4F6;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* 토글 버튼 */
+.sidebar__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 4px;
+  padding: 8px;
+  border-radius: 8px;
+  background: none;
+  border: 1px solid #E5E7EB;
+  color: #9CA3AF;
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.15s, color 0.15s;
+}
+
+.sidebar__toggle:hover {
+  background: #F3F4F6;
+  color: #374151;
+}

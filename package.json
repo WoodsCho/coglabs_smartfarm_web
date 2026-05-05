@@ -11,9 +11,13 @@
   },
   "dependencies": {
     "@aws-amplify/ui-react": "~6.13.2",
+    "@react-three/fiber": "^8.18.0",
     "aws-amplify": "~6.15.10",
+    "lucide-react": "^1.14.0",
     "react": "~18.3.1",
-    "react-dom": "~18.3.1"
+    "react-dom": "~18.3.1",
+    "react-router-dom": "^7.14.2",
+    "three": "^0.184.0"
   },
   "engines": {
     "node": ">= 20.20.0",
@@ -22,11 +26,13 @@
   "devDependencies": {
     "@aws-amplify/backend": "~1.19.0",
     "@aws-amplify/backend-cli": "~1.8.1",
-    "@eslint/compat":  "~2.0.1",
+    "@eslint/compat": "~2.0.1",
     "@eslint/eslintrc": "~3.3.3",
     "@eslint/js": "~9.39.2",
     "@types/react": "~18.3.27",
     "@types/react-dom": "~18.3.7",
+    "@types/react-router-dom": "^5.3.3",
+    "@types/three": "^0.184.0",
     "@typescript-eslint/eslint-plugin": "~8.53.0",
     "@typescript-eslint/parser": "~8.53.0",
     "@vitejs/plugin-react": "~5.1.2",

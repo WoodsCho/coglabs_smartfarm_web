@@ -1,0 +1,262 @@
+/* ── 패널 컨테이너 ────────────────────────────────── */
+.eq-summary {
+  background: #fff;
+  border-radius: 14px;
+  padding: 14px 16px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ── 헤더 ───────────────────────────────── */
+.eq-summary__header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.eq-summary__title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.eq-summary__title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.eq-summary__count {
+  font-size: 11px;
+  color: #6b7280;
+  background: #f3f4f6;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.eq-summary__filters {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.eq-filter-btn {
+  padding: 3px 9px;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  font-size: 11px;
+  background: #fff;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.eq-filter-btn--active {
+  background: #111827;
+  border-color: #111827;
+  color: #fff;
+}
+
+/* ── 그룹 목록 ───────────────────────────────────── */
+.eq-summary__list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ── 그룹 섹션 ───────────────────────────────────── */
+.eq-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.eq-group__header {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.eq-group__dot {
+  font-size: 9px;
+  line-height: 1;
+}
+
+.eq-group__name {
+  font-size: 11px;
+  font-weight: 700;
+  color: #374151;
+  letter-spacing: 0.3px;
+}
+
+/* 카드 그리드: 컨테이너 너비에 맞게 자동 배치 */
+.eq-group__cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+  gap: 8px;
+}
+
+/* ── 장비 카드 ───────────────────────────────────── */
+.eq-card {
+  border: 1px solid;
+  border-radius: 10px;
+  padding: 10px 10px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.eq-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.eq-card__name {
+  font-size: 12px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.eq-card__status {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.eq-card__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* 현재 → 목표 */
+.eq-card__vals {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+}
+
+.eq-card__vals--spacer {
+  min-height: 34px;
+}
+
+.eq-card__val-block {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.eq-card__val-label {
+  font-size: 9px;
+  color: #9ca3af;
+  line-height: 1;
+}
+
+.eq-card__val {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.eq-card__arrow {
+  font-size: 11px;
+  color: #d1d5db;
+  flex: 1;
+  text-align: center;
+}
+
+/* 자동 배지 / 스텝퍼 */
+.eq-card__auto-row {
+  min-height: 22px;
+  display: flex;
+  align-items: center;
+}
+
+.eq-card__auto-badge {
+  font-size: 10px;
+  color: #6b7280;
+  background: rgba(0,0,0,0.04);
+  padding: 3px 8px;
+  border-radius: 4px;
+  width: 100%;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.eq-card__auto-badge--manual {
+  color: #9ca3af;
+}
+
+.eq-card__stepper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  justify-content: center;
+}
+
+.eq-card__stepper button {
+  width: 20px;
+  height: 20px;
+  border: 1px solid #d1d5db;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.8);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #374151;
+  line-height: 1;
+}
+
+.eq-card__stepper button:hover { background: #fff; }
+
+.eq-card__stepper span {
+  font-size: 11px;
+  font-weight: 600;
+  color: #374151;
+  min-width: 40px;
+  text-align: center;
+}
+
+/* 버튼 행 */
+.eq-card__btns {
+  display: flex;
+  gap: 5px;
+}
+
+.eq-card__btn {
+  flex: 1;
+  padding: 6px 4px;
+  border: none;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.eq-card__btn:hover { opacity: 0.85; }
+
+.eq-card__btn--auto   { background: #7c3aed; color: #fff; }
+.eq-card__btn--manual { background: #ede9fe; color: #5b21b6; }
+.eq-card__btn--on     { background: #16a34a; color: #fff; }
+.eq-card__btn--off    { background: #fee2e2; color: #dc2626; }

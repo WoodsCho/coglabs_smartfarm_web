@@ -189,3 +189,87 @@
 .farm3d__cam-value {
   color: #fef08a;
 }
+
+/* ── CCTV ─────────────────────────────────────── */
+.farm3d__cctv-wrap {
+  position: relative;
+  flex: 1;
+  display: flex;
+  gap: 8px;
+  padding: 10px;
+  background: #111827;
+  min-height: 0;
+}
+
+.farm3d__cctv-cam {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.farm3d__cctv-cam-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.farm3d__cctv-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #EF4444;
+  animation: cctv-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes cctv-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.farm3d__cctv-cam-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #D1D5DB;
+  letter-spacing: 0.5px;
+}
+
+.farm3d__cctv-frame {
+  flex: 1;
+  width: 100%;
+  border: none;
+  border-radius: 6px;
+  background: #000;
+  min-height: 0;
+}
+
+/* CCTV 토글 버튼 공통 */
+.farm3d__cctv-btn {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 11px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: opacity 0.15s;
+  z-index: 10;
+}
+
+.farm3d__cctv-btn:hover { opacity: 0.85; }
+
+.farm3d__cctv-btn--open {
+  background: #1D4ED8;
+  color: #fff;
+}
+
+.farm3d__cctv-btn--close {
+  background: #374151;
+  color: #E5E7EB;
+}

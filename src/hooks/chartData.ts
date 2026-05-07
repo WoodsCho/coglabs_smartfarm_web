@@ -1,16 +1,20 @@
 import type { SensorType, ChartDataPoint } from '../types/farm';
+import { environmentApi } from '../api/environment';
 
-interface SensorRange { min: number; max: number; optimal: number; }
+// 실제 API와 연결된 센서 (Tuya 기기에서 실데이터 수신)
+const REAL_API_SENSORS = new Set<SensorType>([
+  'temperature',
+  'humidity',
+  'waterTemp',
+  'ph',
+  'ec',
+  'oxygenLevel',
+]);
 
-const SENSOR_RANGES: Record<SensorType, SensorRange> = {
-  temperature: { min: 18, max: 30,   optimal: 23.5 },
-  humidity:    { min: 50, max: 80,   optimal: 68 },
-  co2:         { min: 400, max: 1500, optimal: 950 },
-  light:       { min: 50, max: 100,  optimal: 80 },
-  ph:          { min: 5.5, max: 6.8, optimal: 6.0 },
-  ec:          { min: 1.5, max: 2.8, optimal: 2.1 },
-  waterTemp:   { min: 18, max: 25,   optimal: 21.5 },
-  oxygenLevel: { min: 6, max: 9,     optimal: 7.2 },
+// 미연결 센서 (co2: modbus 예정, light: TBD) — 임시 시뮬레이션 데이터 사용
+const UNCONNECTED_SENSOR_RANGES: Record<string, { min: number; max: number; optimal: number }> = {
+  co2: { min: 400, max: 1500, optimal: 950 },
+  light: { min: 50, max: 100, optimal: 80 },
 };
 
 function formatTime(kst: string, hours: number): string {
@@ -25,36 +29,25 @@ function generateTimeLabels(count: number, intervalMinutes: number): string[] {
   });
 }
 
-export function generateSensorData(sensorType: SensorType, count = 24, intervalMinutes = 10): ChartDataPoint[] {
-  const range = SENSOR_RANGES[sensorType];
+/** co2 / light 전용 시뮬레이션 데이터 생성 (실데이터 없음) */
+function generateUnconnectedData(sensorType: 'co2' | 'light', count: number, intervalMinutes: number): ChartDataPoint[] {
+  const range = UNCONNECTED_SENSOR_RANGES[sensorType];
   const labels = generateTimeLabels(count, intervalMinutes);
   let base = range.optimal;
 
   return labels.map((time, i) => {
     const hour = Math.sin((i / count) * Math.PI * 2);
     const noise = (Math.random() - 0.5) * (range.max - range.min) * 0.1;
-    let v = 0;
-    switch (sensorType) {
-      case 'temperature': v = hour * 3 + noise; break;
-      case 'humidity':    v = -hour * 5 + noise; break;
-      case 'co2':         v = -hour * 100 + noise * 5; break;
-      case 'light':       v = Math.max(0, hour) * 40 + noise; break;
-      case 'ph':          v = noise * 0.3; break;
-      case 'ec':          v = noise * 0.1; break;
-      case 'waterTemp':   v = hour * 1.5 + noise * 0.5; break;
-      case 'oxygenLevel': v = -hour * 0.5 + noise * 0.2; break;
-    }
-    base = Math.max(range.min, Math.min(range.max, base + v));
+    const delta = sensorType === 'co2'
+      ? -hour * 100 + noise * 5
+      : Math.max(0, hour) * 40 + noise;
+    base = Math.max(range.min, Math.min(range.max, base + delta));
     return { time, value: +base.toFixed(2), timestamp: Date.now() - (count - 1 - i) * intervalMinutes * 60_000 };
   });
 }
 
-// Real API sensors
-const REAL_API_SENSORS = new Set<SensorType>(['temperature', 'humidity', 'waterTemp', 'ph', 'ec', 'oxygenLevel']);
-
-import { environmentApi } from '../api/environment';
-
 export async function fetchSensorChartData(sensorType: SensorType, hours: number): Promise<ChartDataPoint[]> {
+  // 실데이터 연결 센서: API 호출, 실패 시 빈 배열 반환 (mock 없음)
   if (REAL_API_SENSORS.has(sensorType)) {
     try {
       const res = await environmentApi.getHistory({ sensorType, hours });
@@ -63,7 +56,12 @@ export async function fetchSensorChartData(sensorType: SensorType, hours: number
         time: formatTime(pt.timestamp_kst, hours),
         value: pt.value,
       }));
-    } catch { /* fallthrough to mock */ }
+    } catch (err) {
+      console.warn(`[chartData] ${sensorType} 히스토리 조회 실패:`, err);
+      return [];
+    }
   }
-  return generateSensorData(sensorType, hours, 60);
+
+  // 미연결 센서 (co2, light): 시뮬레이션 데이터
+  return generateUnconnectedData(sensorType as 'co2' | 'light', hours, 60);
 }

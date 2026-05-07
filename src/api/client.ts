@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://your-api-gateway-url/prod';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://xr0u2z6sq4.execute-api.ap-northeast-2.amazonaws.com';
 
 class ApiClient {
   private baseURL: string;

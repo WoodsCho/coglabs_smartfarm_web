@@ -11,7 +11,7 @@ import {
   Vector3,
 } from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { Cpu } from 'lucide-react';
+import { Cpu, Video, VideoOff } from 'lucide-react';
 import './FarmModel3D.css';
 
 // ────────────────────────────────────────────────────────
@@ -138,7 +138,7 @@ function GltfModel({ url }: { url: string }) {
     const sz = new Box3().setFromObject(cloned).getSize(new Vector3()).length();
     const cam = camera as PerspectiveCamera;
     cam.near = Math.max(0.001, sz * 0.001);
-    cam.far  = sz * 100;
+    cam.far = sz * 100;
     cam.updateProjectionMatrix();
     return cloned;
   }, [gltf.scene, camera]);
@@ -184,18 +184,18 @@ function Scene({ led1On, led2On, led3On, showGreenhouse, canvasSize, animRef, on
   return (
     <>
       <ambientLight intensity={1.8} />
-      <directionalLight position={[5, 10, 5]}  intensity={3.0} castShadow />
+      <directionalLight position={[5, 10, 5]} intensity={3.0} castShadow />
       <directionalLight position={[-8, 4, -2]} intensity={1.5} />
-      <directionalLight position={[0, -3, 8]}  intensity={1.0} />
+      <directionalLight position={[0, -3, 8]} intensity={1.0} />
       <Ground />
       <Suspense fallback={null}>
         {showGreenhouse && <GltfModel url="/3d-model/greenhouse.glb" />}
         <GltfModel url="/3d-model/pipeline.glb" />
-        <ToggleModel url="/3d-model/light/light1-on.glb"  visible={led1On} />
+        <ToggleModel url="/3d-model/light/light1-on.glb" visible={led1On} />
         <ToggleModel url="/3d-model/light/light1-off.glb" visible={!led1On} />
-        <ToggleModel url="/3d-model/light/light2-on.glb"  visible={led2On} />
+        <ToggleModel url="/3d-model/light/light2-on.glb" visible={led2On} />
         <ToggleModel url="/3d-model/light/light2-off.glb" visible={!led2On} />
-        <ToggleModel url="/3d-model/light/light3-on.glb"  visible={led3On} />
+        <ToggleModel url="/3d-model/light/light3-on.glb" visible={led3On} />
         <ToggleModel url="/3d-model/light/light3-off.glb" visible={!led3On} />
       </Suspense>
       <CameraTracker onUpdate={onCameraUpdate} animRef={animRef} />
@@ -239,18 +239,25 @@ export interface FarmModel3DProps {
   led3On?: boolean;
 }
 
-const OVERVIEW_POS    = new Vector3(56.44, 15.64, -33.48);
-const OVERVIEW_TARGET = new Vector3(18.30,  8.52,  -5.22);
-const ZOOM_POS        = new Vector3(34.2,  11.5,  -17.0);
+const OVERVIEW_POS = new Vector3(56.44, 15.64, -33.48);
+const OVERVIEW_TARGET = new Vector3(18.30, 8.52, -5.22);
+const ZOOM_POS = new Vector3(34.2, 11.5, -17.0);
+
+const FUNNEL_BASE = 'https://k8s-worker02.tail63c20e.ts.net';
+const CAMERAS = [
+  { id: 'cam2', label: 'CAM 1' },
+  { id: 'cam1', label: 'CAM 2' },
+];
 
 export default function FarmModel3D({ led1On = false, led2On = false, led3On = false }: FarmModel3DProps) {
-  const wrapRef    = useRef<HTMLDivElement>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
   const btnElemRef = useRef<HTMLButtonElement>(null);
-  const animRef    = useRef<AnimTarget>(null);
+  const animRef = useRef<AnimTarget>(null);
 
-  const [size, setSize]               = useState({ w: 0, h: 0 });
+  const [size, setSize] = useState({ w: 0, h: 0 });
   const [showGreenhouse, setShowGreenhouse] = useState(true);
   const [camInfo, setCamInfo] = useState<{ pos: Vector3; target: Vector3 } | null>(null);
+  const [showCctv, setShowCctv] = useState(false);
 
   const fmtVec = (v: Vector3) => `(${v.x.toFixed(2)}, ${v.y.toFixed(2)}, ${v.z.toFixed(2)})`;
 
@@ -260,8 +267,8 @@ export default function FarmModel3D({ led1On = false, led2On = false, led3On = f
     const el = btnElemRef.current;
     if (!el) return;
     el.style.display = visible ? 'flex' : 'none';
-    el.style.left    = `${x}px`;
-    el.style.top     = `${y}px`;
+    el.style.left = `${x}px`;
+    el.style.top = `${y}px`;
   };
 
   const handleSmartfarm1Click = () => {
@@ -303,57 +310,92 @@ export default function FarmModel3D({ led1On = false, led2On = false, led3On = f
         </div>
       </div>
 
-      {/* Canvas 컨테이너 */}
-      <div ref={wrapRef} className="farm3d__canvas-wrap">
-        {size.w > 0 && size.h > 0 && (
-          <Canvas
-            camera={{ position: [56.44, 15.64, -33.48], fov: 45, near: 0.001, far: 10000 }}
-            style={{ width: size.w, height: size.h, display: 'block' }}
-            gl={{ antialias: true, toneMapping: ACESFilmicToneMapping, toneMappingExposure: 1.3 }}
-            resize={{ scroll: false, debounce: { scroll: 0, resize: 0 } }}
+      {/* Canvas 또는 CCTV 영상 */}
+      {showCctv ? (
+        <div className="farm3d__cctv-wrap">
+          {CAMERAS.map(cam => (
+            <div key={cam.id} className="farm3d__cctv-cam">
+              <div className="farm3d__cctv-cam-header">
+                <span className="farm3d__cctv-live-dot" />
+                <span className="farm3d__cctv-cam-label">{cam.label}</span>
+              </div>
+              <iframe
+                src={`${FUNNEL_BASE}/${cam.id}`}
+                className="farm3d__cctv-frame"
+                allow="autoplay"
+                allowFullScreen
+              />
+            </div>
+          ))}
+          <button
+            className="farm3d__cctv-btn farm3d__cctv-btn--close"
+            onClick={() => setShowCctv(false)}
           >
-            <Scene
-              led1On={led1On}
-              led2On={led2On}
-              led3On={led3On}
-              showGreenhouse={showGreenhouse}
-              canvasSize={size}
-              animRef={animRef}
-              onCameraUpdate={handleCameraUpdate}
-              onButtonProject={handleButtonProject}
-            />
-          </Canvas>
-        )}
-
-        {/* 카메라 좌표 디버거 */}
-        {camInfo && (
-          <div className="farm3d__cam-debug">
-            <span>📷 pos&nbsp;&nbsp;{fmtVec(camInfo.pos)}</span>
-            <span>🎯 target {fmtVec(camInfo.target)}</span>
-          </div>
-        )}
-
-        {/* 스마트팜1 월드 레이블 버튼 */}
-        <button
-          ref={btnElemRef}
-          className={`farm3d__label-btn${!showGreenhouse ? ' farm3d__label-btn--active' : ''}`}
-          style={{ display: 'none', left: 0, top: 0 }}
-          onClick={showGreenhouse ? handleSmartfarm1Click : undefined}
-        >
-          스마트팜1
-        </button>
-
-        {/* 전체보기 복귀 버튼 */}
-        {!showGreenhouse && (
-          <button className="farm3d__back-btn" onClick={handleBackClick}>
-            ← 전체보기
+            <VideoOff size={13} />
+            닫기
           </button>
-        )}
-
-        <div className="farm3d__hint">
-          드래그하여 회전 · 스크롤하여 확대/축소
         </div>
-      </div>
+      ) : (
+        <div ref={wrapRef} className="farm3d__canvas-wrap">
+          {size.w > 0 && size.h > 0 && (
+            <Canvas
+              camera={{ position: [56.44, 15.64, -33.48], fov: 45, near: 0.001, far: 10000 }}
+              style={{ width: size.w, height: size.h, display: 'block' }}
+              gl={{ antialias: true, toneMapping: ACESFilmicToneMapping, toneMappingExposure: 1.3 }}
+              resize={{ scroll: false, debounce: { scroll: 0, resize: 0 } }}
+            >
+              <Scene
+                led1On={led1On}
+                led2On={led2On}
+                led3On={led3On}
+                showGreenhouse={showGreenhouse}
+                canvasSize={size}
+                animRef={animRef}
+                onCameraUpdate={handleCameraUpdate}
+                onButtonProject={handleButtonProject}
+              />
+            </Canvas>
+          )}
+
+          {/* 카메라 좌표 디버거 */}
+          {camInfo && (
+            <div className="farm3d__cam-debug">
+              <span>📷 pos&nbsp;&nbsp;{fmtVec(camInfo.pos)}</span>
+              <span>🎯 target {fmtVec(camInfo.target)}</span>
+            </div>
+          )}
+
+          {/* 스마트팜1 월드 레이블 버튼 */}
+          <button
+            ref={btnElemRef}
+            className={`farm3d__label-btn${!showGreenhouse ? ' farm3d__label-btn--active' : ''}`}
+            style={{ display: 'none', left: 0, top: 0 }}
+            onClick={showGreenhouse ? handleSmartfarm1Click : undefined}
+          >
+            스마트팜1
+          </button>
+
+          {/* 전체보기 복귀 버튼 */}
+          {!showGreenhouse && (
+            <button className="farm3d__back-btn" onClick={handleBackClick}>
+              ← 전체보기
+            </button>
+          )}
+
+          <div className="farm3d__hint">
+            드래그하여 회전 · 스크롤하여 확대/축소
+          </div>
+
+          {/* CCTV 열기 버튼 (우측 하단) */}
+          <button
+            className="farm3d__cctv-btn farm3d__cctv-btn--open"
+            onClick={() => setShowCctv(true)}
+          >
+            <Video size={13} />
+            CCTV
+          </button>
+        </div>
+      )}
     </div>
   );
 }

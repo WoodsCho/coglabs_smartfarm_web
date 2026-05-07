@@ -6,11 +6,11 @@ import './EquipmentSummary.css';
 const STATUS_ACTIVE = new Set(['ON', 'ACTIVE', 'RUNNING']);
 
 const STATUS_STYLE: Record<string, { bg: string; border: string; dot: string; label: string; labelColor: string }> = {
-  ON:      { bg: '#f0fdf4', border: '#bbf7d0', dot: '#22c55e', label: '가동', labelColor: '#16a34a' },
-  ACTIVE:  { bg: '#f0fdf4', border: '#bbf7d0', dot: '#22c55e', label: '가동', labelColor: '#16a34a' },
+  ON: { bg: '#f0fdf4', border: '#bbf7d0', dot: '#22c55e', label: '가동', labelColor: '#16a34a' },
+  ACTIVE: { bg: '#f0fdf4', border: '#bbf7d0', dot: '#22c55e', label: '가동', labelColor: '#16a34a' },
   RUNNING: { bg: '#eff6ff', border: '#bfdbfe', dot: '#3b82f6', label: '운전', labelColor: '#1d4ed8' },
   STANDBY: { bg: '#fffbeb', border: '#fde68a', dot: '#f59e0b', label: '대기', labelColor: '#b45309' },
-  OFF:     { bg: '#fff1f2', border: '#fecdd3', dot: '#f43f5e', label: '정지', labelColor: '#e11d48' },
+  OFF: { bg: '#fff1f2', border: '#fecdd3', dot: '#f43f5e', label: '정지', labelColor: '#e11d48' },
 };
 const DEFAULT_STYLE = { bg: '#f9fafb', border: '#e5e7eb', dot: '#9ca3af', label: '-', labelColor: '#6b7280' };
 
@@ -108,7 +108,7 @@ export default function EquipmentSummary() {
   const [filter, setFilter] = useState('all');
 
   const activeCount = equipmentGroups.flatMap(g => g.equipment).filter(eq => STATUS_ACTIVE.has(eq.status)).length;
-  const totalCount  = equipmentGroups.flatMap(g => g.equipment).length;
+  const totalCount = equipmentGroups.flatMap(g => g.equipment).length;
 
   const visibleGroups = filter === 'all' ? equipmentGroups : equipmentGroups.filter(g => g.type === filter);
 

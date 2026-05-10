@@ -9,7 +9,6 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
-  Leaf,
 } from 'lucide-react';
 import './Sidebar.css';
 
@@ -41,7 +40,7 @@ export default function Sidebar({ collapsed, onToggle, onMyPage, onSignOut }: Si
       {/* 로고 */}
       <div className="sidebar__logo">
         {collapsed ? (
-          <Leaf size={28} color="#10B981" />
+          <img src="/logo.png" alt="CoG" className="sidebar__logo-icon" />
         ) : (
           <img src="/coglogotop.png" alt="CoGLabs" className="sidebar__logo-img" />
         )}

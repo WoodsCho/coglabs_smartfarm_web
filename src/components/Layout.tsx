@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
-import Chatbot from './Chatbot';
 import './Layout.css';
 
 interface LayoutProps {
@@ -10,7 +9,7 @@ interface LayoutProps {
 }
 
 export default function Layout({ username }: LayoutProps) {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
   const navigate = useNavigate();
 
   const handleSignOut = () => {
@@ -32,7 +31,6 @@ export default function Layout({ username }: LayoutProps) {
           <Outlet />
         </main>
       </div>
-      <Chatbot />
     </div>
   );
 }

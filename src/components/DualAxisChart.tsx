@@ -1,4 +1,14 @@
-import { useMemo } from 'react';
+import {
+  ResponsiveContainer,
+  ComposedChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ReferenceDot,
+} from 'recharts';
 import type { ChartDataPoint } from '../types/farm';
 import './DualAxisChart.css';
 
@@ -11,55 +21,54 @@ interface Props {
   secondaryColor: string;
   primaryUnit: string;
   secondaryUnit: string;
-  width?: number;
-  height?: number;
 }
 
-const PAD = { top: 28, right: 52, bottom: 46, left: 52 };
-const TENSION = 0.25;
-
-function catmullRom(pts: { x: number; y: number }[]): string {
-  if (pts.length < 2) return '';
-  if (pts.length === 2) return `M ${pts[0].x} ${pts[0].y} L ${pts[1].x} ${pts[1].y}`;
-  let d = `M ${pts[0].x} ${pts[0].y}`;
-  for (let i = 0; i < pts.length - 1; i++) {
-    const p0 = pts[Math.max(0, i - 1)];
-    const p1 = pts[i];
-    const p2 = pts[i + 1];
-    const p3 = pts[Math.min(pts.length - 1, i + 2)];
-    const cp1x = p1.x + (p2.x - p0.x) * TENSION;
-    const cp1y = p1.y + (p2.y - p0.y) * TENSION;
-    const cp2x = p2.x - (p3.x - p1.x) * TENSION;
-    const cp2y = p2.y - (p3.y - p1.y) * TENSION;
-    d += ` C ${cp1x} ${cp1y} ${cp2x} ${cp2y} ${p2.x} ${p2.y}`;
-  }
-  return d;
-}
-
-function buildPoints(
-  data: ChartDataPoint[],
-  min: number, max: number,
-  cw: number, ch: number,
-): { x: number; y: number; value: number }[] {
-  return data.map((d, i) => ({
-    x: PAD.left + (i / Math.max(data.length - 1, 1)) * cw,
-    y: PAD.top  + ch - ((d.value - min) / (max - min)) * ch,
-    value: d.value,
+function mergeData(
+  primary: ChartDataPoint[],
+  secondary: ChartDataPoint[],
+) {
+  const len = Math.max(primary.length, secondary.length);
+  return Array.from({ length: len }, (_, i) => ({
+    time: primary[i]?.time ?? secondary[i]?.time ?? '',
+    primary: primary[i]?.value ?? null,
+    secondary: secondary[i]?.value ?? null,
   }));
 }
 
-function yRange(data: ChartDataPoint[]) {
-  const vals = data.map(d => d.value);
-  let mn = Math.min(...vals), mx = Math.max(...vals);
-  const r = mx - mn || 1;
-  return { min: mn - r * 0.1, max: mx + r * 0.1 };
+// X축 틱: 6개 정도만 표시
+function pickTicks(data: { time: string }[]): string[] {
+  if (data.length <= 6) return data.map(d => d.time);
+  const step = Math.floor(data.length / 5);
+  return data.filter((_, i) => i % step === 0 || i === data.length - 1).map(d => d.time);
 }
 
-function yLabels(min: number, max: number, n: number, cy: number) {
-  return Array.from({ length: n }, (_, i) => ({
-    v: (min + ((max - min) * i) / (n - 1)).toFixed(1),
-    y: PAD.top + cy - (i / (n - 1)) * cy,
-  }));
+const CustomTooltip = ({
+  active, payload, label,
+  primaryLabel, secondaryLabel, primaryUnit, secondaryUnit,
+  primaryColor, secondaryColor,
+}: any) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="dualchart__tooltip">
+      <div className="dualchart__tooltip-time">{label}</div>
+      {payload.map((p: any) => (
+        <div key={p.dataKey} className="dualchart__tooltip-row" style={{ color: p.color }}>
+          <span className="dualchart__tooltip-dot" style={{ background: p.color }} />
+          <span>{p.dataKey === 'primary' ? primaryLabel : secondaryLabel}</span>
+          <span className="dualchart__tooltip-val">
+            {p.value != null ? p.value.toFixed(1) : '-'}
+            {p.dataKey === 'primary' ? primaryUnit : secondaryUnit}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+function formatTick(v: number): string {
+  if (Math.abs(v) >= 1000) return `${(v / 1000).toFixed(1)}k`;
+  if (Math.abs(v) >= 100)  return `${Math.round(v)}`;
+  return `${v.toFixed(1)}`;
 }
 
 export default function DualAxisChart({
@@ -67,94 +76,97 @@ export default function DualAxisChart({
   primaryLabel, secondaryLabel,
   primaryColor, secondaryColor,
   primaryUnit, secondaryUnit,
-  width = 340, height = 120,
 }: Props) {
-  const cw = width  - PAD.left  - PAD.right;
-  const ch = height - PAD.top   - PAD.bottom;
-
-  const computed = useMemo(() => {
-    if (!primaryData.length && !secondaryData.length) return null;
-
-    const pr = primaryData.length   ? yRange(primaryData)   : { min: 0, max: 1 };
-    const sr = secondaryData.length ? yRange(secondaryData) : { min: 0, max: 1 };
-
-    const pPts = buildPoints(primaryData,   pr.min, pr.max, cw, ch);
-    const sPts = buildPoints(secondaryData, sr.min, sr.max, cw, ch);
-
-    const xStep = Math.max(1, Math.floor(primaryData.length / 6));
-    const xLabels = primaryData
-      .filter((_, i) => i % xStep === 0 || i === primaryData.length - 1)
-      .map(d => ({ label: d.time, x: PAD.left + (primaryData.indexOf(d) / Math.max(primaryData.length - 1, 1)) * cw }));
-
-    return {
-      pPath: catmullRom(pPts), sPat: catmullRom(sPts),
-      pPts, sPts,
-      pLabels: yLabels(pr.min, pr.max, 5, ch),
-      sLabels: yLabels(sr.min, sr.max, 5, ch),
-      xLabels,
-    };
-  }, [primaryData, secondaryData, cw, ch]);
-
-  if (!computed) {
-    return <div className="dualchart dualchart--empty" style={{ width, height }}>데이터 없음</div>;
+  if (!primaryData.length && !secondaryData.length) {
+    return <div className="dualchart dualchart--empty">데이터 없음</div>;
   }
 
-  const { pPath, sPat, pPts, sPts, pLabels, sLabels, xLabels } = computed;
+  const data = mergeData(primaryData, secondaryData);
+  const ticks = pickTicks(data);
 
   return (
     <div className="dualchart">
-      <svg viewBox={`0 0 ${width} ${height}`} width="100%" style={{ display: 'block' }} overflow="visible">
-        {/* 가로 그리드 */}
-        {pLabels.map((l, i) => (
-          <line key={i} x1={PAD.left} x2={PAD.left + cw} y1={l.y} y2={l.y}
-            stroke="#F3F4F6" strokeWidth={1} />
-        ))}
+      <ResponsiveContainer width="100%" height={108}>
+        <ComposedChart data={data} margin={{ top: 6, right: 8, bottom: 0, left: 8 }}>
 
-        {/* 좌측 Y축 라벨 (primary) */}
-        {pLabels.map((l, i) => (
-          <text key={i} x={PAD.left - 6} y={l.y} textAnchor="end" dominantBaseline="middle"
-            fontSize={9} fill={primaryColor}>
-            {l.v}
-          </text>
-        ))}
-        {/* 우측 Y축 라벨 (secondary) */}
-        {sLabels.map((l, i) => (
-          <text key={i} x={PAD.left + cw + 6} y={l.y} textAnchor="start" dominantBaseline="middle"
-            fontSize={9} fill={secondaryColor}>
-            {l.v}
-          </text>
-        ))}
+          <CartesianGrid stroke="#f3f4f6" strokeDasharray="" vertical={false} />
 
-        {/* X축 라벨 */}
-        {xLabels.map((l, i) => (
-          <text key={i} x={l.x} y={PAD.top + ch + 14} textAnchor="middle"
-            fontSize={9} fill="#9CA3AF">
-            {l.label}
-          </text>
-        ))}
+          <XAxis
+            dataKey="time"
+            ticks={ticks}
+            tick={{ fontSize: 9, fill: '#9ca3af' }}
+            axisLine={false}
+            tickLine={false}
+            interval="preserveStartEnd"
+          />
 
-        {/* 선 */}
-        {pPath && <path d={pPath} fill="none" stroke={primaryColor}   strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />}
-        {sPat  && <path d={sPat}  fill="none" stroke={secondaryColor} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" strokeDasharray="4 3" />}
+          <YAxis
+            yAxisId="left"
+            tick={{ fontSize: 9, fill: primaryColor }}
+            axisLine={false}
+            tickLine={false}
+            width={32}
+            tickCount={3}
+            domain={['auto', 'auto']}
+            tickFormatter={formatTick}
+          />
+          <YAxis
+            yAxisId="right"
+            orientation="right"
+            tick={{ fontSize: 9, fill: secondaryColor }}
+            axisLine={false}
+            tickLine={false}
+            width={32}
+            tickCount={3}
+            domain={['auto', 'auto']}
+            tickFormatter={formatTick}
+          />
 
-        {/* 점 (마지막만) */}
-        {pPts.length > 0 && (
-          <circle cx={pPts[pPts.length - 1].x} cy={pPts[pPts.length - 1].y} r={3}
-            fill={primaryColor} />
-        )}
-        {sPts.length > 0 && (
-          <circle cx={sPts[sPts.length - 1].x} cy={sPts[sPts.length - 1].y} r={3}
-            fill={secondaryColor} />
-        )}
+          <Tooltip
+            content={
+              <CustomTooltip
+                primaryLabel={primaryLabel} secondaryLabel={secondaryLabel}
+                primaryUnit={primaryUnit} secondaryUnit={secondaryUnit}
+                primaryColor={primaryColor} secondaryColor={secondaryColor}
+              />
+            }
+            cursor={{ stroke: '#e5e7eb', strokeWidth: 1 }}
+          />
 
-        {/* 범례 */}
-        <g transform={`translate(${PAD.left}, ${PAD.top + ch + 30})`}>
-          <rect x={0} y={-4} width={14} height={3} fill={primaryColor} rx={1} />
-          <text x={18} y={0} fontSize={9} fill="#6B7280">{primaryLabel}{primaryUnit ? ` (${primaryUnit})` : ''}</text>
-          <line x1={80} y1={-2} x2={94} y2={-2} stroke={secondaryColor} strokeWidth={2} strokeDasharray="4 3" />
-          <text x={98} y={0} fontSize={9} fill="#6B7280">{secondaryLabel}{secondaryUnit ? ` (${secondaryUnit})` : ''}</text>
-        </g>
-      </svg>
+          <Legend
+            iconType="plainline"
+            iconSize={14}
+            wrapperStyle={{ fontSize: 10, paddingTop: 2 }}
+            formatter={(value) =>
+              value === 'primary'
+                ? `${primaryLabel}${primaryUnit ? ` (${primaryUnit})` : ''}`
+                : `${secondaryLabel}${secondaryUnit ? ` (${secondaryUnit})` : ''}`
+            }
+          />
+
+          <Line
+            yAxisId="left"
+            dataKey="primary"
+            stroke={primaryColor}
+            strokeWidth={2}
+            dot={false}
+            activeDot={{ r: 3, strokeWidth: 0 }}
+            type="monotone"
+            connectNulls
+          />
+          <Line
+            yAxisId="right"
+            dataKey="secondary"
+            stroke={secondaryColor}
+            strokeWidth={1.5}
+            strokeDasharray="5 3"
+            dot={false}
+            activeDot={{ r: 3, strokeWidth: 0 }}
+            type="monotone"
+            connectNulls
+          />
+        </ComposedChart>
+      </ResponsiveContainer>
     </div>
   );
 }

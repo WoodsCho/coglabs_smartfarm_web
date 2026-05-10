@@ -34,17 +34,107 @@
   border-radius: 10px;
 }
 
-.task-panel__link-btn {
+.task-panel__add-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   padding: 4px 10px;
   font-size: 11px;
-  border: 1px solid #d1d5db;
+  font-weight: 600;
+  border: 1px solid #f97316;
   border-radius: 6px;
-  background: #fff;
-  color: #374151;
+  background: #fff7ed;
+  color: #f97316;
   cursor: pointer;
+  transition: background 0.15s;
 }
 
-.task-panel__link-btn:hover { background: #f9fafb; }
+.task-panel__add-btn:hover { background: #ffedd5; }
+
+.task-panel__add-btn--cancel {
+  border-color: #d1d5db;
+  background: #f9fafb;
+  color: #6b7280;
+}
+
+.task-panel__add-btn--cancel:hover { background: #f3f4f6; }
+
+/* 작업 지시 폼 */
+.task-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 10px;
+}
+
+.task-form__input {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: #111827;
+  background: #fff;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+}
+
+.task-form__input:focus { border-color: #f97316; }
+
+.task-form__row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.task-form__input--date {
+  flex: 1;
+  min-width: 0;
+}
+
+.task-form__priority-group {
+  display: flex;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.task-form__priority-btn {
+  padding: 3px 7px;
+  font-size: 10px;
+  font-weight: 600;
+  border: 1px solid #d1d5db;
+  border-radius: 5px;
+  background: #fff;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.task-form__priority-btn--active {
+  font-weight: 700;
+}
+
+.task-form__submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 7px;
+  background: #f97316;
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.task-form__submit:hover { background: #ea6d0d; }
 
 .task-panel__list {
   display: flex;
@@ -57,7 +147,10 @@
   gap: 10px;
   padding: 8px 0;
   border-bottom: 1px solid #f3f4f6;
+  cursor: pointer;
 }
+
+.task-item:hover { background: #fafafa; }
 
 .task-item:last-child { border-bottom: none; }
 

@@ -129,6 +129,13 @@
   color: #111827;
 }
 
+.eq-card__badges {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
 .eq-card__status {
   display: flex;
   align-items: center;
@@ -136,6 +143,24 @@
   font-size: 10px;
   font-weight: 700;
   flex-shrink: 0;
+}
+
+.eq-card__mode-badge {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.eq-card__mode-badge--auto {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.eq-card__mode-badge--manual {
+  background: #f3f4f6;
+  color: #6b7280;
 }
 
 .eq-card__dot {
@@ -236,6 +261,47 @@
   min-width: 40px;
   text-align: center;
 }
+
+.eq-card__stepper-val {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #374151;
+  min-width: 40px;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 2px 4px;
+  transition: background 0.12s;
+}
+
+.eq-card__stepper-val:hover {
+  background: rgba(0,0,0,0.06);
+}
+
+.eq-card__stepper-input {
+  width: 52px;
+  border: 1px solid #f97316;
+  border-radius: 4px;
+  padding: 2px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #374151;
+  text-align: center;
+  outline: none;
+  background: #fff;
+  /* 스피너 제거 */
+  -moz-appearance: textfield;
+}
+
+.eq-card__stepper-input::-webkit-outer-spin-button,
+.eq-card__stepper-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+}
+
+
 
 /* 버튼 행 */
 .eq-card__btns {

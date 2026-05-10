@@ -20,6 +20,14 @@ export interface ChatMessage {
   content: string;
 }
 
+export interface SessionInfo {
+  session_id: string;
+  title: string;
+  last_message?: string;
+  last_active: number;
+  message_count: number;
+}
+
 export const chatApi = {
   createSession: (userId: string, title = '새 대화') =>
     post<{ session_id: string }>({ action: 'create_session', user_id: userId, title }),
@@ -31,4 +39,13 @@ export const chatApi = {
       session_id: sessionId,
       message,
     }),
+
+  listSessions: (userId: string) =>
+    post<{ sessions: SessionInfo[] }>({ action: 'list_sessions', user_id: userId }),
+
+  getMessages: (sessionId: string) =>
+    post<{ messages: ChatMessage[] }>({ action: 'get_messages', session_id: sessionId }),
+
+  deleteSession: (sessionId: string) =>
+    post<{ deleted: string }>({ action: 'delete_session', session_id: sessionId }),
 };

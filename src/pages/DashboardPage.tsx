@@ -6,6 +6,7 @@ import DualAxisChart from '../components/DualAxisChart';
 import EquipmentSummary from '../components/EquipmentSummary';
 import ActivityTimeline from '../components/ActivityTimeline';
 import TaskPanel from '../components/TaskPanel';
+import Chatbot from '../components/Chatbot';
 import { useFarm } from '../contexts/FarmContext';
 import { useCorrelatedChartData } from '../hooks/useSensorChartData';
 import './DashboardPage.css';
@@ -121,10 +122,15 @@ export default function DashboardPage() {
           <EquipmentSummary />
         </div>
 
-        {/* 오른쪽: 작업 관리 + 활동 로그 */}
-        <div className="dash__col dash__col--right">
-          <TaskPanel />
-          <ActivityTimeline />
+        {/* 오른쪽: 챗봇(위) + 작업관리/활동로그(아래 나란히) */}
+        <div className="dash__col dash__col--right-area">
+          <div className="dash__chat-panel">
+            <Chatbot embedded />
+          </div>
+          <div className="dash__bottom-row">
+            <div className="dash__bottom-col"><TaskPanel /></div>
+            <div className="dash__bottom-col"><ActivityTimeline /></div>
+          </div>
         </div>
       </div>
     </div>

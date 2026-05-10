@@ -30,6 +30,12 @@
   max-width: 160px;
 }
 
+.sidebar__logo-icon {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
 /* 네비게이션 */
 .sidebar__nav {
   flex: 1;

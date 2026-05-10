@@ -26,16 +26,34 @@ function EquipmentCard({ eq }: { eq: Equipment }) {
   const isActive = STATUS_ACTIVE.has(eq.status);
   const st = STATUS_STYLE[eq.status] ?? DEFAULT_STYLE;
   const hasVals = eq.envValue != null && eq.target != null;
+  const [editingTarget, setEditingTarget] = useState<string | null>(null);
+
+  const commitTarget = () => {
+    if (editingTarget === null) return;
+    const v = parseFloat(editingTarget);
+    if (!isNaN(v)) updateEquipmentTarget(eq.id, +v.toFixed(1));
+    setEditingTarget(null);
+  };
+
+  const handleTargetKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') commitTarget();
+    if (e.key === 'Escape') setEditingTarget(null);
+  };
 
   return (
     <div className="eq-card" style={{ background: st.bg, borderColor: st.border }}>
-      {/* 헤더: 이름 + 상태 */}
+      {/* 헤더: 이름 + 가동상태 + 자동/수동 */}
       <div className="eq-card__head">
         <span className="eq-card__name">{eq.name}</span>
-        <span className="eq-card__status" style={{ color: st.labelColor }}>
-          <span className="eq-card__dot" style={{ background: st.dot }} />
-          {st.label}
-        </span>
+        <div className="eq-card__badges">
+          <span className="eq-card__status" style={{ color: st.labelColor }}>
+            <span className="eq-card__dot" style={{ background: st.dot }} />
+            {st.label}
+          </span>
+          <span className={`eq-card__mode-badge ${eq.auto ? 'eq-card__mode-badge--auto' : 'eq-card__mode-badge--manual'}`}>
+            {eq.auto ? '자동' : '수동'}
+          </span>
+        </div>
       </div>
 
       {/* 현재 → 목표 (없으면 빈 줄로 높이 맞춤) */}
@@ -55,14 +73,30 @@ function EquipmentCard({ eq }: { eq: Equipment }) {
         <div className="eq-card__vals eq-card__vals--spacer" />
       )}
 
-      {/* 자동제어 배지 or 스텝퍼 */}
+      {/* 목표값 스텝퍼 — 자동 여부와 무관하게 항상 표시 */}
       <div className="eq-card__auto-row">
-        {eq.auto ? (
-          <span className="eq-card__auto-badge">🔒 자동 제어중</span>
-        ) : eq.target != null ? (
+        {eq.target != null ? (
           <div className="eq-card__stepper">
             <button onClick={() => updateEquipmentTarget(eq.id, +(eq.target! - 0.5).toFixed(1))}>−</button>
-            <span>{eq.target}{eq.unit}</span>
+            {editingTarget !== null ? (
+              <input
+                className="eq-card__stepper-input"
+                type="number"
+                value={editingTarget}
+                onChange={e => setEditingTarget(e.target.value)}
+                onBlur={commitTarget}
+                onKeyDown={handleTargetKey}
+                autoFocus
+              />
+            ) : (
+              <span
+                className="eq-card__stepper-val"
+                title="클릭하여 직접 입력"
+                onClick={() => setEditingTarget(String(eq.target))}
+              >
+                {eq.target}{eq.unit}
+              </span>
+            )}
             <button onClick={() => updateEquipmentTarget(eq.id, +(eq.target! + 0.5).toFixed(1))}>+</button>
           </div>
         ) : (
@@ -70,19 +104,19 @@ function EquipmentCard({ eq }: { eq: Equipment }) {
         )}
       </div>
 
-      {/* 버튼 */}
+      {/* 버튼: ON/OFF 왼쪽, 자동/수동 전환 오른쪽 */}
       <div className="eq-card__btns">
-        <button
-          className={`eq-card__btn ${eq.auto ? 'eq-card__btn--auto' : 'eq-card__btn--manual'}`}
-          onClick={() => toggleEquipmentAuto(eq.id, !eq.auto)}
-        >
-          ↺ {eq.auto ? '자동' : '수동'}
-        </button>
         <button
           className={`eq-card__btn ${isActive ? 'eq-card__btn--on' : 'eq-card__btn--off'}`}
           onClick={() => toggleEquipmentStatus(eq.id, isActive ? 'OFF' : 'ON')}
         >
           ⏻ {isActive ? 'ON' : 'OFF'}
+        </button>
+        <button
+          className={`eq-card__btn ${eq.auto ? 'eq-card__btn--auto' : 'eq-card__btn--manual'}`}
+          onClick={() => toggleEquipmentAuto(eq.id, !eq.auto)}
+        >
+          {eq.auto ? '자동' : '수동'}
         </button>
       </div>
     </div>

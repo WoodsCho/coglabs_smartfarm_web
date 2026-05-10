@@ -2,7 +2,7 @@
 .dash {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 7px;
   height: 100%;
   overflow: hidden;
 }
@@ -11,7 +11,7 @@
 .dash__kpi-row {
   display: grid;
   grid-template-columns: repeat(8, 1fr);
-  gap: 10px;
+  gap: 5px;
 }
 
 @media (max-width: 1400px) {
@@ -21,24 +21,28 @@
   .dash__kpi-row { grid-template-columns: repeat(2, 1fr); }
 }
 
-/* ── 3-컬럼 그리드 ───────────────────────────────── */
+/* ── 4-컬럼 그리드 ───────────────────────────────── */
 .dash__grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.9fr) minmax(0, 0.9fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 2.2fr) minmax(0, 0.7fr) minmax(0, 1.5fr);
   grid-template-rows: 1fr;
-  gap: 14px;
+  gap: 7px;
   flex: 1;
   min-height: 0;
   align-items: stretch;
 }
 
+@media (max-width: 1600px) {
+  .dash__grid { grid-template-columns: minmax(0, 2fr) minmax(0, 0.65fr) minmax(0, 1.4fr); }
+}
+
 @media (max-width: 1400px) {
-  .dash__grid { grid-template-columns: minmax(0, 1.7fr) minmax(0, 0.8fr) minmax(0, 0.9fr); }
+  .dash__grid { grid-template-columns: minmax(0, 2fr) minmax(0, 0.7fr) minmax(0, 1.3fr); }
 }
 
 @media (max-width: 1200px) {
-  .dash__grid { grid-template-columns: minmax(0, 1.9fr) minmax(0, 0.9fr); }
-  .dash__col--right { display: none; }
+  .dash__grid { grid-template-columns: minmax(0, 2.2fr) minmax(0, 0.8fr); }
+  .dash__col--right-area { display: none; }
 }
 
 @media (max-width: 900px) {
@@ -49,16 +53,44 @@
 .dash__col {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 7px;
   min-width: 0;
   min-height: 0;
   height: 100%;
 }
 
-/* 중간·오른쪽 컬럼 내부 스크롤 */
-.dash__col--mid,
-.dash__col--right {
+/* 중간 컬럼 내부 스크롤 */
+.dash__col--mid {
   overflow-y: auto;
+}
+
+/* 오른쪽 영역: 챗봇 위 + 하단 2열 */
+.dash__col--right-area {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-height: 0;
+  height: 100%;
+}
+
+.dash__chat-panel {
+  flex: 3;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.dash__bottom-row {
+  flex: 2;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+  min-height: 0;
+}
+
+.dash__bottom-col {
+  overflow-y: auto;
+  min-height: 0;
 }
 
 /* ── 3D 패널 ────────────────────────────────────── */
@@ -75,23 +107,24 @@
 .dash-chart-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 6px;
 }
 
 .dash-chart-card {
   background: #fff;
   border-radius: 12px;
-  padding: 12px 14px;
+  padding: 6px 0 4px 0;
   box-shadow: 0 1px 4px rgba(0,0,0,0.06);
   min-width: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .dash-chart-card__title {
   font-size: 12px;
   font-weight: 600;
   color: #374151;
-  margin-bottom: 8px;
+  margin-bottom: 2px;
+  padding-left: 8px;
 }
 
 .dash-chart-loading {

@@ -7,7 +7,6 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
-  ReferenceDot,
 } from 'recharts';
 import type { ChartDataPoint } from '../types/farm';
 import './DualAxisChart.css';
@@ -45,7 +44,6 @@ function pickTicks(data: { time: string }[]): string[] {
 const CustomTooltip = ({
   active, payload, label,
   primaryLabel, secondaryLabel, primaryUnit, secondaryUnit,
-  primaryColor, secondaryColor,
 }: any) => {
   if (!active || !payload?.length) return null;
   return (

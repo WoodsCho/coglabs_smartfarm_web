@@ -711,6 +711,7 @@ interface SceneProps {
   sensorData: EnvironmentData;
   isZoomedIn: boolean;
   onCctvClick: () => void;
+  mobileMode?: boolean;
 }
 
 function Scene({
@@ -721,6 +722,7 @@ function Scene({
   onGreenhouse2Click, onGreenhouse2Hover,
   weather, sensorData, isZoomedIn,
   onCctvClick,
+  mobileMode = false,
 }: SceneProps) {
   const { scene } = useThree();
 
@@ -764,8 +766,8 @@ function Scene({
         )}
       </Suspense>
 
-      {/* 센서 오버레이: 전체보기 상태에서만 표시 */}
-      {!isZoomedIn && (
+      {/* 센서 오버레이: 전체보기 상태 + 웹 전용 (모바일은 네이티브 패널로 대체) */}
+      {!isZoomedIn && !mobileMode && (
         <>
           {/* 팜1 센서 말풍선 — 지붕 위 */}
           {showFarm1 && (
@@ -979,11 +981,11 @@ const PIPELINE1_TARGET = new Vector3(18.59,  7.01,  -4.41);
 const PLANT_CHECK_POS    = new Vector3( 8.07, 7.83, -10.54);
 const PLANT_CHECK_TARGET = new Vector3( 8.08, 7.83,  -7.98);
 
-// 모바일 전용 팜별 카메라 앵글 (캘리브레이션 필요 시 웹 DEV 카메라 디버거로 확인)
-const MOBILE_FARM1_POS    = PIPELINE1_POS;
-const MOBILE_FARM1_TARGET = PIPELINE1_TARGET;
-const MOBILE_FARM2_POS    = new Vector3(30.00, 18.00, 20.00);
-const MOBILE_FARM2_TARGET = new Vector3(10.00,  7.00, 10.00);
+// 모바일 전용 팜별 카메라 앵글
+const MOBILE_FARM1_POS    = new Vector3(62.00, 23.00, -38.00);
+const MOBILE_FARM1_TARGET = new Vector3(18.00,  7.00,  -4.00);
+const MOBILE_FARM2_POS    = new Vector3(63.00, 18.00, -14.00);
+const MOBILE_FARM2_TARGET = new Vector3(34.00,  7.00,  10.00);
 
 
 const FUNNEL_BASE = 'https://k8s-worker02.tail63c20e.ts.net';
@@ -1358,6 +1360,7 @@ export default function FarmModel3D({ led1On = false, led2On = false, led3On = f
                 sensorData={sensorData}
                 isZoomedIn={isZoomedIn}
                 onCctvClick={() => setShowCctv(true)}
+                mobileMode={mobileMode}
               />
             </Canvas>
           )}

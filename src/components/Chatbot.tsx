@@ -7,13 +7,7 @@ import cogLogo from '/logo.png';
 import './Chatbot.css';
 
 function getUserId(): string {
-  const key = 'cog_chat_user_id';
-  let id = localStorage.getItem(key);
-  if (!id) {
-    id = `user_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-    localStorage.setItem(key, id);
-  }
-  return id;
+  return 'cog_admin';
 }
 
 function formatDate(ts: number): string {
@@ -206,7 +200,18 @@ export default function Chatbot({ embedded = false }: { embedded?: boolean }) {
               <div key={i} className={`chatbot__message chatbot__message--${msg.role}`}>
                 <div className="chatbot__bubble">
                   {msg.role === 'assistant'
-                    ? <ReactMarkdown remarkPlugins={[[remarkGfm, { singleTilde: false }]]}>{msg.content}</ReactMarkdown>
+                    ? <ReactMarkdown
+                        remarkPlugins={[[remarkGfm, { singleTilde: false }]]}
+                        components={{
+                          img: ({ src, alt }) => (
+                            <img
+                              src={src}
+                              alt={alt ?? 'CCTV'}
+                              style={{ maxWidth: '100%', borderRadius: '8px', marginTop: '6px', display: 'block' }}
+                            />
+                          ),
+                        }}
+                      >{msg.content}</ReactMarkdown>
                     : msg.content
                   }
                 </div>

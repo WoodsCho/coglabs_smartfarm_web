@@ -164,19 +164,19 @@ function GrassField({ weather }: { weather: WeatherState }) {
     const geo = new BufferGeometry();
     const W = 0.06;
     const positions = new Float32Array([
-      -W, 0,   0,
-       W, 0,   0,
-       0, 1.0, 0,
+      -W, 0, 0,
+      W, 0, 0,
+      0, 1.0, 0,
     ]);
-    const uvs = new Float32Array([0, 0,  1, 0,  0.5, 1]);
+    const uvs = new Float32Array([0, 0, 1, 0, 0.5, 1]);
     geo.setAttribute('position', new BufferAttribute(positions, 3));
-    geo.setAttribute('uv',       new BufferAttribute(uvs, 2));
+    geo.setAttribute('uv', new BufferAttribute(uvs, 2));
 
     // 인스턴스별 랜덤값, 높이값
-    const rand   = new Float32Array(GRASS_COUNT);
+    const rand = new Float32Array(GRASS_COUNT);
     const height = new Float32Array(GRASS_COUNT);
     for (let i = 0; i < GRASS_COUNT; i++) {
-      rand[i]   = Math.random();
+      rand[i] = Math.random();
       height[i] = 0.4 + Math.random() * 0.8;
     }
     geo.setAttribute('aRandom', new BufferAttribute(rand, 1));
@@ -222,7 +222,7 @@ function GrassField({ weather }: { weather: WeatherState }) {
   const { colorBase, colorTip, windStrength } = useMemo(() => {
     const { isDay, condition } = weather;
     let base = new Color(0x3a7d44);
-    let tip  = new Color(0x7ec850);
+    let tip = new Color(0x7ec850);
     if (!isDay) { base = new Color(0x1a3a22); tip = new Color(0x2d5c33); }
     else if (condition === 'rain' || condition === 'thunderstorm') {
       base = new Color(0x2d5c33); tip = new Color(0x4a8c50);
@@ -230,9 +230,9 @@ function GrassField({ weather }: { weather: WeatherState }) {
       base = new Color(0x3a6b3f); tip = new Color(0x6aaa50);
     }
     const wind = condition === 'thunderstorm' ? 0.35
-               : condition === 'rain'         ? 0.25
-               : condition === 'clouds'       ? 0.18
-               : 0.12;
+      : condition === 'rain' ? 0.25
+        : condition === 'clouds' ? 0.18
+          : 0.12;
     return { colorBase: base, colorTip: tip, windStrength: wind };
   }, [weather]);
 
@@ -248,7 +248,7 @@ function GrassField({ weather }: { weather: WeatherState }) {
     if (!matRef.current) return;
     matRef.current.uniforms.uWindStrength.value = windStrength;
     matRef.current.uniforms.uColorBase.value = colorBase;
-    matRef.current.uniforms.uColorTip.value  = colorTip;
+    matRef.current.uniforms.uColorTip.value = colorTip;
   }, [windStrength, colorBase, colorTip]);
 
   return (
@@ -258,10 +258,10 @@ function GrassField({ weather }: { weather: WeatherState }) {
         vertexShader={GRASS_VERT}
         fragmentShader={GRASS_FRAG}
         uniforms={{
-          uTime:        { value: 0 },
+          uTime: { value: 0 },
           uWindStrength: { value: windStrength },
-          uColorBase:   { value: colorBase },
-          uColorTip:    { value: colorTip },
+          uColorBase: { value: colorBase },
+          uColorTip: { value: colorTip },
         }}
         side={DoubleSide}
         transparent
@@ -298,12 +298,12 @@ function Ground({ weather }: { weather: WeatherState }) {
 // ────────────────────────────────────────────────────────
 const NODE = {
   greenhouse: 'greenhouse',
-  light1On:   'light1-on',
-  light1Off:  'light1-off',
-  light2On:   'light2-on',
-  light2Off:  'light2-off',
-  light3On:   'light3-on',
-  light3Off:  'light3-off',
+  light1On: 'light1-on',
+  light1Off: 'light1-off',
+  light2On: 'light2-on',
+  light2Off: 'light2-off',
+  light3On: 'light3-on',
+  light3Off: 'light3-off',
 } as const;
 
 // 재질 기본 설정 헬퍼
@@ -394,7 +394,7 @@ function SmartfarmModel({
     const sz = new Box3().setFromObject(cloned).getSize(new Vector3()).length();
     const cam = camera as PerspectiveCamera;
     cam.near = Math.max(0.001, sz * 0.001);
-    cam.far  = sz * 100;
+    cam.far = sz * 100;
     cam.updateProjectionMatrix();
 
     let foundGh: any = null;
@@ -452,7 +452,7 @@ function SmartfarmModel({
       obj.traverse((child: any) => { child.visible = visible; });
       obj.visible = visible;
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scene]);
 
   // 라이트 노드 ON/OFF
@@ -563,7 +563,7 @@ function Greenhouse2Model({
     const sz = new Box3().setFromObject(cloned).getSize(new Vector3()).length();
     const cam = camera as PerspectiveCamera;
     cam.near = Math.max(0.001, sz * 0.001);
-    cam.far  = sz * 100;
+    cam.far = sz * 100;
     cam.updateProjectionMatrix();
     return cloned;
   }, [gltf.scene, camera]);
@@ -760,8 +760,8 @@ function Scene({
             led2On={false}
             led3On={false}
             showGreenhouse={false}
-            onClick={() => {}}
-            onHoverChange={() => {}}
+            onClick={() => { }}
+            onHoverChange={() => { }}
           />
         )}
       </Suspense>
@@ -842,11 +842,11 @@ function DayProgressOverlay({ weather, time }: { weather: WeatherState; time: Da
 // ────────────────────────────────────────────────────────
 function SensorOverlay({ data }: { data: EnvironmentData }) {
   const items = useMemo(() => [
-    { key: 'temp', icon: '🌡️', label: '온도',  value: `${data.temperature.toFixed(1)}°C`,  color: '#fb7185' },
-    { key: 'hum',  icon: '💧', label: '습도',  value: `${data.humidity.toFixed(1)}%`,      color: '#38bdf8' },
-    { key: 'co2',  icon: '💨', label: 'CO₂',   value: `${data.co2.toFixed(0)} ppm`,        color: '#a78bfa' },
-    { key: 'ec',   icon: '⚡', label: 'EC',    value: `${data.ec.toFixed(1)} dS/m`,        color: '#facc15' },
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    { key: 'temp', icon: '🌡️', label: '온도', value: `${data.temperature.toFixed(1)}°C`, color: '#fb7185' },
+    { key: 'hum', icon: '💧', label: '습도', value: `${data.humidity.toFixed(1)}%`, color: '#38bdf8' },
+    { key: 'co2', icon: '💨', label: 'CO₂', value: `${data.co2.toFixed(0)} ppm`, color: '#a78bfa' },
+    { key: 'ec', icon: '⚡', label: 'EC', value: `${data.ec.toFixed(1)} dS/m`, color: '#facc15' },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   ], [data.temperature, data.humidity, data.co2, data.ec]);
   return (
     <div className="farm3d__sensor-overlay">
@@ -879,7 +879,7 @@ function PrecipitationOverlay({ condition }: { condition: string }) {
       sz: isSnow ? 2 + Math.random() * 4 : 0,
       opacity: isRain ? 0.28 + Math.random() * 0.32 : 0.55 + Math.random() * 0.35,
     })),
-  [condition]);
+    [condition]);
 
   if (!isRain && !isSnow) return null;
 
@@ -938,7 +938,7 @@ const WEATHER_LABELS: Record<string, string> = {
 
 function WeatherWidget({ weather }: { weather: WeatherState }) {
   if (weather.loading) return null;
-  const icon  = WEATHER_ICONS[weather.condition]  ?? '🌤️';
+  const icon = WEATHER_ICONS[weather.condition] ?? '🌤️';
   const label = WEATHER_LABELS[weather.condition] ?? weather.condition;
   const timeLabel = weather.isDay ? '낮' : '밤';
   const hasTemp = weather.temperature !== 0 || weather.condition !== 'clear';
@@ -970,22 +970,22 @@ export interface FarmModel3DProps {
   mobileMode?: boolean;
 }
 
-const OVERVIEW_POS    = new Vector3(83.64, 25.96, -40.25);
-const OVERVIEW_TARGET = new Vector3(23.94, 14.82,   3.98);
+const OVERVIEW_POS = new Vector3(83.64, 25.96, -40.25);
+const OVERVIEW_TARGET = new Vector3(23.94, 14.82, 3.98);
 
 // 파이프라인1 줌인 — 카메라 디버거로 확인 후 조정
-const PIPELINE1_POS    = new Vector3(47.32, 17.89, -28.11);
-const PIPELINE1_TARGET = new Vector3(18.59,  7.01,  -4.41);
+const PIPELINE1_POS = new Vector3(47.32, 17.89, -28.11);
+const PIPELINE1_TARGET = new Vector3(18.59, 7.01, -4.41);
 
 // 팜1 식물 상태 확인 시 클로즈업 좌표
-const PLANT_CHECK_POS    = new Vector3( 8.07, 7.83, -10.54);
-const PLANT_CHECK_TARGET = new Vector3( 8.08, 7.83,  -7.98);
+const PLANT_CHECK_POS = new Vector3(8.07, 7.83, -10.54);
+const PLANT_CHECK_TARGET = new Vector3(8.08, 7.83, -7.98);
 
 // 모바일 전용 팜별 카메라 앵글
-const MOBILE_FARM1_POS    = new Vector3(62.00, 23.00, -38.00);
-const MOBILE_FARM1_TARGET = new Vector3(18.00,  7.00,  -4.00);
-const MOBILE_FARM2_POS    = new Vector3(63.00, 18.00, -14.00);
-const MOBILE_FARM2_TARGET = new Vector3(34.00,  7.00,  10.00);
+const MOBILE_FARM1_POS = new Vector3(62.00, 23.00, -38.00);
+const MOBILE_FARM1_TARGET = new Vector3(18.00, 7.00, -4.00);
+const MOBILE_FARM2_POS = new Vector3(59.71, 15.95, 4.29);
+const MOBILE_FARM2_TARGET = new Vector3(35.65, 10.81, 21.18);
 
 
 const FUNNEL_BASE = 'https://k8s-worker02.tail63c20e.ts.net';
@@ -1214,14 +1214,14 @@ export default function FarmModel3D({ led1On = false, led2On = false, led3On = f
 
   const [size, setSize] = useState({ w: 0, h: 0 });
   const [showGreenhouse, setShowGreenhouse] = useState(true); // 팜1 greenhouse 노드
-  const [showFarm1,      setShowFarm1]      = useState(true); // 팜1 전체
-  const [showFarm2,      setShowFarm2]      = useState(true); // 팜2 전체
-  const [showPipeline2,  setShowPipeline2]  = useState(true); // pipeline2.glb
-  const [camInfo,        setCamInfo]        = useState<{ pos: Vector3; target: Vector3 } | null>(null);
-  const [showCctv,       setShowCctv]       = useState(false);
-  const [farm1Hovered,     setFarm1Hovered]     = useState(false);
-  const [farm2Hovered,     setFarm2Hovered]     = useState(false);
-  const [isZoomedInFarm1,  setIsZoomedInFarm1]  = useState(false);
+  const [showFarm1, setShowFarm1] = useState(true); // 팜1 전체
+  const [showFarm2, setShowFarm2] = useState(true); // 팜2 전체
+  const [showPipeline2, setShowPipeline2] = useState(true); // pipeline2.glb
+  const [camInfo, setCamInfo] = useState<{ pos: Vector3; target: Vector3 } | null>(null);
+  const [showCctv, setShowCctv] = useState(false);
+  const [farm1Hovered, setFarm1Hovered] = useState(false);
+  const [farm2Hovered, setFarm2Hovered] = useState(false);
+  const [isZoomedInFarm1, setIsZoomedInFarm1] = useState(false);
   const [isPlantCheckView, setIsPlantCheckView] = useState(false);
   const [farm2Disabled, setFarm2Disabled] = useState(false);
   const farm2TimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);

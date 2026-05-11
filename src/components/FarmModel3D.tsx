@@ -1151,7 +1151,7 @@ export default function FarmModel3D({ led1On = false, led2On = false, led3On = f
   const wrapRef = useRef<HTMLDivElement>(null);
   const animRef = useRef<AnimTarget>(null);
   const weather = useWeather();
-  const { toggleEquipmentStatus } = useFarm();
+  const { toggleEquipmentStatus, equipmentGroups } = useFarm();
 
   const [currentTime, setCurrentTime] = useState(() => new Date());
   useEffect(() => {
@@ -1167,20 +1167,35 @@ export default function FarmModel3D({ led1On = false, led2On = false, led3On = f
     const handler = (e: MessageEvent) => {
       try {
         const msg = JSON.parse(typeof e.data === 'string' ? e.data : JSON.stringify(e.data));
-        if (msg.type === 'ENTER_FARM1') handleFarm1Click();
-        else if (msg.type === 'BACK_TO_OVERVIEW') handleBackClick();
+        if (msg.type === 'ENTER_FARM1') {
+          setShowGreenhouse(false); setShowFarm2(false); setShowPipeline2(false);
+          setFarm1Hovered(false); setIsZoomedInFarm1(true);
+          animRef.current = { toPos: PIPELINE1_POS.clone(), toTarget: PIPELINE1_TARGET.clone() };
+        } else if (msg.type === 'BACK_TO_OVERVIEW') {
+          setShowGreenhouse(true); setShowFarm1(true); setShowFarm2(true);
+          setShowPipeline2(true); setIsZoomedInFarm1(false);
+          animRef.current = { toPos: OVERVIEW_POS.clone(), toTarget: OVERVIEW_TARGET.clone() };
+        } else if (msg.type === 'TOGGLE_EQUIPMENT') {
+          toggleEquipmentStatus(msg.id, msg.status);
+        }
       } catch { /* ignore */ }
     };
     window.addEventListener('message', handler);
     return () => window.removeEventListener('message', handler);
-  }, [mobileMode]);
+  }, [mobileMode, toggleEquipmentStatus]);
 
-  // 웹 → 앱 센서 데이터 전송
+  // 웹 → 앱 데이터 전송 (센서 + 장비)
   useEffect(() => {
     if (!mobileMode) return;
     const rn = (window as any).ReactNativeWebView;
     rn?.postMessage(JSON.stringify({ type: 'SENSOR_DATA', data: sensorData }));
   }, [mobileMode, sensorData]);
+
+  useEffect(() => {
+    if (!mobileMode) return;
+    const rn = (window as any).ReactNativeWebView;
+    rn?.postMessage(JSON.stringify({ type: 'EQUIPMENT_DATA', data: equipmentGroups }));
+  }, [mobileMode, equipmentGroups]);
 
   const [size, setSize] = useState({ w: 0, h: 0 });
   const [showGreenhouse, setShowGreenhouse] = useState(true); // 팜1 greenhouse 노드

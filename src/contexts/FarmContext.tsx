@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { environmentApi } from '../api/environment';
-import { equipmentApi, controllerApi, REAL_DEVICE_MAP } from '../api/equipment';
+import { controllerApi, REAL_DEVICE_MAP } from '../api/equipment';
 import type { EnvironmentData, EquipmentGroup, Equipment } from '../types/farm';
 
 interface FarmContextType {

@@ -978,9 +978,6 @@ const PIPELINE1_TARGET = new Vector3(18.59,  7.01,  -4.41);
 const PLANT_CHECK_POS    = new Vector3( 8.07, 7.83, -10.54);
 const PLANT_CHECK_TARGET = new Vector3( 8.08, 7.83,  -7.98);
 
-// 파이프라인2 줌인 — 카메라 디버거로 확인 후 조정
-const PIPELINE2_POS    = new Vector3(37.96, 10.36, 13.17);
-const PIPELINE2_TARGET = new Vector3(14.04,  4.07, 29.71);
 
 const FUNNEL_BASE = 'https://k8s-worker02.tail63c20e.ts.net';
 const CAMERAS = [

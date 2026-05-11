@@ -2,6 +2,7 @@ import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame, useLoader, useThree } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import {
   ACESFilmicToneMapping,
   Box3,
@@ -24,6 +25,18 @@ import type { WeatherState } from '../hooks/useWeather';
 import type { EnvironmentData } from '../types/farm';
 import { Cpu, Video, VideoOff } from 'lucide-react';
 import './FarmModel3D.css';
+
+// ────────────────────────────────────────────────────────
+// DRACOLoader singleton (Draco 압축된 .glb 디코딩용)
+// public/draco/gltf/ 경로에 draco_decoder.js, draco_wasm_wrapper.js 등이 있어야 함
+// ────────────────────────────────────────────────────────
+const dracoLoader = new DRACOLoader();
+dracoLoader.setDecoderPath('/draco/gltf/');
+dracoLoader.setDecoderConfig({ type: 'js' });
+
+const setupGLTFLoader = (loader: GLTFLoader) => {
+  loader.setDRACOLoader(dracoLoader);
+};
 
 // ────────────────────────────────────────────────────────
 // Camera controls + smooth animation
@@ -358,7 +371,7 @@ function SmartfarmModel({
   onClick: () => void;
   onHoverChange: (hovered: boolean) => void;
 }) {
-  const gltf = useLoader(GLTFLoader, url) as any;
+  const gltf = useLoader(GLTFLoader, url, setupGLTFLoader) as any;
   const { camera, gl } = useThree();
   const [hovered, setHovered] = useState(false);
 
@@ -508,7 +521,7 @@ function Greenhouse2Model({
   onClick: () => void;
   onHoverChange: (hovered: boolean) => void;
 }) {
-  const gltf = useLoader(GLTFLoader, '/3d-model/greenhous2.glb') as any;
+  const gltf = useLoader(GLTFLoader, '/3d-model/greenhous2.glb', setupGLTFLoader) as any;
   const { camera, gl } = useThree();
   const [hovered, setHovered] = useState(false);
 

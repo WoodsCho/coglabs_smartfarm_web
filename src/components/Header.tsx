@@ -1,4 +1,4 @@
-import { Bell } from 'lucide-react';
+import NotificationCenter from './NotificationCenter';
 import './Header.css';
 
 interface HeaderProps {
@@ -20,9 +20,7 @@ export default function Header({ username }: HeaderProps) {
         <p className="topheader__date">{today}</p>
       </div>
       <div className="topheader__right">
-        <button className="topheader__icon-btn" aria-label="알림">
-          <Bell size={22} color="#6B7280" />
-        </button>
+        <NotificationCenter />
       </div>
     </header>
   );

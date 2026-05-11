@@ -610,22 +610,30 @@
   bottom: auto;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
   background: linear-gradient(135deg, rgba(15, 23, 42, 0.85), rgba(30, 41, 59, 0.72));
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255,255,255,0.2);
-  border-radius: 16px;
-  padding: 12px 18px 12px 14px;
+  border-radius: 14px;
+  padding: 9px 14px 9px 11px;
   z-index: 10;
   pointer-events: none;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
 }
 
+@media (min-width: 1920px) {
+  .farm3d__weather-widget { gap: 14px; border-radius: 16px; padding: 12px 18px 12px 14px; }
+}
+
 .farm3d__weather-icon {
-  font-size: 36px;
+  font-size: 28px;
   line-height: 1;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+}
+
+@media (min-width: 1920px) {
+  .farm3d__weather-icon { font-size: 36px; }
 }
 
 .farm3d__weather-info {
@@ -636,10 +644,14 @@
 }
 
 .farm3d__weather-temp {
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 800;
   color: #ffffff;
   letter-spacing: -0.5px;
+}
+
+@media (min-width: 1920px) {
+  .farm3d__weather-temp { font-size: 22px; }
 }
 
 .farm3d__weather-meta {
@@ -649,18 +661,18 @@
 }
 
 .farm3d__weather-label {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   color: #e2e8f0;
 }
 
 .farm3d__weather-divider {
   color: rgba(255,255,255,0.3);
-  font-size: 11px;
+  font-size: 10px;
 }
 
 .farm3d__weather-sub {
-  font-size: 11px;
+  font-size: 10px;
   color: #94a3b8;
   font-weight: 500;
 }
@@ -712,21 +724,25 @@
   transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   background: linear-gradient(135deg, rgba(15, 23, 42, 0.72), rgba(30, 41, 59, 0.58));
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 20px;
-  padding: 5px 16px 5px 12px;
+  border-radius: 16px;
+  padding: 4px 12px 4px 10px;
   z-index: 10;
   pointer-events: none;
   white-space: nowrap;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
 }
 
+@media (min-width: 1920px) {
+  .farm3d__day-overlay { gap: 10px; padding: 5px 16px 5px 12px; border-radius: 20px; }
+}
+
 .farm3d__day-time {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   color: #f1f5f9;
   font-family: 'SF Mono', 'Menlo', 'Courier New', monospace;
@@ -735,11 +751,16 @@
 
 .farm3d__day-track {
   position: relative;
-  width: 110px;
-  height: 5px;
+  width: 90px;
+  height: 4px;
   background: rgba(255, 255, 255, 0.14);
   border-radius: 3px;
   overflow: visible;
+}
+
+@media (min-width: 1920px) {
+  .farm3d__day-time { font-size: 12px; }
+  .farm3d__day-track { width: 110px; height: 5px; }
 }
 
 .farm3d__day-fill {
@@ -754,10 +775,14 @@
   position: absolute;
   top: 50%;
   transform: translate(-50%, -55%);
-  font-size: 15px;
+  font-size: 13px;
   line-height: 1;
   filter: drop-shadow(0 0 6px rgba(255, 220, 0, 0.95));
   transition: left 2s linear;
+}
+
+@media (min-width: 1920px) {
+  .farm3d__day-icon { font-size: 15px; }
 }
 
 /* ── 캔버스 내 미니 센서 패널 (우상단) ───────────── */
@@ -767,57 +792,77 @@
   right: 10px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 5px;
   background: linear-gradient(160deg, rgba(15, 23, 42, 0.85), rgba(30, 41, 59, 0.72));
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 16px;
-  padding: 14px 18px;
+  border-radius: 13px;
+  padding: 10px 14px;
   z-index: 10;
   pointer-events: none;
   box-shadow: 0 6px 22px rgba(0, 0, 0, 0.32);
-  min-width: 200px;
+  min-width: 168px;
+}
+
+@media (min-width: 1920px) {
+  .farm3d__sensor-overlay { gap: 8px; padding: 14px 18px; border-radius: 16px; min-width: 200px; }
 }
 
 .farm3d__sensor-overlay-title {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   color: #7dd3fc;
   letter-spacing: 1.2px;
   text-transform: uppercase;
-  padding-bottom: 8px;
-  margin-bottom: 2px;
+  padding-bottom: 6px;
+  margin-bottom: 1px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+@media (min-width: 1920px) {
+  .farm3d__sensor-overlay-title { font-size: 11px; padding-bottom: 8px; margin-bottom: 2px; }
 }
 
 .farm3d__sensor-overlay-row {
   display: grid;
-  grid-template-columns: 22px 1fr auto;
+  grid-template-columns: 18px 1fr auto;
   align-items: center;
-  gap: 10px;
+  gap: 7px;
+}
+
+@media (min-width: 1920px) {
+  .farm3d__sensor-overlay-row { grid-template-columns: 22px 1fr auto; gap: 10px; }
 }
 
 .farm3d__sensor-overlay-icon {
-  font-size: 16px;
+  font-size: 13px;
   text-align: center;
   filter: drop-shadow(0 1px 1px rgba(0,0,0,0.3));
 }
 
+@media (min-width: 1920px) {
+  .farm3d__sensor-overlay-icon { font-size: 16px; }
+}
+
 .farm3d__sensor-overlay-label {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
   color: #cbd5e1;
   letter-spacing: 0.2px;
 }
 
 .farm3d__sensor-overlay-val {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 800;
   text-align: right;
   white-space: nowrap;
   letter-spacing: -0.3px;
   font-variant-numeric: tabular-nums;
+}
+
+@media (min-width: 1920px) {
+  .farm3d__sensor-overlay-val { font-size: 14px; }
 }
 
 /* ── 날씨 강수 파티클 ─────────────────────────────── */
@@ -871,17 +916,21 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 14px 20px;
+  gap: 7px;
+  padding: 10px 16px;
   background: rgba(15, 23, 42, 0.72);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 14px;
+  border-radius: 12px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
   pointer-events: auto;
   animation: fadeInUp 0.25s ease;
   white-space: nowrap;
+}
+
+@media (min-width: 1920px) {
+  .farm3d__farm1-panel { gap: 10px; padding: 14px 20px; border-radius: 14px; }
 }
 
 @keyframes fadeInUp {
@@ -905,16 +954,20 @@
 .farm3d__farm1-led-btn {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 7px 14px;
-  border-radius: 8px;
+  gap: 5px;
+  padding: 5px 11px;
+  border-radius: 7px;
   border: 1px solid rgba(255, 255, 255, 0.15);
   background: rgba(255, 255, 255, 0.07);
   color: rgba(255, 255, 255, 0.6);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.18s ease;
+}
+
+@media (min-width: 1920px) {
+  .farm3d__farm1-led-btn { gap: 6px; padding: 7px 14px; border-radius: 8px; font-size: 12px; }
 }
 
 .farm3d__farm1-led-btn:hover {
@@ -951,16 +1004,20 @@
 
 .farm3d__farm1-plants-btn {
   width: 100%;
-  padding: 8px 16px;
-  border-radius: 9px;
+  padding: 6px 14px;
+  border-radius: 8px;
   border: 1px solid rgba(52, 211, 153, 0.4);
   background: rgba(52, 211, 153, 0.12);
   color: #34d399;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.18s ease;
   text-align: center;
+}
+
+@media (min-width: 1920px) {
+  .farm3d__farm1-plants-btn { padding: 8px 16px; border-radius: 9px; font-size: 13px; }
 }
 
 .farm3d__farm1-plants-btn:hover {
@@ -977,19 +1034,23 @@
   top: 50%;
   right: 14px;
   transform: translateY(-50%);
-  width: 280px;
+  width: 230px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 16px;
+  gap: 8px;
+  padding: 12px;
   background: rgba(10, 18, 35, 0.80);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.10);
-  border-radius: 16px;
+  border-radius: 14px;
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.55);
   pointer-events: auto;
   animation: fadeInRight 0.3s ease;
+}
+
+@media (min-width: 1920px) {
+  .farm3d__plant-panel { width: 280px; gap: 10px; padding: 16px; border-radius: 16px; }
 }
 
 @keyframes fadeInRight {
@@ -1109,19 +1170,23 @@
   top: 50%;
   left: 14px;
   transform: translateY(-50%);
-  width: 220px;
+  width: 185px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 14px 16px;
+  gap: 6px;
+  padding: 10px 12px;
   background: rgba(10, 18, 35, 0.80);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.10);
-  border-radius: 16px;
+  border-radius: 14px;
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.55);
   pointer-events: none;
   animation: fadeInLeft 0.3s ease;
+}
+
+@media (min-width: 1920px) {
+  .farm3d__gh-spec-panel { width: 220px; gap: 8px; padding: 14px 16px; border-radius: 16px; }
 }
 
 @keyframes fadeInLeft {
@@ -1130,12 +1195,16 @@
 }
 
 .farm3d__gh-spec-title {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   color: #f1f5f9;
   letter-spacing: 0.02em;
-  padding-bottom: 8px;
+  padding-bottom: 6px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+@media (min-width: 1920px) {
+  .farm3d__gh-spec-title { font-size: 13px; padding-bottom: 8px; }
 }
 
 .farm3d__gh-spec-section-label {
@@ -1155,19 +1224,25 @@
 }
 
 .farm3d__gh-spec-key {
-  font-size: 11px;
+  font-size: 10px;
   color: rgba(255, 255, 255, 0.45);
 }
 
 .farm3d__gh-spec-val {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   color: #cbd5e1;
 }
 
 .farm3d__gh-spec-val.highlight {
   color: #34d399;
-  font-size: 13px;
+  font-size: 12px;
+}
+
+@media (min-width: 1920px) {
+  .farm3d__gh-spec-key { font-size: 11px; }
+  .farm3d__gh-spec-val { font-size: 12px; }
+  .farm3d__gh-spec-val.highlight { font-size: 13px; }
 }
 
 .farm3d__gh-spec-divider {
@@ -1261,10 +1336,14 @@
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border: 1px solid rgba(255, 255, 255, 0.10);
-  border-radius: 10px;
+  border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.50);
-  width: 200px;
+  width: 160px;
+}
+
+@media (min-width: 1920px) {
+  .farm3d__cctv-mini-cam { width: 200px; border-radius: 10px; }
 }
 
 .farm3d__cctv-mini-header {
@@ -1284,8 +1363,12 @@
 
 .farm3d__cctv-mini-frame {
   display: block;
-  width: 200px;
-  height: 112px;
+  width: 160px;
+  height: 90px;
   border: none;
   background: #000;
+}
+
+@media (min-width: 1920px) {
+  .farm3d__cctv-mini-frame { width: 200px; height: 112px; }
 }

@@ -1,6 +1,9 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import DashboardPage from './pages/DashboardPage';
+import HarvestPage from './pages/HarvestPage';
+import ShipmentPage from './pages/ShipmentPage';
+import SocialPage from './pages/SocialPage';
 import { FarmProvider } from './contexts/FarmContext';
 
 function App() {
@@ -12,6 +15,9 @@ function App() {
             <Route index element={<DashboardPage />} />
             <Route path="/monitor"  element={<Placeholder title="환경 모니터링" />} />
             <Route path="/control"  element={<Placeholder title="장비 제어" />} />
+            <Route path="/harvest"  element={<HarvestPage />} />
+            <Route path="/shipment" element={<ShipmentPage />} />
+            <Route path="/social"   element={<SocialPage />} />
             <Route path="/logs"     element={<Placeholder title="활동 로그" />} />
             <Route path="/todos"    element={<Placeholder title="작업 관리" />} />
             <Route path="/mypage"   element={<Placeholder title="마이페이지" />} />

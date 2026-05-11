@@ -1,11 +1,12 @@
 .dualchart {
-  display: block;
+  flex: 1;
+  min-height: 0;
   width: 100%;
 }
 
 .dualchart--empty {
-  width: 100%;
-  height: 110px;
+  flex: 1;
+  min-height: 80px;
   display: flex;
   align-items: center;
   justify-content: center;

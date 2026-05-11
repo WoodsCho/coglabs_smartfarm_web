@@ -1,0 +1,141 @@
+.sp-page {
+  padding: 20px 24px 32px;
+  height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.sp-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+.sp-summary__card {
+  background: #fff; border-radius: 12px; padding: 14px 18px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  display: flex; flex-direction: column;
+}
+.sp-summary__card span { font-size: 12px; color: #9CA3AF; }
+.sp-summary__card strong { font-size: 24px; font-weight: 700; color: #111827; line-height: 1.2; }
+.sp-summary__card em { font-style: normal; font-size: 12px; color: #6B7280; }
+
+@media (max-width: 900px) { .sp-summary { grid-template-columns: repeat(2, 1fr); } }
+
+.sp-section {
+  background: #fff; border-radius: 12px; padding: 18px 20px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  display: flex; flex-direction: column; gap: 14px;
+}
+.sp-section h2 {
+  margin: 0; display: flex; align-items: center; gap: 8px;
+  font-size: 15px; font-weight: 600; color: #111827;
+}
+
+/* Market */
+.sp-market {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px;
+}
+.sp-market__card {
+  background: #FAFAFA; border: 1px solid #F3F4F6; border-radius: 10px;
+  padding: 12px 14px; display: flex; flex-direction: column; gap: 4px;
+}
+.sp-market__head { display: flex; justify-content: space-between; font-size: 12px; }
+.sp-market__head strong { color: #111827; font-weight: 600; }
+.sp-market__head span { color: #9CA3AF; font-size: 11px; }
+.sp-market__price { font-size: 18px; font-weight: 700; color: #111827; }
+.sp-market__price em { font-style: normal; font-size: 11px; color: #6B7280; margin-left: 3px; }
+.sp-market__chg { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 600; }
+.sp-market__chg.is-up { color: #16A34A; }
+.sp-market__chg.is-down { color: #DC2626; }
+
+/* Pending */
+.sp-pending { display: flex; flex-direction: column; gap: 8px; }
+.sp-pending__row {
+  display: flex; align-items: center; justify-content: space-between;
+  background: #FAFAFA; border: 1px solid #F3F4F6; border-radius: 8px; padding: 10px 12px;
+}
+.sp-pending__main { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.sp-pending__meta { color: #6B7280; font-size: 12px; }
+
+.sp-grade-tag {
+  display: inline-flex; align-items: center;
+  padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700;
+}
+
+/* Ships */
+.sp-ship-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px;
+}
+.sp-ship-card {
+  background: #FAFAFA; border: 1px solid #F3F4F6; border-radius: 10px;
+  padding: 14px; display: flex; flex-direction: column; gap: 10px;
+}
+.sp-ship-card__head { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.sp-ship-card__head strong { color: #111827; }
+.sp-status { margin-left: auto; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+.sp-ship-card__meta { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.sp-ship-card__meta > div { display: flex; flex-direction: column; }
+.sp-ship-card__meta span { font-size: 10px; color: #9CA3AF; }
+.sp-ship-card__meta strong { font-size: 12px; color: #111827; font-weight: 600; }
+.sp-ship-card__btns { display: flex; gap: 6px; }
+.sp-ship-card__btns > * { flex: 1; }
+
+.sp-empty {
+  padding: 28px; text-align: center; color: #9CA3AF; font-size: 13px;
+  border: 1px dashed #E5E7EB; border-radius: 8px;
+}
+
+/* Buttons */
+.sp-btn-primary {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 8px 14px; background: #10B981; color: #fff;
+  border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer;
+}
+.sp-btn-primary:hover { background: #059669; }
+.sp-btn-ghost {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 8px 14px; background: #F3F4F6; color: #374151;
+  border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer;
+}
+.sp-btn-ghost:hover { background: #E5E7EB; }
+.sp-btn-done {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 8px 14px; background: #DCFCE7; color: #16A34A;
+  border: none; border-radius: 6px; font-size: 12px; font-weight: 600;
+}
+
+/* Modal */
+.sp-modal-mask {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+  display: flex; align-items: center; justify-content: center; z-index: 1000;
+}
+.sp-modal {
+  background: #fff; border-radius: 12px; padding: 22px; width: min(440px, 92vw);
+  display: flex; flex-direction: column; gap: 12px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+}
+.sp-modal h3 { margin: 0; font-size: 16px; color: #111827; }
+.sp-modal__row { display: flex; justify-content: space-between; font-size: 13px; }
+.sp-modal__row span { color: #6B7280; }
+.sp-modal__hint { margin: 0; font-size: 11px; color: #9CA3AF; line-height: 1.5; }
+.sp-modal label { display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: #6B7280; }
+.sp-channel-picker { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.sp-channel-picker button {
+  padding: 10px; border: 1px solid #E5E7EB; background: #fff;
+  border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500;
+}
+.sp-channel-picker button.is-on { background: #10B981; color: #fff; border-color: #10B981; }
+.sp-modal__btns { display: flex; justify-content: flex-end; gap: 8px; }
+
+.sp-modal--qr { align-items: center; text-align: center; }
+.sp-modal--qr img { border: 1px solid #E5E7EB; border-radius: 8px; padding: 4px; background: #fff; }
+.sp-modal--qr code { font-size: 13px; color: #111827; font-weight: 600; letter-spacing: 0.05em; }
+.sp-trace-meta {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%;
+  background: #FAFAFA; padding: 10px; border-radius: 8px;
+}
+.sp-trace-meta > div { display: flex; flex-direction: column; text-align: left; }
+.sp-trace-meta span { font-size: 10px; color: #9CA3AF; }
+.sp-trace-meta strong { font-size: 12px; color: #111827; }

@@ -84,7 +84,7 @@ export default function DualAxisChart({
 
   return (
     <div className="dualchart">
-      <ResponsiveContainer width="100%" height={108}>
+      <ResponsiveContainer width="100%" height="100%">
         <ComposedChart data={data} margin={{ top: 6, right: 8, bottom: 0, left: 8 }}>
 
           <CartesianGrid stroke="#f3f4f6" strokeDasharray="" vertical={false} />

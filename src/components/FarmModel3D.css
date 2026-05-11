@@ -97,6 +97,77 @@
   z-index: 10;
 }
 
+/* 스마트팜 hover 툴팁 */
+.farm3d__hover-tooltip {
+  position: absolute;
+  bottom: 42px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 16px;
+  background: rgba(17, 24, 39, 0.92);
+  color: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.30);
+  pointer-events: none;
+  animation: farm3d-tooltip-in 0.18s ease;
+  white-space: nowrap;
+  z-index: 20;
+  min-width: 200px;
+}
+
+.farm3d__hover-tooltip-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  padding-bottom: 8px;
+}
+
+.farm3d__hover-tooltip-icon {
+  font-size: 15px;
+}
+
+.farm3d__hover-tooltip-body {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.farm3d__hover-tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 12px;
+}
+
+.farm3d__hover-tooltip-key {
+  color: #9CA3AF;
+  font-weight: 500;
+}
+
+.farm3d__hover-tooltip-val {
+  color: #F9FAFB;
+  font-weight: 600;
+}
+
+.farm3d__hover-tooltip-hint {
+  font-size: 11px;
+  color: #6EE7B7;
+  font-weight: 500;
+  text-align: center;
+  margin-top: 2px;
+}
+
+@keyframes farm3d-tooltip-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(6px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
 /* 스마트팜 레이블 버튼 (월드 좌표 오버레이) */
 .farm3d__label-btn {
   position: absolute;
@@ -272,4 +343,126 @@
 .farm3d__cctv-btn--close {
   background: #374151;
   color: #E5E7EB;
+}
+
+/* ────────────────────────────────────────────────────────
+   센서 말풍선 (drei Html 내부)
+───────────────────────────────────────────────────────── */
+.farm3d__sensor-bubble {
+  background: rgba(15, 23, 42, 0.82);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 12px;
+  padding: 12px 16px;
+  color: #f1f5f9;
+  font-size: 14px;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  min-width: 160px;
+}
+
+.farm3d__sensor-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -7px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 7px 6px 0;
+  border-style: solid;
+  border-color: rgba(15,23,42,0.82) transparent transparent;
+}
+
+.farm3d__sensor-bubble-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #7dd3fc;
+  margin-bottom: 7px;
+  letter-spacing: 0.3px;
+}
+
+.farm3d__sensor-bubble-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 13px;
+  color: #e2e8f0;
+}
+
+/* ────────────────────────────────────────────────────────
+   팜 선택 버튼 오버레이
+───────────────────────────────────────────────────────── */
+.farm3d__farm-select-btns {
+  position: absolute;
+  bottom: 38px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 10;
+}
+
+.farm3d__farm-btn {
+  padding: 6px 16px;
+  border-radius: 20px;
+  border: 1.5px solid rgba(255,255,255,0.5);
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(6px);
+  color: #f1f5f9;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.farm3d__farm-btn:hover,
+.farm3d__farm-btn--hovered {
+  background: rgba(29, 78, 216, 0.75);
+  border-color: #60a5fa;
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(29,78,216,0.4);
+}
+
+/* ────────────────────────────────────────────────────────
+   날씨 위젯
+───────────────────────────────────────────────────────── */
+.farm3d__weather-widget {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 10px;
+  padding: 5px 10px;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.farm3d__weather-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.farm3d__weather-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.farm3d__weather-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #f1f5f9;
+}
+
+.farm3d__weather-sub {
+  font-size: 10px;
+  color: #94a3b8;
 }

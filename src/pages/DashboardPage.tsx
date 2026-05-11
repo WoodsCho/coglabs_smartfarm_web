@@ -95,7 +95,7 @@ export default function DashboardPage() {
         {/* 왼쪽: 3D + 차트 */}
         <div className="dash__col dash__col--left">
           <div className="dash-panel dash-panel--model">
-            <FarmModel3D led1On={ledStatus(1)} led2On={ledStatus(2)} led3On={ledStatus(3)} />
+            <FarmModel3D led1On={ledStatus(1)} led2On={ledStatus(2)} led3On={ledStatus(3)} sensorData={currentData} />
           </div>
           <div className="dash-chart-grid">
             <div className="dash-chart-card">

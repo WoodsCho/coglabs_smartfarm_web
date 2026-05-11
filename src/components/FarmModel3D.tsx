@@ -1,16 +1,27 @@
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame, useLoader, useThree } from '@react-three/fiber';
+import { Html } from '@react-three/drei';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import {
   ACESFilmicToneMapping,
   Box3,
+  BufferAttribute,
+  BufferGeometry,
   Color,
   DoubleSide,
+  DynamicDrawUsage,
+  InstancedMesh,
+  Matrix4,
   Mesh,
   PerspectiveCamera,
+  Quaternion,
+  ShaderMaterial,
   Vector3,
 } from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { useWeather } from '../hooks/useWeather';
+import type { WeatherState } from '../hooks/useWeather';
+import type { EnvironmentData } from '../types/farm';
 import { Cpu, Video, VideoOff } from 'lucide-react';
 import './FarmModel3D.css';
 
@@ -47,7 +58,7 @@ function CameraControlsInner({
 
   useEffect(() => {
     const ctrl = new OrbitControls(camera, gl.domElement);
-    ctrl.target.set(18.30, 8.52, -5.22);
+    ctrl.target.set(23.94, 14.82, 3.98);
     ctrl.enableDamping = true;
     ctrl.dampingFactor = 0.08;
     ctrl.minDistance = 2;
@@ -79,83 +90,548 @@ function CameraControlsInner({
 }
 
 // ────────────────────────────────────────────────────────
-// World → screen position tracker for overlay button
-// ────────────────────────────────────────────────────────
-const LABEL_WORLD = new Vector3(18.3, 15, -5.22);
-
-function ButtonTracker({
-  canvasSize,
-  onProject,
-}: {
-  canvasSize: { w: number; h: number };
-  onProject: (x: number, y: number, visible: boolean) => void;
-}) {
-  const { camera } = useThree();
-  useFrame(() => {
-    const ndc = LABEL_WORLD.clone().project(camera);
-    const visible = ndc.z < 1;
-    const x = (ndc.x * 0.5 + 0.5) * canvasSize.w;
-    const y = (-ndc.y * 0.5 + 0.5) * canvasSize.h;
-    onProject(x, y, visible);
-  });
-  return null;
-}
-
-// ────────────────────────────────────────────────────────
 // Ground plane
 // ────────────────────────────────────────────────────────
-function Ground() {
+// ────────────────────────────────────────────────────────
+// Ground + 인스턴스 풀잎 (바람 애니메이션)
+// ────────────────────────────────────────────────────────
+const GRASS_VERT = `
+  uniform float uTime;
+  uniform float uWindStrength;
+  attribute float aRandom;
+  attribute float aHeight;
+  varying vec2 vUv;
+  varying float vHeight;
+
+  void main() {
+    vUv = uv;
+    vHeight = position.y / aHeight;
+
+    // 풀잎 끝부분만 바람에 흔들림
+    float sway = sin(uTime * 1.8 + aRandom * 6.28) * uWindStrength * vHeight * vHeight;
+    float swayZ = cos(uTime * 1.3 + aRandom * 3.14) * uWindStrength * 0.4 * vHeight * vHeight;
+
+    vec3 pos = position;
+    pos.x += sway;
+    pos.z += swayZ;
+
+    vec4 mvPos = instanceMatrix * vec4(pos, 1.0);
+    gl_Position = projectionMatrix * modelViewMatrix * mvPos;
+  }
+`;
+
+const GRASS_FRAG = `
+  varying vec2 vUv;
+  varying float vHeight;
+  uniform vec3 uColorBase;
+  uniform vec3 uColorTip;
+
+  void main() {
+    vec3 color = mix(uColorBase, uColorTip, vHeight);
+    float alpha = 1.0 - smoothstep(0.85, 1.0, vUv.x);
+    gl_FragColor = vec4(color, alpha);
+  }
+`;
+
+const GRASS_COUNT = 25000;
+const FIELD_CENTER = new Vector3(18, 0, -5);
+const FIELD_RADIUS = 200;
+
+function GrassField({ weather }: { weather: WeatherState }) {
+  const meshRef = useRef<InstancedMesh>(null);
+  const matRef = useRef<ShaderMaterial>(null);
+  const timeRef = useRef(0);
+
+  const { geometry, randomArr } = useMemo(() => {
+    // 풀잎 형태: 가늘고 긴 삼각형 (끝이 뾰족)
+    const geo = new BufferGeometry();
+    const W = 0.06;
+    const positions = new Float32Array([
+      -W, 0,   0,
+       W, 0,   0,
+       0, 1.0, 0,
+    ]);
+    const uvs = new Float32Array([0, 0,  1, 0,  0.5, 1]);
+    geo.setAttribute('position', new BufferAttribute(positions, 3));
+    geo.setAttribute('uv',       new BufferAttribute(uvs, 2));
+
+    // 인스턴스별 랜덤값, 높이값
+    const rand   = new Float32Array(GRASS_COUNT);
+    const height = new Float32Array(GRASS_COUNT);
+    for (let i = 0; i < GRASS_COUNT; i++) {
+      rand[i]   = Math.random();
+      height[i] = 0.4 + Math.random() * 0.8;
+    }
+    geo.setAttribute('aRandom', new BufferAttribute(rand, 1));
+    geo.setAttribute('aHeight', new BufferAttribute(height, 1));
+
+    return { geometry: geo, randomArr: { rand, height } };
+  }, []);
+
+  // 인스턴스 행렬 초기화 (랜덤 위치/회전/스케일)
+  useEffect(() => {
+    if (!meshRef.current) return;
+    const mesh = meshRef.current;
+    const mat4 = new Matrix4();
+    const quat = new Quaternion();
+    const scale = new Vector3();
+    const pos = new Vector3();
+
+    for (let i = 0; i < GRASS_COUNT; i++) {
+      // 원형 범위 안 랜덤 배치 (스마트팜 건물 주변 제외)
+      let x: number, z: number, dist: number;
+      do {
+        x = (Math.random() - 0.5) * FIELD_RADIUS * 2 + FIELD_CENTER.x;
+        z = (Math.random() - 0.5) * FIELD_RADIUS * 2 + FIELD_CENTER.z;
+        dist = Math.sqrt((x - FIELD_CENTER.x) ** 2 + (z - FIELD_CENTER.z) ** 2);
+      } while (dist > FIELD_RADIUS || dist < 12); // 건물 중심 12단위 제외
+
+      const h = randomArr.height[i];
+      const rotY = Math.random() * Math.PI * 2;
+      quat.setFromAxisAngle(new Vector3(0, 1, 0), rotY);
+      scale.set(1, h, 1);
+      pos.set(x, 0, z);
+      mat4.compose(pos, quat, scale);
+      mesh.setMatrixAt(i, mat4);
+    }
+    mesh.instanceMatrix.needsUpdate = true;
+    (mesh.instanceMatrix as any).usage = DynamicDrawUsage;
+  }, []);
+
+  // 날씨에 따른 풀 색상
+  const { colorBase, colorTip, windStrength } = useMemo(() => {
+    const { isDay, condition } = weather;
+    let base = new Color(0x3a7d44);
+    let tip  = new Color(0x7ec850);
+    if (!isDay) { base = new Color(0x1a3a22); tip = new Color(0x2d5c33); }
+    else if (condition === 'rain' || condition === 'thunderstorm') {
+      base = new Color(0x2d5c33); tip = new Color(0x4a8c50);
+    } else if (condition === 'clouds') {
+      base = new Color(0x3a6b3f); tip = new Color(0x6aaa50);
+    }
+    const wind = condition === 'thunderstorm' ? 0.35
+               : condition === 'rain'         ? 0.25
+               : condition === 'clouds'       ? 0.18
+               : 0.12;
+    return { colorBase: base, colorTip: tip, windStrength: wind };
+  }, [weather]);
+
+  useFrame((_, delta) => {
+    timeRef.current += delta;
+    if (matRef.current) {
+      matRef.current.uniforms.uTime.value = timeRef.current;
+      matRef.current.uniforms.uWindStrength.value = windStrength;
+      matRef.current.uniforms.uColorBase.value = colorBase;
+      matRef.current.uniforms.uColorTip.value  = colorTip;
+    }
+  });
+
   return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[18, -0.05, -5]} receiveShadow>
-      <planeGeometry args={[160, 160]} />
-      <meshStandardMaterial color="#c8d5b9" roughness={0.95} metalness={0} />
-    </mesh>
+    <instancedMesh ref={meshRef} args={[geometry, undefined, GRASS_COUNT]} frustumCulled={false}>
+      <shaderMaterial
+        ref={matRef}
+        vertexShader={GRASS_VERT}
+        fragmentShader={GRASS_FRAG}
+        uniforms={{
+          uTime:        { value: 0 },
+          uWindStrength: { value: windStrength },
+          uColorBase:   { value: colorBase },
+          uColorTip:    { value: colorTip },
+        }}
+        side={DoubleSide}
+        transparent
+      />
+    </instancedMesh>
+  );
+}
+
+function Ground({ weather }: { weather: WeatherState }) {
+  // 날씨/시간에 따른 지면 색상
+  const groundColor = useMemo(() => {
+    const { isDay, condition } = weather;
+    if (!isDay) return '#1a2e1e';
+    if (condition === 'rain' || condition === 'thunderstorm') return '#4a5c40';
+    if (condition === 'clouds') return '#7a9460';
+    return '#6aaa50';
+  }, [weather]);
+
+  return (
+    <>
+      {/* 지면 */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[18, -0.05, -5]} receiveShadow>
+        <planeGeometry args={[600, 600]} />
+        <meshStandardMaterial color={groundColor} roughness={0.95} metalness={0} />
+      </mesh>
+      {/* 풀잎 */}
+      <GrassField weather={weather} />
+    </>
   );
 }
 
 // ────────────────────────────────────────────────────────
-// GLTF Model loader (auto-fit camera near/far)
+// 노드 이름 상수 (pipeline.glb 내부 Blender 오브젝트명)
 // ────────────────────────────────────────────────────────
-function GltfModel({ url }: { url: string }) {
-  const gltf = useLoader(GLTFLoader, url) as any;
-  const { camera } = useThree();
+const NODE = {
+  greenhouse: 'greenhouse',
+  light1On:   'light1-on',
+  light1Off:  'light1-off',
+  light2On:   'light2-on',
+  light2Off:  'light2-off',
+  light3On:   'light3-on',
+  light3Off:  'light3-off',
+} as const;
 
-  const scene = useMemo(() => {
+// 재질 기본 설정 헬퍼
+function applyMaterialDefaults(root: any) {
+  root.traverse((obj: any) => {
+    if (obj instanceof Mesh) {
+      const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+      mats.forEach((mat: any) => {
+        if (!mat) return;
+        mat.side = DoubleSide;
+        mat.polygonOffset = true;
+        mat.polygonOffsetFactor = 1;
+        mat.polygonOffsetUnits = 1;
+        mat.needsUpdate = true;
+      });
+    }
+  });
+}
+
+// 동일한 색상/속성의 머터리얼을 하나로 합쳐 드로우콜 감소
+function deduplicateMaterials(root: any) {
+  const cache = new Map<string, any>();
+
+  const matKey = (mat: any): string => {
+    if (!mat?.isMeshStandardMaterial && !mat?.isMeshPhysicalMaterial) return mat?.uuid ?? '';
+    const c = mat.color;
+    const e = mat.emissive;
+    return [
+      c.r.toFixed(3), c.g.toFixed(3), c.b.toFixed(3),
+      (mat.opacity ?? 1).toFixed(2),
+      (mat.roughness ?? 1).toFixed(2),
+      (mat.metalness ?? 0).toFixed(2),
+      mat.transparent ? '1' : '0',
+      mat.map?.uuid ?? '0',
+      e ? `${e.r.toFixed(2)},${e.g.toFixed(2)},${e.b.toFixed(2)}` : '0',
+      (mat.emissiveIntensity ?? 0).toFixed(2),
+    ].join('|');
+  };
+
+  let before = 0;
+  let after = 0;
+
+  root.traverse((obj: any) => {
+    if (!(obj instanceof Mesh)) return;
+    const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+    before += mats.length;
+    const merged = mats.map((mat: any) => {
+      const key = matKey(mat);
+      if (!key) return mat;
+      if (cache.has(key)) return cache.get(key);
+      cache.set(key, mat);
+      return mat;
+    });
+    obj.material = Array.isArray(obj.material) ? merged : merged[0];
+    after += (Array.isArray(obj.material) ? obj.material : [obj.material]).length;
+  });
+
+}
+
+// ────────────────────────────────────────────────────────
+// 통합 스마트팜 모델 — pipeline.glb 단일 파일로 모든 노드 제어
+// ────────────────────────────────────────────────────────
+function SmartfarmModel({
+  url,
+  led1On,
+  led2On,
+  led3On,
+  showGreenhouse,
+  onClick,
+  onHoverChange,
+}: {
+  url: string;
+  led1On: boolean;
+  led2On: boolean;
+  led3On: boolean;
+  showGreenhouse: boolean;
+  onClick: () => void;
+  onHoverChange: (hovered: boolean) => void;
+}) {
+  const gltf = useLoader(GLTFLoader, url) as any;
+  const { camera, gl } = useThree();
+  const [hovered, setHovered] = useState(false);
+
+  const { scene, ghNode } = useMemo(() => {
     const cloned = gltf.scene.clone(true);
+    applyMaterialDefaults(cloned);
+    deduplicateMaterials(cloned);
+    const sz = new Box3().setFromObject(cloned).getSize(new Vector3()).length();
+    const cam = camera as PerspectiveCamera;
+    cam.near = Math.max(0.001, sz * 0.001);
+    cam.far  = sz * 100;
+    cam.updateProjectionMatrix();
+
+    let foundGh: any = null;
     cloned.traverse((obj: any) => {
+      if (obj.name && !foundGh && obj.name.toLowerCase().includes('greenhouse')) {
+        foundGh = obj;
+      }
+    });
+    return { scene: cloned, ghNode: foundGh };
+  }, [gltf.scene, camera]);
+
+  // GLB 로드 직후 모든 Light의 원래 intensity 저장 + 그룹 분류
+  const spotGroupsRef = useRef<any[][]>([[], [], []]);
+  useEffect(() => {
+    const spots: any[] = [];
+    scene.traverse((obj: any) => {
+      if (obj.isLight) {
+        if (obj._savedIntensity === undefined) obj._savedIntensity = obj.intensity / 1000;
+        obj.intensity = obj._savedIntensity; // 초기 밝기도 1/10으로
+        spots.push(obj);
+      }
+    });
+    // 18개 Spot을 순서대로 3그룹으로 분할 (light3 / light2 / light1 — 1·3 swap)
+    const size = Math.ceil(spots.length / 3);
+    spotGroupsRef.current = [
+      spots.slice(size * 2),       // led1 → 마지막 그룹
+      spots.slice(size, size * 2), // led2 → 중간 그룹
+      spots.slice(0, size),        // led3 → 첫 번째 그룹
+    ];
+  }, [scene]);
+
+  // 씬에서 이름에 keyword가 포함된 그룹의 visibility 설정 (자식 포함)
+  const setNodeGroupVisible = (keyword: string, visible: boolean) => {
+    scene.traverse((obj: any) => {
+      if (obj.name && obj.name.toLowerCase().includes(keyword.toLowerCase())) {
+        obj.traverse((child: any) => { child.visible = visible; });
+        obj.visible = visible;
+      }
+    });
+  };
+
+  // 라이트 노드 ON/OFF
+  useEffect(() => {
+    const states = [led1On, led2On, led3On];
+    // Spot 조명 그룹별 intensity 제어
+    states.forEach((on, i) => {
+      spotGroupsRef.current[i]?.forEach((light: any) => {
+        light.intensity = on ? (light._savedIntensity ?? light.intensity) : 0;
+      });
+    });
+    // -off 메시 그룹 visibility (OFF일 때 표시)
+    const pairs = [
+      { onKey: NODE.light1On, offKey: NODE.light1Off, state: led1On },
+      { onKey: NODE.light2On, offKey: NODE.light2Off, state: led2On },
+      { onKey: NODE.light3On, offKey: NODE.light3Off, state: led3On },
+    ];
+    pairs.forEach(({ onKey, offKey, state }) => {
+      setNodeGroupVisible(offKey, !state);
+      setNodeGroupVisible(onKey, state);
+    });
+  }, [led1On, led2On, led3On, scene]);
+
+  // greenhouse 노드 show/hide
+  useEffect(() => {
+    if (ghNode) {
+      ghNode.traverse((child: any) => { child.visible = showGreenhouse; });
+      ghNode.visible = showGreenhouse;
+    }
+  }, [showGreenhouse, ghNode]);
+
+  // greenhouse hover 하이라이트
+  useEffect(() => {
+    if (!ghNode) return;
+    ghNode.traverse((obj: any) => {
       if (obj instanceof Mesh) {
         const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
         mats.forEach((mat: any) => {
-          if (!mat) return;
-          mat.side = DoubleSide;
-          mat.polygonOffset = true;
-          mat.polygonOffsetFactor = 1;
-          mat.polygonOffsetUnits = 1;
+          if (!mat?.emissive) return;
+          mat.emissive.set(hovered ? 0x88ddff : 0x000000);
+          mat.emissiveIntensity = hovered ? 0.5 : 0;
           mat.needsUpdate = true;
         });
       }
     });
+  }, [hovered, ghNode]);
+
+  // 커서
+  useEffect(() => {
+    gl.domElement.style.cursor = hovered && showGreenhouse ? 'pointer' : 'auto';
+    return () => { gl.domElement.style.cursor = 'auto'; };
+  }, [hovered, showGreenhouse, gl.domElement]);
+
+  // 이벤트 대상이 greenhouse 노드 하위인지 확인
+  const isInGreenhouse = (obj: any): boolean => {
+    if (!ghNode) return false;
+    let cur = obj;
+    while (cur) {
+      if (cur === ghNode) return true;
+      cur = cur.parent;
+    }
+    return false;
+  };
+
+  return (
+    <primitive
+      object={scene}
+      onPointerMove={(e: any) => {
+        if (!showGreenhouse) return;
+        const hit = isInGreenhouse(e.object);
+        if (hit !== hovered) {
+          setHovered(hit);
+          onHoverChange(hit);
+        }
+      }}
+      onPointerOut={() => {
+        if (hovered) { setHovered(false); onHoverChange(false); }
+      }}
+      onClick={(e: any) => {
+        if (!showGreenhouse) return;
+        if (isInGreenhouse(e.object)) {
+          e.stopPropagation();
+          onClick();
+        }
+      }}
+    />
+  );
+}
+
+// ────────────────────────────────────────────────────────
+// 팜2 모델 (greenhous2.glb — 추후 통합 GLB 교체 예정)
+// ────────────────────────────────────────────────────────
+function Greenhouse2Model({
+  onClick,
+  onHoverChange,
+}: {
+  onClick: () => void;
+  onHoverChange: (hovered: boolean) => void;
+}) {
+  const gltf = useLoader(GLTFLoader, '/3d-model/greenhous2.glb') as any;
+  const { camera, gl } = useThree();
+  const [hovered, setHovered] = useState(false);
+
+  const scene = useMemo(() => {
+    const cloned = gltf.scene.clone(true);
+    applyMaterialDefaults(cloned);
+    deduplicateMaterials(cloned);
     const sz = new Box3().setFromObject(cloned).getSize(new Vector3()).length();
     const cam = camera as PerspectiveCamera;
     cam.near = Math.max(0.001, sz * 0.001);
-    cam.far = sz * 100;
+    cam.far  = sz * 100;
     cam.updateProjectionMatrix();
     return cloned;
   }, [gltf.scene, camera]);
 
-  return <primitive object={scene} />;
+  useEffect(() => {
+    scene.traverse((obj: any) => {
+      if (obj instanceof Mesh) {
+        const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+        mats.forEach((mat: any) => {
+          if (!mat?.emissive) return;
+          mat.emissive.set(hovered ? 0x88ddff : 0x000000);
+          mat.emissiveIntensity = hovered ? 0.5 : 0;
+          mat.needsUpdate = true;
+        });
+      }
+    });
+  }, [hovered, scene]);
+
+  useEffect(() => {
+    gl.domElement.style.cursor = hovered ? 'pointer' : 'auto';
+    return () => { gl.domElement.style.cursor = 'auto'; };
+  }, [hovered, gl.domElement]);
+
+  return (
+    <primitive
+      object={scene}
+      onPointerOver={(e: any) => { e.stopPropagation(); setHovered(true); onHoverChange(true); }}
+      onPointerOut={() => { setHovered(false); onHoverChange(false); }}
+      onClick={(e: any) => { e.stopPropagation(); onClick(); }}
+    />
+  );
 }
 
-// group ref로 visible 직접 제어 — Suspense 로드 후에도 확실히 반영
-function ToggleModel({ url, visible }: { url: string; visible: boolean }) {
-  const groupRef = useRef<any>(null);
+// ────────────────────────────────────────────────────────
+// 날씨/시간 기반 환경 조명
+// ────────────────────────────────────────────────────────
+function WeatherLighting({ weather }: { weather: WeatherState }) {
+  const { scene } = useThree();
+
   useEffect(() => {
-    if (groupRef.current) groupRef.current.visible = visible;
-  });  // 매 렌더마다 체크 (deps 없음)
+    const { isDay, sunProgress, condition } = weather;
+
+    // 하늘 배경색 계산
+    let skyColor: Color;
+    if (!isDay) {
+      // 밤: 어두운 남색
+      skyColor = new Color(0x0a0f1e);
+    } else if (condition === 'rain' || condition === 'thunderstorm') {
+      skyColor = new Color(0x4a5568);
+    } else if (condition === 'clouds') {
+      skyColor = new Color(0x9eafc2);
+    } else if (condition === 'mist') {
+      skyColor = new Color(0xc8d4dc);
+    } else {
+      // 맑은 낮: 일출/일몰 주황→파랑→주황
+      if (sunProgress < 0.15) {
+        skyColor = new Color(0xf97316).lerp(new Color(0x60a5fa), sunProgress / 0.15);
+      } else if (sunProgress > 0.85) {
+        skyColor = new Color(0x60a5fa).lerp(new Color(0xf97316), (sunProgress - 0.85) / 0.15);
+      } else {
+        skyColor = new Color(0x87ceeb);
+      }
+    }
+    // 배경색 동기화
+    scene.background = skyColor;
+  }, [weather, scene]);
+
+  // ambient: 낮=밝음, 밤=어두움, 흐림=줄어듦
+  const { isDay, sunProgress, cloudiness, condition } = weather;
+  const ambientBase = isDay ? 1.2 : 0.15;
+  const cloudDim = 1 - cloudiness * 0.5;
+  const ambientIntensity = ambientBase * cloudDim;
+
+  // 태양 directional light: 낮에만 활성화
+  // sunProgress 0=동쪽, 0.5=정남, 1=서쪽
+  const sunAngle = (sunProgress - 0.5) * Math.PI; // -π/2 ~ π/2
+  const sunHeight = Math.sin((1 - Math.abs(sunProgress * 2 - 1)) * Math.PI * 0.5);
+  const sunX = Math.sin(sunAngle) * 30;
+  const sunY = Math.max(0.1, sunHeight * 20);
+  const sunZ = -10;
+
+  // 태양 색: 일출/일몰=주황, 정오=흰색
+  const sunColor = sunProgress < 0.15 || sunProgress > 0.85 ? 0xffaa44 : 0xffffff;
+  const sunIntensity = isDay ? Math.max(0, sunHeight) * (1 - cloudiness * 0.7) * 3.0 : 0;
+
+  // 달빛: 밤에 약하게
+  const moonIntensity = !isDay ? 0.3 : 0;
+
+  // 비/우박: 흐린 날 파란빛 추가
+  const rainTint = (condition === 'rain' || condition === 'thunderstorm') ? 0.4 : 0;
+
   return (
-    <group ref={groupRef}>
-      <GltfModel url={url} />
-    </group>
+    <>
+      <ambientLight intensity={ambientIntensity} color={isDay ? 0xffffff : 0x334466} />
+      {/* 태양 */}
+      {isDay && (
+        <directionalLight
+          position={[sunX, sunY, sunZ]}
+          intensity={sunIntensity}
+          color={sunColor}
+          castShadow
+        />
+      )}
+      {/* 달빛 */}
+      {!isDay && (
+        <directionalLight position={[10, 15, -5]} intensity={moonIntensity} color={0x8899cc} />
+      )}
+      {/* 보조광 (그림자 채움) */}
+      <directionalLight position={[-8, 4, -2]} intensity={isDay ? 0.8 * cloudDim : 0.1} color={isDay ? 0xffffff : 0x334466} />
+      {/* 비 오는 날 파란 채움광 */}
+      {rainTint > 0 && <ambientLight intensity={rainTint} color={0x6688aa} />}
+    </>
   );
 }
 
@@ -167,39 +643,121 @@ interface SceneProps {
   led2On: boolean;
   led3On: boolean;
   showGreenhouse: boolean;
-  canvasSize: { w: number; h: number };
+  showFarm1: boolean;
+  showFarm2: boolean;
+  showPipeline2: boolean;
   animRef: React.MutableRefObject<AnimTarget>;
   onCameraUpdate: (pos: Vector3, target: Vector3) => void;
-  onButtonProject: (x: number, y: number, visible: boolean) => void;
+  onGreenhouseClick: () => void;
+  onGreenhouseHover: (hovered: boolean) => void;
+  onGreenhouse2Click: () => void;
+  onGreenhouse2Hover: (hovered: boolean) => void;
+  weather: WeatherState;
+  sensorData: EnvironmentData;
+  isZoomedIn: boolean;
 }
 
-function Scene({ led1On, led2On, led3On, showGreenhouse, canvasSize, animRef, onCameraUpdate, onButtonProject }: SceneProps) {
+function Scene({
+  led1On, led2On, led3On,
+  showGreenhouse, showFarm1, showFarm2, showPipeline2,
+  animRef, onCameraUpdate,
+  onGreenhouseClick, onGreenhouseHover,
+  onGreenhouse2Click, onGreenhouse2Hover,
+  weather, sensorData, isZoomedIn,
+}: SceneProps) {
   const { scene } = useThree();
 
+  // 배경색 초기화
   useEffect(() => {
-    scene.background = new Color(0xffffff);
+    scene.background = new Color(0x87ceeb);
     return () => { scene.background = null; };
   }, [scene]);
 
+  // 날씨에 따라 배경색 업데이트
+  useEffect(() => {
+    const { isDay, condition } = weather;
+    const bgColor = !isDay          ? 0x0a0f1e
+                  : condition === 'rain' || condition === 'thunderstorm' ? 0x4a5568
+                  : condition === 'clouds' ? 0x9eafc2
+                  : condition === 'mist'   ? 0xc8d4dc
+                  : 0x87ceeb;
+    scene.background = new Color(bgColor);
+  }, [weather, scene]);
+
   return (
     <>
-      <ambientLight intensity={1.8} />
-      <directionalLight position={[5, 10, 5]} intensity={3.0} castShadow />
-      <directionalLight position={[-8, 4, -2]} intensity={1.5} />
-      <directionalLight position={[0, -3, 8]} intensity={1.0} />
-      <Ground />
+      <WeatherLighting weather={weather} />
+      <Ground weather={weather} />
       <Suspense fallback={null}>
-        {showGreenhouse && <GltfModel url="/3d-model/greenhouse.glb" />}
-        <GltfModel url="/3d-model/pipeline.glb" />
-        <ToggleModel url="/3d-model/light/light1-on.glb" visible={led1On} />
-        <ToggleModel url="/3d-model/light/light1-off.glb" visible={!led1On} />
-        <ToggleModel url="/3d-model/light/light2-on.glb" visible={led2On} />
-        <ToggleModel url="/3d-model/light/light2-off.glb" visible={!led2On} />
-        <ToggleModel url="/3d-model/light/light3-on.glb" visible={led3On} />
-        <ToggleModel url="/3d-model/light/light3-off.glb" visible={!led3On} />
+        {/* 팜1: pipeline.glb 하나에 greenhouse + lights 모두 포함 */}
+        {showFarm1 && (
+          <SmartfarmModel
+            url="/3d-model/pipeline.glb"
+            led1On={led1On}
+            led2On={led2On}
+            led3On={led3On}
+            showGreenhouse={showGreenhouse}
+            onClick={onGreenhouseClick}
+            onHoverChange={onGreenhouseHover}
+          />
+        )}
+        {/* 팜2: 추후 통합 GLB 교체 예정 */}
+        {showFarm2 && (
+          <Greenhouse2Model
+            onClick={onGreenhouse2Click}
+            onHoverChange={onGreenhouse2Hover}
+          />
+        )}
+        {showPipeline2 && (
+          <SmartfarmModel
+            url="/3d-model/pipeline2.glb"
+            led1On={false}
+            led2On={false}
+            led3On={false}
+            showGreenhouse={false}
+            onClick={() => {}}
+            onHoverChange={() => {}}
+          />
+        )}
       </Suspense>
+
+      {/* 센서 오버레이: 전체보기 상태에서만 표시 */}
+      {!isZoomedIn && (
+        <>
+          {/* 팜1 센서 말풍선 — 지붕 위 */}
+          {showFarm1 && (
+            <Html position={[14, 22, -5]} center distanceFactor={55} zIndexRange={[10, 0]}>
+              <div className="farm3d__sensor-bubble">
+                <div className="farm3d__sensor-bubble-title">🏭 팜 1</div>
+                <div className="farm3d__sensor-bubble-row">
+                  <span>🌡️</span><span>{sensorData.temperature.toFixed(1)}°C</span>
+                  <span>💧</span><span>{sensorData.humidity.toFixed(1)}%</span>
+                </div>
+                <div className="farm3d__sensor-bubble-row">
+                  <span>💨</span><span>CO₂ {sensorData.co2.toFixed(0)}ppm</span>
+                </div>
+              </div>
+            </Html>
+          )}
+          {/* 팜2 센서 말풍선 — 지붕 위 */}
+          {showFarm2 && (
+            <Html position={[34, 22, 10]} center distanceFactor={55} zIndexRange={[10, 0]}>
+              <div className="farm3d__sensor-bubble">
+                <div className="farm3d__sensor-bubble-title">🏭 팜 2</div>
+                <div className="farm3d__sensor-bubble-row">
+                  <span>🌡️</span><span>{sensorData.temperature.toFixed(1)}°C</span>
+                  <span>💧</span><span>{sensorData.humidity.toFixed(1)}%</span>
+                </div>
+                <div className="farm3d__sensor-bubble-row">
+                  <span>💨</span><span>CO₂ {sensorData.co2.toFixed(0)}ppm</span>
+                </div>
+              </div>
+            </Html>
+          )}
+        </>
+      )}
+
       <CameraTracker onUpdate={onCameraUpdate} animRef={animRef} />
-      <ButtonTracker canvasSize={canvasSize} onProject={onButtonProject} />
     </>
   );
 }
@@ -207,24 +765,41 @@ function Scene({ led1On, led2On, led3On, showGreenhouse, canvasSize, animRef, on
 // ────────────────────────────────────────────────────────
 // LED status indicator
 // ────────────────────────────────────────────────────────
-interface LedIndicatorProps {
-  label: string;
-  on: boolean;
-}
-
-function LedIndicator({ label, on }: LedIndicatorProps) {
+function LedIndicator({ label, on }: { label: string; on: boolean }) {
   return (
     <div className="farm3d__led">
-      <span
-        className="farm3d__led-dot"
-        style={{ background: on ? '#FCD34D' : '#D1D5DB' }}
-      />
-      <span
-        className="farm3d__led-label"
-        style={{ color: on ? '#92400E' : '#9CA3AF' }}
-      >
+      <span className="farm3d__led-dot" style={{ background: on ? '#FCD34D' : '#D1D5DB' }} />
+      <span className="farm3d__led-label" style={{ color: on ? '#92400E' : '#9CA3AF' }}>
         {label}
       </span>
+    </div>
+  );
+}
+
+// ────────────────────────────────────────────────────────
+// 날씨 위젯
+// ────────────────────────────────────────────────────────
+const WEATHER_ICONS: Record<string, string> = {
+  clear: '☀️', clouds: '⛅', rain: '🌧️',
+  snow: '❄️', thunderstorm: '⛈️', mist: '🌫️',
+};
+const WEATHER_LABELS: Record<string, string> = {
+  clear: '맑음', clouds: '흐림', rain: '비',
+  snow: '눈', thunderstorm: '폭풍', mist: '안개',
+};
+
+function WeatherWidget({ weather }: { weather: WeatherState }) {
+  if (weather.loading) return null;
+  const icon  = WEATHER_ICONS[weather.condition]  ?? '🌤️';
+  const label = WEATHER_LABELS[weather.condition] ?? weather.condition;
+  const timeLabel = weather.isDay ? '낮' : '밤';
+  return (
+    <div className="farm3d__weather-widget">
+      <span className="farm3d__weather-icon">{icon}</span>
+      <div className="farm3d__weather-info">
+        <span className="farm3d__weather-label">{label} · {timeLabel}</span>
+        <span className="farm3d__weather-sub">장성군</span>
+      </div>
     </div>
   );
 }
@@ -233,15 +808,22 @@ function LedIndicator({ label, on }: LedIndicatorProps) {
 // Main component
 // ────────────────────────────────────────────────────────
 export interface FarmModel3DProps {
-  /** LED 상태. 외부에서 주입하지 않으면 모두 OFF */
   led1On?: boolean;
   led2On?: boolean;
   led3On?: boolean;
+  sensorData?: EnvironmentData;
 }
 
-const OVERVIEW_POS = new Vector3(56.44, 15.64, -33.48);
-const OVERVIEW_TARGET = new Vector3(18.30, 8.52, -5.22);
-const ZOOM_POS = new Vector3(34.2, 11.5, -17.0);
+const OVERVIEW_POS    = new Vector3(83.64, 25.96, -40.25);
+const OVERVIEW_TARGET = new Vector3(23.94, 14.82,   3.98);
+
+// 파이프라인1 줌인 — 카메라 디버거로 확인 후 조정
+const PIPELINE1_POS    = new Vector3(22.0, 10.0, -18.0);
+const PIPELINE1_TARGET = new Vector3(18.3,  6.0,  -5.2);
+
+// 파이프라인2 줌인 — 카메라 디버거로 확인 후 조정
+const PIPELINE2_POS    = new Vector3(37.96, 10.36, 13.17);
+const PIPELINE2_TARGET = new Vector3(14.04,  4.07, 29.71);
 
 const FUNNEL_BASE = 'https://k8s-worker02.tail63c20e.ts.net';
 const CAMERAS = [
@@ -249,37 +831,56 @@ const CAMERAS = [
   { id: 'cam1', label: 'CAM 2' },
 ];
 
-export default function FarmModel3D({ led1On = false, led2On = false, led3On = false }: FarmModel3DProps) {
+// 기본 센서 데이터 (sensorData prop 없을 때 fallback)
+const DEFAULT_SENSOR: EnvironmentData = {
+  temperature: 0, humidity: 0, co2: 0, light: 0,
+  ph: 0, ec: 0, waterTemp: 0, oxygenLevel: 0,
+};
+
+export default function FarmModel3D({ led1On = false, led2On = false, led3On = false, sensorData = DEFAULT_SENSOR }: FarmModel3DProps) {
   const wrapRef = useRef<HTMLDivElement>(null);
-  const btnElemRef = useRef<HTMLButtonElement>(null);
   const animRef = useRef<AnimTarget>(null);
+  const weather = useWeather();
 
   const [size, setSize] = useState({ w: 0, h: 0 });
-  const [showGreenhouse, setShowGreenhouse] = useState(true);
-  const [camInfo, setCamInfo] = useState<{ pos: Vector3; target: Vector3 } | null>(null);
-  const [showCctv, setShowCctv] = useState(false);
+  const [showGreenhouse, setShowGreenhouse] = useState(true); // 팜1 greenhouse 노드
+  const [showFarm1,      setShowFarm1]      = useState(true); // 팜1 전체
+  const [showFarm2,      setShowFarm2]      = useState(true); // 팜2 전체
+  const [showPipeline2,  setShowPipeline2]  = useState(true); // pipeline2.glb
+  const [camInfo,        setCamInfo]        = useState<{ pos: Vector3; target: Vector3 } | null>(null);
+  const [showCctv,       setShowCctv]       = useState(false);
+  const [farm1Hovered,   setFarm1Hovered]   = useState(false);
+  const [farm2Hovered,   setFarm2Hovered]   = useState(false);
 
   const fmtVec = (v: Vector3) => `(${v.x.toFixed(2)}, ${v.y.toFixed(2)}, ${v.z.toFixed(2)})`;
 
   const handleCameraUpdate = (pos: Vector3, target: Vector3) => { setCamInfo({ pos, target }); };
 
-  const handleButtonProject = (x: number, y: number, visible: boolean) => {
-    const el = btnElemRef.current;
-    if (!el) return;
-    el.style.display = visible ? 'flex' : 'none';
-    el.style.left = `${x}px`;
-    el.style.top = `${y}px`;
+  const handleFarm1Click = () => {
+    setShowGreenhouse(false); // greenhouse 노드 숨김
+    setShowFarm2(false);      // 팜2 전체 숨김
+    setShowPipeline2(false);  // pipeline2 숨김
+    setFarm1Hovered(false);
+    animRef.current = { toPos: PIPELINE1_POS.clone(), toTarget: PIPELINE1_TARGET.clone() };
   };
 
-  const handleSmartfarm1Click = () => {
-    setShowGreenhouse(false);
-    animRef.current = { toPos: ZOOM_POS.clone(), toTarget: OVERVIEW_TARGET.clone() };
+  const handleFarm2Click = () => {
+    setShowFarm1(false);      // 팜1 전체 숨김
+    setShowFarm2(false);      // greenhouse2 숨김
+    setShowPipeline2(true);   // pipeline2만 표시
+    setFarm2Hovered(false);
+    animRef.current = { toPos: PIPELINE2_POS.clone(), toTarget: PIPELINE2_TARGET.clone() };
   };
 
   const handleBackClick = () => {
     setShowGreenhouse(true);
+    setShowFarm1(true);
+    setShowFarm2(true);
+    setShowPipeline2(true);
     animRef.current = { toPos: OVERVIEW_POS.clone(), toTarget: OVERVIEW_TARGET.clone() };
   };
+
+  const isZoomedIn = !showGreenhouse || !showFarm1 || !showFarm2;
 
   // ResizeObserver 로 컨테이너 크기 추적 → Canvas 크기 동기화
   useEffect(() => {
@@ -339,7 +940,7 @@ export default function FarmModel3D({ led1On = false, led2On = false, led3On = f
         <div ref={wrapRef} className="farm3d__canvas-wrap">
           {size.w > 0 && size.h > 0 && (
             <Canvas
-              camera={{ position: [56.44, 15.64, -33.48], fov: 45, near: 0.001, far: 10000 }}
+              camera={{ position: [83.64, 25.96, -40.25], fov: 45, near: 0.001, far: 10000 }}
               style={{ width: size.w, height: size.h, display: 'block' }}
               gl={{ antialias: true, toneMapping: ACESFilmicToneMapping, toneMappingExposure: 1.3 }}
               resize={{ scroll: false, debounce: { scroll: 0, resize: 0 } }}
@@ -349,10 +950,18 @@ export default function FarmModel3D({ led1On = false, led2On = false, led3On = f
                 led2On={led2On}
                 led3On={led3On}
                 showGreenhouse={showGreenhouse}
-                canvasSize={size}
+                showFarm1={showFarm1}
+                showFarm2={showFarm2}
+                showPipeline2={showPipeline2}
                 animRef={animRef}
                 onCameraUpdate={handleCameraUpdate}
-                onButtonProject={handleButtonProject}
+                onGreenhouseClick={handleFarm1Click}
+                onGreenhouseHover={setFarm1Hovered}
+                onGreenhouse2Click={handleFarm2Click}
+                onGreenhouse2Hover={setFarm2Hovered}
+                weather={weather}
+                sensorData={sensorData}
+                isZoomedIn={isZoomedIn}
               />
             </Canvas>
           )}
@@ -365,18 +974,75 @@ export default function FarmModel3D({ led1On = false, led2On = false, led3On = f
             </div>
           )}
 
-          {/* 스마트팜1 월드 레이블 버튼 */}
-          <button
-            ref={btnElemRef}
-            className={`farm3d__label-btn${!showGreenhouse ? ' farm3d__label-btn--active' : ''}`}
-            style={{ display: 'none', left: 0, top: 0 }}
-            onClick={showGreenhouse ? handleSmartfarm1Click : undefined}
-          >
-            스마트팜1
-          </button>
+          {/* 팜 선택 버튼 — 전체보기 상태에서만 */}
+          {!isZoomedIn && (
+            <div className="farm3d__farm-select-btns">
+              <button
+                className={`farm3d__farm-btn${farm1Hovered ? ' farm3d__farm-btn--hovered' : ''}`}
+                onClick={handleFarm1Click}
+                onMouseEnter={() => setFarm1Hovered(true)}
+                onMouseLeave={() => setFarm1Hovered(false)}
+              >
+                🏭 팜 1
+              </button>
+              <button
+                className={`farm3d__farm-btn${farm2Hovered ? ' farm3d__farm-btn--hovered' : ''}`}
+                onClick={handleFarm2Click}
+                onMouseEnter={() => setFarm2Hovered(true)}
+                onMouseLeave={() => setFarm2Hovered(false)}
+              >
+                🏭 팜 2
+              </button>
+            </div>
+          )}
+
+          {/* 날씨 위젯 */}
+          <WeatherWidget weather={weather} />
+
+          {/* 팜1 hover 툴팁 */}
+          {showGreenhouse && farm1Hovered && !isZoomedIn && (
+            <div className="farm3d__hover-tooltip">
+              <div className="farm3d__hover-tooltip-title">
+                <span className="farm3d__hover-tooltip-icon">🏭</span>
+                <span>MVP용 스마트팜</span>
+              </div>
+              <div className="farm3d__hover-tooltip-body">
+                <div className="farm3d__hover-tooltip-row">
+                  <span className="farm3d__hover-tooltip-key">주소</span>
+                  <span className="farm3d__hover-tooltip-val">대악길 19-11</span>
+                </div>
+                <div className="farm3d__hover-tooltip-row">
+                  <span className="farm3d__hover-tooltip-key">수확 횟수</span>
+                  <span className="farm3d__hover-tooltip-val">1회</span>
+                </div>
+              </div>
+              <div className="farm3d__hover-tooltip-hint">클릭하여 진입</div>
+            </div>
+          )}
+
+          {/* 팜2 hover 툴팁 */}
+          {showFarm2 && farm2Hovered && !farm1Hovered && !isZoomedIn && (
+            <div className="farm3d__hover-tooltip">
+              <div className="farm3d__hover-tooltip-title">
+                <span className="farm3d__hover-tooltip-icon">🏭</span>
+                <span>MVP용 스마트팜 2</span>
+              </div>
+              <div className="farm3d__hover-tooltip-body">
+                <div className="farm3d__hover-tooltip-row">
+                  <span className="farm3d__hover-tooltip-key">주소</span>
+                  <span className="farm3d__hover-tooltip-val">대악길 19-11</span>
+                </div>
+                <div className="farm3d__hover-tooltip-row">
+                  <span className="farm3d__hover-tooltip-key">수확 횟수</span>
+                  <span className="farm3d__hover-tooltip-val">1회</span>
+                </div>
+              </div>
+              <div className="farm3d__hover-tooltip-hint">클릭하여 진입</div>
+            </div>
+          )}
 
           {/* 전체보기 복귀 버튼 */}
-          {!showGreenhouse && (
+          {isZoomedIn && (
             <button className="farm3d__back-btn" onClick={handleBackClick}>
               ← 전체보기
             </button>
@@ -386,13 +1052,8 @@ export default function FarmModel3D({ led1On = false, led2On = false, led3On = f
             드래그하여 회전 · 스크롤하여 확대/축소
           </div>
 
-          {/* CCTV 열기 버튼 (우측 하단) */}
-          <button
-            className="farm3d__cctv-btn farm3d__cctv-btn--open"
-            onClick={() => setShowCctv(true)}
-          >
-            <Video size={13} />
-            CCTV
+          <button className="farm3d__cctv-btn farm3d__cctv-btn--open" onClick={() => setShowCctv(true)}>
+            <Video size={13} /> CCTV
           </button>
         </div>
       )}

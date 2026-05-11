@@ -1,6 +1,5 @@
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame, useLoader, useThree } from '@react-three/fiber';
-import { Html } from '@react-three/drei';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import {
@@ -789,7 +788,7 @@ function DayProgressOverlay({ weather, time }: { weather: WeatherState; time: Da
 // ────────────────────────────────────────────────────────
 // 캔버스 내 미니 센서 오버레이 (우상단)
 // ────────────────────────────────────────────────────────
-function SensorOverlay({ data }: { data: EnvironmentData }) {
+export function SensorOverlay({ data }: { data: EnvironmentData }) {
   const items = useMemo(() => [
     { key: 'temp', icon: '🌡️', label: '온도',  value: `${data.temperature.toFixed(1)}°C`,  color: '#fb7185' },
     { key: 'hum',  icon: '💧', label: '습도',  value: `${data.humidity.toFixed(1)}%`,      color: '#38bdf8' },
@@ -973,6 +972,7 @@ export interface FarmModel3DProps {
   led2On?: boolean;
   led3On?: boolean;
   sensorData?: EnvironmentData;
+  mobileMode?: boolean;
 }
 
 const OVERVIEW_POS    = new Vector3(69.64, 21.04, -41.63);
@@ -993,7 +993,7 @@ const CAMERAS = [
   { id: 'cam1', label: 'CAM 2' },
 ];
 
-function CctvMiniPanel() {
+export function CctvMiniPanel() {
   return (
     <div className="farm3d__cctv-mini-panel">
       {CAMERAS.map(cam => (

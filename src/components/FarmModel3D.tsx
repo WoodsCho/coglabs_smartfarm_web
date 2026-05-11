@@ -10,7 +10,7 @@ import {
   BufferGeometry,
   Color,
   DoubleSide,
-  DynamicDrawUsage,
+  StaticDrawUsage,
   InstancedMesh,
   Matrix4,
   Mesh,
@@ -148,9 +148,9 @@ const GRASS_FRAG = `
   }
 `;
 
-const GRASS_COUNT = 25000;
+const GRASS_COUNT = 6000;
 const FIELD_CENTER = new Vector3(18, 0, -5);
-const FIELD_RADIUS = 200;
+const FIELD_RADIUS = 60;
 
 function GrassField({ weather }: { weather: WeatherState }) {
   const meshRef = useRef<InstancedMesh>(null);
@@ -183,6 +183,9 @@ function GrassField({ weather }: { weather: WeatherState }) {
     return { geometry: geo, randomArr: { rand, height } };
   }, []);
 
+  // geometry GPU 메모리 해제
+  useEffect(() => () => { geometry.dispose(); }, [geometry]);
+
   // 인스턴스 행렬 초기화 (랜덤 위치/회전/스케일)
   useEffect(() => {
     if (!meshRef.current) return;
@@ -209,8 +212,8 @@ function GrassField({ weather }: { weather: WeatherState }) {
       mat4.compose(pos, quat, scale);
       mesh.setMatrixAt(i, mat4);
     }
+    mesh.instanceMatrix.usage = StaticDrawUsage;
     mesh.instanceMatrix.needsUpdate = true;
-    (mesh.instanceMatrix as any).usage = DynamicDrawUsage;
   }, []);
 
   // 날씨에 따른 풀 색상
@@ -396,6 +399,17 @@ function SmartfarmModel({
     return { scene: cloned, ghNode: foundGh };
   }, [gltf.scene, camera]);
 
+  // 클론 씬 언마운트 시 GPU 메모리 해제
+  useEffect(() => () => {
+    scene.traverse((obj: any) => {
+      obj.geometry?.dispose();
+      if (obj.material) {
+        (Array.isArray(obj.material) ? obj.material : [obj.material])
+          .forEach((m: any) => m.dispose?.());
+      }
+    });
+  }, [scene]);
+
   // GLB 로드 직후 모든 Light의 원래 intensity 저장 + 그룹 분류
   const spotGroupsRef = useRef<any[][]>([[], [], []]);
   useEffect(() => {
@@ -538,6 +552,17 @@ function Greenhouse2Model({
     cam.updateProjectionMatrix();
     return cloned;
   }, [gltf.scene, camera]);
+
+  // 클론 씬 언마운트 시 GPU 메모리 해제
+  useEffect(() => () => {
+    scene.traverse((obj: any) => {
+      obj.geometry?.dispose();
+      if (obj.material) {
+        (Array.isArray(obj.material) ? obj.material : [obj.material])
+          .forEach((m: any) => m.dispose?.());
+      }
+    });
+  }, [scene]);
 
   useEffect(() => {
     scene.traverse((obj: any) => {
@@ -962,8 +987,105 @@ const CAMERAS = [
 ];
 
 // ────────────────────────────────────────────────────────
+// AI 식물 상태 분석 — 목 데이터 (하루 1회 CCTV 분석 결과)
+// ────────────────────────────────────────────────────────
+const MOCK_PLANT_ANALYSIS = {
+  analyzedAt: '2026-05-11 06:00',
+  summary: '파이프 내 식물 없음 — 정식 준비 단계',
+  status: 'empty' as 'healthy' | 'warning' | 'empty',
+  details: [
+    { icon: '🪴', label: '정식 여부', value: '미정식 (Net pot 슬롯 비어있음)' },
+    { icon: '🌱', label: '육묘 상태', value: '하단 플러그 트레이 발아 진행 중' },
+    { icon: '💧', label: '배관 상태', value: '정상 — 양액 공급 배관 이상 없음' },
+    { icon: '📡', label: '센서 모듈', value: '각 열 부착 센서 정상 감지 중' },
+    { icon: '📅', label: '정식 예상', value: '발아 완료 후 약 7~10일 내 가능' },
+  ],
+  recommendation: '현재 파이프에 식물이 없습니다. 육묘 트레이의 발아 상태를 확인 후 정식 일정을 수립하세요.',
+};
+
+function PlantStatusPanel() {
+  const { status, summary, analyzedAt, details, recommendation } = MOCK_PLANT_ANALYSIS;
+  const statusColor = status === 'healthy' ? '#34d399' : status === 'warning' ? '#fbbf24' : '#94a3b8';
+  const statusLabel = status === 'healthy' ? '정상' : status === 'warning' ? '주의' : '비어있음';
+  return (
+    <div className="farm3d__plant-panel">
+      <div className="farm3d__plant-panel-header">
+        <div className="farm3d__plant-panel-title">🌿 AI 식물 상태 분석</div>
+        <div className="farm3d__plant-panel-time">분석 시각: {analyzedAt}</div>
+      </div>
+      <div className="farm3d__plant-status-badge" style={{ borderColor: statusColor, color: statusColor }}>
+        <span className="farm3d__plant-status-dot" style={{ background: statusColor }} />
+        {statusLabel}
+      </div>
+      <div className="farm3d__plant-summary">{summary}</div>
+      <div className="farm3d__plant-details">
+        {details.map((d, i) => (
+          <div key={i} className="farm3d__plant-detail-row">
+            <span className="farm3d__plant-detail-icon">{d.icon}</span>
+            <div className="farm3d__plant-detail-content">
+              <span className="farm3d__plant-detail-label">{d.label}</span>
+              <span className="farm3d__plant-detail-value">{d.value}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="farm3d__plant-recommendation">
+        <span className="farm3d__plant-rec-icon">💡</span>
+        {recommendation}
+      </div>
+    </div>
+  );
+}
+
+// ────────────────────────────────────────────────────────
 // Farm 1 진입 시 나타나는 LED/식물상태 컨트롤 패널
 // ────────────────────────────────────────────────────────
+
+// ────────────────────────────────────────────────────────
+// 온실 스펙 패널 (팜1 진입 뷰 좌측)
+// ────────────────────────────────────────────────────────
+function GreenhouseSpecPanel() {
+  return (
+    <div className="farm3d__gh-spec-panel">
+      <div className="farm3d__gh-spec-title">🏭 온실 스펙</div>
+
+      <div className="farm3d__gh-spec-section-label">재배</div>
+      <div className="farm3d__gh-spec-row">
+        <span className="farm3d__gh-spec-key">면적</span>
+        <span className="farm3d__gh-spec-val">2.5평</span>
+      </div>
+      <div className="farm3d__gh-spec-row">
+        <span className="farm3d__gh-spec-key">모종 수</span>
+        <span className="farm3d__gh-spec-val highlight">324 모종</span>
+      </div>
+
+      <div className="farm3d__gh-spec-divider" />
+
+      <div className="farm3d__gh-spec-section-label">히트펌프</div>
+      <div className="farm3d__gh-spec-row">
+        <span className="farm3d__gh-spec-key">용량</span>
+        <span className="farm3d__gh-spec-val">1 PS</span>
+      </div>
+      <div className="farm3d__gh-spec-row">
+        <span className="farm3d__gh-spec-key">사용 수온</span>
+        <span className="farm3d__gh-spec-val">7 ~ 25 °C</span>
+      </div>
+
+      <div className="farm3d__gh-spec-row-group">
+        <div className="farm3d__gh-spec-chip heating">
+          <span className="farm3d__gh-spec-chip-label">난방</span>
+          <span className="farm3d__gh-spec-chip-val">2,600 kcal/h</span>
+          <span className="farm3d__gh-spec-chip-power">1.2 kW</span>
+        </div>
+        <div className="farm3d__gh-spec-chip cooling">
+          <span className="farm3d__gh-spec-chip-label">냉방</span>
+          <span className="farm3d__gh-spec-chip-val">2,400 kcal/h</span>
+          <span className="farm3d__gh-spec-chip-power">1.3 kW</span>
+        </div>
+      </div>
+    </div>
+  );
+}
 interface Farm1ControlPanelProps {
   led1: boolean; led2: boolean; led3: boolean;
   onToggleLed: (id: number, next: boolean) => void;
@@ -1179,8 +1301,8 @@ export default function FarmModel3D({ led1On = false, led2On = false, led3On = f
           {/* 미니 센서 오버레이 - 전체보기 상태에서만 */}
           {!isZoomedIn && <SensorOverlay data={sensorData} />}
 
-          {/* 날씨 강수 파티클 */}
-          {!weather.loading && <PrecipitationOverlay condition={weather.condition} />}
+          {/* 날씨 강수 파티클 — 온실(팜1) 진입 시 숨김 */}
+          {!weather.loading && !isZoomedInFarm1 && <PrecipitationOverlay condition={weather.condition} />}
 
           {/* 팜 선택 버튼 — 전체보기 상태에서만 */}
           {!isZoomedIn && (
@@ -1283,6 +1405,12 @@ export default function FarmModel3D({ led1On = false, led2On = false, led3On = f
               }}
             />
           )}
+
+          {/* 팜1 진입 뷰 — 온실 스펙 패널 (좌측) */}
+          {isZoomedInFarm1 && !isPlantCheckView && <GreenhouseSpecPanel />}
+
+          {/* 식물상태확인 뷰 — AI 분석 결과 패널 */}
+          {isPlantCheckView && <PlantStatusPanel />}
 
           <div className="farm3d__hint">
             <span className="farm3d__hint-key">드래그</span> 회전

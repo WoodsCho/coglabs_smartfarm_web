@@ -902,3 +902,257 @@
   border-color: rgba(52, 211, 153, 0.65);
   box-shadow: 0 0 12px rgba(52, 211, 153, 0.25);
 }
+
+/* ────────────────────────────────────────────────────────
+   AI 식물 상태 분석 패널 (식물상태확인 뷰)
+   ──────────────────────────────────────────────────────── */
+.farm3d__plant-panel {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  transform: translateY(-50%);
+  width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  background: rgba(10, 18, 35, 0.80);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 16px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.55);
+  pointer-events: auto;
+  animation: fadeInRight 0.3s ease;
+}
+
+@keyframes fadeInRight {
+  from { opacity: 0; transform: translateY(-50%) translateX(16px); }
+  to   { opacity: 1; transform: translateY(-50%) translateX(0); }
+}
+
+.farm3d__plant-panel-header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 10px;
+}
+
+.farm3d__plant-panel-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #f1f5f9;
+  letter-spacing: 0.02em;
+}
+
+.farm3d__plant-panel-time {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.38);
+}
+
+.farm3d__plant-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  width: fit-content;
+  letter-spacing: 0.04em;
+}
+
+.farm3d__plant-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.farm3d__plant-summary {
+  font-size: 12px;
+  font-weight: 600;
+  color: #e2e8f0;
+  line-height: 1.4;
+}
+
+.farm3d__plant-details {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.farm3d__plant-detail-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.farm3d__plant-detail-icon {
+  font-size: 13px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.farm3d__plant-detail-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.farm3d__plant-detail-label {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.38);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.farm3d__plant-detail-value {
+  font-size: 11px;
+  color: #cbd5e1;
+  line-height: 1.35;
+}
+
+.farm3d__plant-recommendation {
+  display: flex;
+  gap: 7px;
+  align-items: flex-start;
+  padding: 9px 10px;
+  background: rgba(251, 191, 36, 0.08);
+  border: 1px solid rgba(251, 191, 36, 0.2);
+  border-radius: 8px;
+  font-size: 11px;
+  color: #fde68a;
+  line-height: 1.5;
+}
+
+.farm3d__plant-rec-icon {
+  font-size: 13px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* ────────────────────────────────────────────────────────
+   온실 스펙 패널 (팜1 진입 뷰 좌측)
+   ──────────────────────────────────────────────────────── */
+.farm3d__gh-spec-panel {
+  position: absolute;
+  top: 50%;
+  left: 14px;
+  transform: translateY(-50%);
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  background: rgba(10, 18, 35, 0.80);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 16px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.55);
+  pointer-events: none;
+  animation: fadeInLeft 0.3s ease;
+}
+
+@keyframes fadeInLeft {
+  from { opacity: 0; transform: translateY(-50%) translateX(-14px); }
+  to   { opacity: 1; transform: translateY(-50%) translateX(0); }
+}
+
+.farm3d__gh-spec-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #f1f5f9;
+  letter-spacing: 0.02em;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.farm3d__gh-spec-section-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.35);
+  margin-top: 2px;
+}
+
+.farm3d__gh-spec-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.farm3d__gh-spec-key {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.farm3d__gh-spec-val {
+  font-size: 12px;
+  font-weight: 600;
+  color: #cbd5e1;
+}
+
+.farm3d__gh-spec-val.highlight {
+  color: #34d399;
+  font-size: 13px;
+}
+
+.farm3d__gh-spec-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.07);
+  margin: 2px 0;
+}
+
+.farm3d__gh-spec-row-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.farm3d__gh-spec-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px;
+  border-radius: 9px;
+  border: 1px solid;
+}
+
+.farm3d__gh-spec-chip.heating {
+  background: rgba(239, 68, 68, 0.10);
+  border-color: rgba(239, 68, 68, 0.28);
+}
+
+.farm3d__gh-spec-chip.cooling {
+  background: rgba(59, 130, 246, 0.10);
+  border-color: rgba(59, 130, 246, 0.28);
+}
+
+.farm3d__gh-spec-chip-label {
+  font-size: 10px;
+  font-weight: 700;
+  min-width: 26px;
+}
+
+.farm3d__gh-spec-chip.heating .farm3d__gh-spec-chip-label { color: #fca5a5; }
+.farm3d__gh-spec-chip.cooling .farm3d__gh-spec-chip-label { color: #93c5fd; }
+
+.farm3d__gh-spec-chip-val {
+  font-size: 11px;
+  font-weight: 600;
+  color: #e2e8f0;
+  flex: 1;
+}
+
+.farm3d__gh-spec-chip-power {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.40);
+}

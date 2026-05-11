@@ -9,6 +9,11 @@
   flex-shrink: 0;
 }
 
+@media (min-width: 1920px) {
+  .sidebar { width: 240px; }
+  .sidebar--collapsed { width: 72px; }
+}
+
 .sidebar--collapsed {
   width: 64px;
 }

@@ -16,8 +16,14 @@
 .layout__content {
   flex: 1;
   overflow: hidden;
-  padding: 10px 12px;
+  padding: 14px 18px;
   display: flex;
   flex-direction: column;
   min-height: 0;
+}
+
+@media (min-width: 1920px) {
+  .layout__content {
+    padding: 20px 28px;
+  }
 }

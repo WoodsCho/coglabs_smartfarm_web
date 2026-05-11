@@ -534,6 +534,72 @@
   color: #dbeafe;
 }
 
+.farm3d__farm-btn--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: grayscale(0.4);
+}
+
+.farm3d__farm-btn--disabled:hover,
+.farm3d__farm-btn--disabled.farm3d__farm-btn--hovered {
+  transform: none;
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: none;
+}
+
+/* 팜2 비활성 토스트 */
+.farm3d__farm2-toast {
+  position: absolute;
+  bottom: 110px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 18px;
+  background: rgba(15, 23, 42, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  border-radius: 12px;
+  box-shadow: 0 6px 28px rgba(0, 0, 0, 0.50);
+  pointer-events: none;
+  white-space: nowrap;
+  animation: toastIn 0.22s ease, toastOut 0.3s ease 2.7s forwards;
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+@keyframes toastOut {
+  from { opacity: 1; }
+  to   { opacity: 0; transform: translateX(-50%) translateY(6px); }
+}
+
+.farm3d__farm2-toast-icon {
+  font-size: 18px;
+}
+
+.farm3d__farm2-toast-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.farm3d__farm2-toast-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #fde68a;
+}
+
+.farm3d__farm2-toast-desc {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.55);
+}
+
 /* ────────────────────────────────────────────────────────
    날씨 위젯
 ───────────────────────────────────────────────────────── */
@@ -1155,4 +1221,71 @@
 .farm3d__gh-spec-chip-power {
   font-size: 10px;
   color: rgba(255, 255, 255, 0.40);
+}
+
+/* ────────────────────────────────────────────────────────
+   팜1 컨트롤 패널 + CCTV 미니 래퍼
+   ──────────────────────────────────────────────────────── */
+.farm3d__farm1-controls-wrap {
+  position: absolute;
+  bottom: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  pointer-events: auto;
+}
+
+/* farm1-panel 은 이미 position:absolute 이므로 래퍼 안에서 static으로 재정의 */
+.farm3d__farm1-controls-wrap .farm3d__farm1-panel {
+  position: static;
+  transform: none;
+  animation: fadeInUp 0.25s ease;
+}
+
+/* CCTV 미니 패널 */
+.farm3d__cctv-mini-panel {
+  position: absolute;
+  bottom: 50px;
+  right: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  pointer-events: auto;
+  animation: fadeInRight 0.25s ease;
+}
+
+.farm3d__cctv-mini-cam {
+  background: rgba(10, 18, 35, 0.80);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.50);
+  width: 200px;
+}
+
+.farm3d__cctv-mini-header {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 9px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.farm3d__cctv-mini-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.60);
+  letter-spacing: 0.05em;
+}
+
+.farm3d__cctv-mini-frame {
+  display: block;
+  width: 200px;
+  height: 112px;
+  border: none;
+  background: #000;
 }

@@ -31,6 +31,57 @@
   color: #374151;
 }
 
+/* 팜 세그먼트 탭 — 날씨 위젯 우측 인라인 */
+.farm3d__farm-tabs-overlay {
+  position: static;
+  display: flex;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 12px;
+  padding: 4px;
+  gap: 3px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.08);
+}
+
+.farm3d__farm-tabs {
+  display: flex;
+  background: #F3F4F6;
+  border: 1px solid #E5E7EB;
+  border-radius: 7px;
+  padding: 2px;
+  gap: 1px;
+  margin-left: 2px;
+}
+
+.farm3d__farm-tab {
+  padding: 6px 18px;
+  font-size: 12px;
+  font-weight: 700;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s, box-shadow 0.18s, transform 0.12s;
+  white-space: nowrap;
+  letter-spacing: 0.5px;
+}
+
+.farm3d__farm-tab:hover:not(.farm3d__farm-tab--active) {
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.10);
+  transform: translateY(-1px);
+}
+
+.farm3d__farm-tab--active {
+  background: linear-gradient(135deg, #10B981, #059669);
+  color: #ffffff;
+  box-shadow: 0 2px 10px rgba(16, 185, 129, 0.55), 0 1px 3px rgba(0,0,0,0.2);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
 /* LED 상태 */
 .farm3d__leds {
   display: flex;
@@ -603,11 +654,19 @@
 /* ────────────────────────────────────────────────────────
    날씨 위젯
 ───────────────────────────────────────────────────────── */
-.farm3d__weather-widget {
+/* 좌상단 날씨 + 팜 탭 wrapper */
+.farm3d__top-left-bar {
   position: absolute;
   top: 10px;
   left: 10px;
-  bottom: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 10;
+}
+
+.farm3d__weather-widget {
+  position: static;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -617,7 +676,6 @@
   border: 1px solid rgba(255,255,255,0.2);
   border-radius: 14px;
   padding: 9px 14px 9px 11px;
-  z-index: 10;
   pointer-events: none;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
 }
@@ -863,6 +921,113 @@
 
 @media (min-width: 1920px) {
   .farm3d__sensor-overlay-val { font-size: 14px; }
+}
+
+/* ── 좌측 팜 상태 종합 패널 ─────────────────────────────── */
+.farm3d__status-panel {
+  position: absolute;
+  top: 50%;
+  left: 10px;
+  transform: translateY(-50%);
+  width: 192px;
+  background: linear-gradient(160deg, rgba(15, 23, 42, 0.88), rgba(30, 41, 59, 0.76));
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
+  padding: 12px 13px;
+  z-index: 10;
+  pointer-events: none;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.38);
+}
+
+.farm3d__status-section-label {
+  font-size: 9px;
+  font-weight: 700;
+  color: #7dd3fc;
+  letter-spacing: 1.3px;
+  text-transform: uppercase;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+  margin-bottom: 8px;
+}
+
+.farm3d__status-section-label--mt {
+  margin-top: 10px;
+}
+
+/* 환경값 2열 그리드 */
+.farm3d__status-env-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px 8px;
+}
+
+.farm3d__status-env-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.farm3d__status-env-icon {
+  font-size: 11px;
+}
+
+.farm3d__status-env-label {
+  font-size: 9px;
+  color: #94a3b8;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+}
+
+.farm3d__status-env-val {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 설비 현황 리스트 */
+.farm3d__status-equip-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.farm3d__status-equip-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto 3px;
+  column-gap: 6px;
+  row-gap: 3px;
+  align-items: center;
+}
+
+.farm3d__status-equip-name {
+  font-size: 10px;
+  color: #cbd5e1;
+  font-weight: 500;
+}
+
+.farm3d__status-equip-count {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+}
+
+.farm3d__status-equip-bar {
+  grid-column: 1 / -1;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.10);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.farm3d__status-equip-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  opacity: 0.85;
+  transition: width 0.4s ease;
 }
 
 /* ── 날씨 강수 파티클 ─────────────────────────────── */
@@ -1163,6 +1328,84 @@
 }
 
 /* ────────────────────────────────────────────────────────
+   팜 이름 라벨 (상단 중앙, 모델과 하늘 사이)
+   ──────────────────────────────────────────────────────── */
+.farm3d__farm-name-label {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.farm3d__farm-name-badge {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: #10B981;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.45);
+  border-radius: 6px;
+  padding: 3px 8px;
+  text-transform: uppercase;
+}
+
+.farm3d__farm-name-text {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #fff;
+  text-shadow:
+    0 0 24px rgba(16, 185, 129, 0.55),
+    0 2px 8px rgba(0, 0, 0, 0.6);
+}
+
+/* ────────────────────────────────────────────────────────
+   팜2 오픈 준비중 오버레이
+   ──────────────────────────────────────────────────────── */
+.farm3d__coming-soon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  background: rgba(5, 12, 25, 0.72);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: 24px;
+  padding: 40px 56px;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.farm3d__coming-soon-icon {
+  font-size: 48px;
+  line-height: 1;
+}
+
+.farm3d__coming-soon-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: #10B981;
+  letter-spacing: 0.06em;
+  text-shadow: 0 0 24px rgba(16, 185, 129, 0.6);
+}
+
+.farm3d__coming-soon-sub {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.55);
+  letter-spacing: 0.02em;
+}
+
+/* ────────────────────────────────────────────────────────
    온실 스펙 패널 (팜1 진입 뷰 좌측)
    ──────────────────────────────────────────────────────── */
 .farm3d__gh-spec-panel {
@@ -1329,6 +1572,34 @@
   gap: 6px;
   pointer-events: auto;
   animation: fadeInRight 0.25s ease;
+}
+
+.farm3d__cctv-mini-detail-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  width: 100%;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(125, 211, 252, 0.45);
+  background: linear-gradient(180deg, rgba(29, 78, 216, 0.60), rgba(29, 78, 216, 0.40));
+  color: #e0f2fe;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+}
+
+.farm3d__cctv-mini-detail-btn:hover {
+  background: linear-gradient(180deg, rgba(59, 130, 246, 0.80), rgba(29, 78, 216, 0.60));
+  border-color: rgba(125, 211, 252, 0.75);
+}
+
+.farm3d__cctv-mini-detail-btn:active {
+  transform: translateY(1px);
 }
 
 .farm3d__cctv-mini-cam {

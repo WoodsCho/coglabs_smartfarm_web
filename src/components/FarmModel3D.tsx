@@ -24,6 +24,7 @@ import { useWeather } from '../hooks/useWeather';
 import type { WeatherState } from '../hooks/useWeather';
 import type { EnvironmentData } from '../types/farm';
 import { Cpu, Video, VideoOff } from 'lucide-react';
+import { equipmentApi } from '../api/equipment';
 import './FarmModel3D.css';
 
 // ────────────────────────────────────────────────────────
@@ -787,12 +788,105 @@ function Scene({
 }
 
 // ────────────────────────────────────────────────────────
+// 낮/밤 진행 오버레이 (상단 중앙)
+// ────────────────────────────────────────────────────────
+function DayProgressOverlay({ weather, time }: { weather: WeatherState; time: Date }) {
+  if (weather.loading) return null;
+  const { isDay, sunProgress } = weather;
+  const timeStr = time.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
+  const pct = Math.max(2, Math.min(97, sunProgress * 100));
+  return (
+    <div className="farm3d__day-overlay">
+      <span className="farm3d__day-time">{timeStr}</span>
+      <div className="farm3d__day-track">
+        <div className="farm3d__day-fill" style={{ width: `${pct}%` }} />
+        <span className="farm3d__day-icon" style={{ left: `${pct}%` }}>
+          {isDay ? '☀️' : '🌙'}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ────────────────────────────────────────────────────────
+// 캔버스 내 미니 센서 오버레이 (우상단)
+// ────────────────────────────────────────────────────────
+function SensorOverlay({ data }: { data: EnvironmentData }) {
+  const items = [
+    { key: 'temp', icon: '🌡️', label: '온도',  value: `${data.temperature.toFixed(1)}°C`,  color: '#fb7185' },
+    { key: 'hum',  icon: '💧', label: '습도',  value: `${data.humidity.toFixed(1)}%`,      color: '#38bdf8' },
+    { key: 'co2',  icon: '💨', label: 'CO₂',   value: `${data.co2.toFixed(0)} ppm`,        color: '#a78bfa' },
+    { key: 'ec',   icon: '⚡', label: 'EC',    value: `${data.ec.toFixed(1)} dS/m`,        color: '#facc15' },
+  ];
+  return (
+    <div className="farm3d__sensor-overlay">
+      <div className="farm3d__sensor-overlay-title">실시간 환경</div>
+      {items.map(it => (
+        <div key={it.key} className="farm3d__sensor-overlay-row">
+          <span className="farm3d__sensor-overlay-icon">{it.icon}</span>
+          <span className="farm3d__sensor-overlay-label">{it.label}</span>
+          <span className="farm3d__sensor-overlay-val" style={{ color: it.color }}>{it.value}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ────────────────────────────────────────────────────────
+// 날씨 강수 파티클 (비 / 눈)
+// ────────────────────────────────────────────────────────
+function PrecipitationOverlay({ condition }: { condition: string }) {
+  const isRain = condition === 'rain' || condition === 'thunderstorm';
+  const isSnow = condition === 'snow';
+
+  const items = useMemo(() =>
+    Array.from({ length: isRain ? 55 : isSnow ? 38 : 0 }, (_, i) => ({
+      id: i,
+      left: Math.random() * 108 - 4,
+      delay: Math.random() * 2,
+      duration: isRain ? 0.45 + Math.random() * 0.35 : 3.5 + Math.random() * 3,
+      h: isRain ? 12 + Math.random() * 15 : 0,
+      sz: isSnow ? 2 + Math.random() * 4 : 0,
+      opacity: isRain ? 0.28 + Math.random() * 0.32 : 0.55 + Math.random() * 0.35,
+    })),
+  [condition]);
+
+  if (!isRain && !isSnow) return null;
+
+  return (
+    <div className="farm3d__precip">
+      {items.map(item => (
+        <span
+          key={item.id}
+          className={isSnow ? 'farm3d__precip-flake' : 'farm3d__precip-drop'}
+          style={{
+            left: `${item.left}%`,
+            animationDelay: `${item.delay}s`,
+            animationDuration: `${item.duration}s`,
+            opacity: item.opacity,
+            ...(isRain
+              ? { height: `${item.h}px` }
+              : { width: `${item.sz}px`, height: `${item.sz}px` }),
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+// ────────────────────────────────────────────────────────
 // LED status indicator
 // ────────────────────────────────────────────────────────
 function LedIndicator({ label, on }: { label: string; on: boolean }) {
   return (
     <div className="farm3d__led">
-      <span className="farm3d__led-dot" style={{ background: on ? '#FCD34D' : '#D1D5DB' }} />
+      <span
+        className="farm3d__led-dot"
+        style={{
+          background: on ? '#FCD34D' : '#D1D5DB',
+          boxShadow: on ? '0 0 6px rgba(252, 211, 77, 0.85)' : 'none',
+        }}
+      />
       <span className="farm3d__led-label" style={{ color: on ? '#92400E' : '#9CA3AF' }}>
         {label}
       </span>
@@ -817,12 +911,19 @@ function WeatherWidget({ weather }: { weather: WeatherState }) {
   const icon  = WEATHER_ICONS[weather.condition]  ?? '🌤️';
   const label = WEATHER_LABELS[weather.condition] ?? weather.condition;
   const timeLabel = weather.isDay ? '낮' : '밤';
+  const hasTemp = weather.temperature !== 0 || weather.condition !== 'clear';
   return (
     <div className="farm3d__weather-widget">
       <span className="farm3d__weather-icon">{icon}</span>
       <div className="farm3d__weather-info">
-        <span className="farm3d__weather-label">{label} · {timeLabel}</span>
-        <span className="farm3d__weather-sub">장성군</span>
+        {hasTemp && (
+          <span className="farm3d__weather-temp">{weather.temperature.toFixed(1)}°</span>
+        )}
+        <div className="farm3d__weather-meta">
+          <span className="farm3d__weather-label">{label}</span>
+          <span className="farm3d__weather-divider">·</span>
+          <span className="farm3d__weather-sub">장성군 {timeLabel}</span>
+        </div>
       </div>
     </div>
   );
@@ -842,8 +943,12 @@ const OVERVIEW_POS    = new Vector3(83.64, 25.96, -40.25);
 const OVERVIEW_TARGET = new Vector3(23.94, 14.82,   3.98);
 
 // 파이프라인1 줌인 — 카메라 디버거로 확인 후 조정
-const PIPELINE1_POS    = new Vector3(22.0, 10.0, -18.0);
-const PIPELINE1_TARGET = new Vector3(18.3,  6.0,  -5.2);
+const PIPELINE1_POS    = new Vector3(47.32, 17.89, -28.11);
+const PIPELINE1_TARGET = new Vector3(18.59,  7.01,  -4.41);
+
+// 팜1 식물 상태 확인 시 클로즈업 좌표
+const PLANT_CHECK_POS    = new Vector3( 8.07, 7.83, -10.54);
+const PLANT_CHECK_TARGET = new Vector3( 8.08, 7.83,  -7.98);
 
 // 파이프라인2 줌인 — 카메라 디버거로 확인 후 조정
 const PIPELINE2_POS    = new Vector3(37.96, 10.36, 13.17);
@@ -854,6 +959,43 @@ const CAMERAS = [
   { id: 'cam2', label: 'CAM 1' },
   { id: 'cam1', label: 'CAM 2' },
 ];
+
+// ────────────────────────────────────────────────────────
+// Farm 1 진입 시 나타나는 LED/식물상태 컨트롤 패널
+// ────────────────────────────────────────────────────────
+interface Farm1ControlPanelProps {
+  led1: boolean; led2: boolean; led3: boolean;
+  onToggleLed: (id: number, next: boolean) => void;
+  onCheckPlants: () => void;
+}
+function Farm1ControlPanel({ led1, led2, led3, onToggleLed, onCheckPlants }: Farm1ControlPanelProps) {
+  const leds = [
+    { id: 1, label: 'LED 1', on: led1 },
+    { id: 2, label: 'LED 2', on: led2 },
+    { id: 3, label: 'LED 3', on: led3 },
+  ];
+  return (
+    <div className="farm3d__farm1-panel">
+      <div className="farm3d__farm1-panel-title">팜 1 제어</div>
+      <div className="farm3d__farm1-led-row">
+        {leds.map(({ id, label, on }) => (
+          <button
+            key={id}
+            className={`farm3d__farm1-led-btn${on ? ' farm3d__farm1-led-btn--on' : ''}`}
+            onClick={() => onToggleLed(id, !on)}
+          >
+            <span className={`farm3d__farm1-led-dot${on ? ' farm3d__farm1-led-dot--on' : ''}`} />
+            {label}
+            <span className="farm3d__farm1-led-status">{on ? 'ON' : 'OFF'}</span>
+          </button>
+        ))}
+      </div>
+      <button className="farm3d__farm1-plants-btn" onClick={onCheckPlants}>
+        🌿 현재 식물 상태 확인
+      </button>
+    </div>
+  );
+}
 
 // 기본 센서 데이터 (sensorData prop 없을 때 fallback)
 const DEFAULT_SENSOR: EnvironmentData = {
@@ -866,6 +1008,13 @@ export default function FarmModel3D({ led1On = false, led2On = false, led3On = f
   const animRef = useRef<AnimTarget>(null);
   const weather = useWeather();
 
+  const [currentTime, setCurrentTime] = useState(() => new Date());
+  useEffect(() => {
+    const id = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  const timeStr = currentTime.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
+
   const [size, setSize] = useState({ w: 0, h: 0 });
   const [showGreenhouse, setShowGreenhouse] = useState(true); // 팜1 greenhouse 노드
   const [showFarm1,      setShowFarm1]      = useState(true); // 팜1 전체
@@ -873,8 +1022,16 @@ export default function FarmModel3D({ led1On = false, led2On = false, led3On = f
   const [showPipeline2,  setShowPipeline2]  = useState(true); // pipeline2.glb
   const [camInfo,        setCamInfo]        = useState<{ pos: Vector3; target: Vector3 } | null>(null);
   const [showCctv,       setShowCctv]       = useState(false);
-  const [farm1Hovered,   setFarm1Hovered]   = useState(false);
-  const [farm2Hovered,   setFarm2Hovered]   = useState(false);
+  const [farm1Hovered,     setFarm1Hovered]     = useState(false);
+  const [farm2Hovered,     setFarm2Hovered]     = useState(false);
+  const [isZoomedInFarm1,  setIsZoomedInFarm1]  = useState(false);
+  const [isPlantCheckView, setIsPlantCheckView] = useState(false);
+  // 팜1 진입 시 로컬 LED 제어 (props 초기값으로 초기화)
+  const [localLed1, setLocalLed1] = useState(led1On);
+  const [localLed2, setLocalLed2] = useState(led2On);
+  const [localLed3, setLocalLed3] = useState(led3On);
+  // props 변경 시 동기화 (팜1 진입 전에만)
+  useEffect(() => { if (!isZoomedInFarm1) { setLocalLed1(led1On); setLocalLed2(led2On); setLocalLed3(led3On); } }, [led1On, led2On, led3On, isZoomedInFarm1]);
 
   const fmtVec = (v: Vector3) => `(${v.x.toFixed(2)}, ${v.y.toFixed(2)}, ${v.z.toFixed(2)})`;
 
@@ -885,6 +1042,7 @@ export default function FarmModel3D({ led1On = false, led2On = false, led3On = f
     setShowFarm2(false);      // 팜2 전체 숨김
     setShowPipeline2(false);  // pipeline2 숨김
     setFarm1Hovered(false);
+    setIsZoomedInFarm1(true);
     animRef.current = { toPos: PIPELINE1_POS.clone(), toTarget: PIPELINE1_TARGET.clone() };
   };
 
@@ -897,10 +1055,17 @@ export default function FarmModel3D({ led1On = false, led2On = false, led3On = f
   };
 
   const handleBackClick = () => {
+    if (isPlantCheckView) {
+      // 식물상태확인 → 팜1 뷰로 복귀
+      setIsPlantCheckView(false);
+      animRef.current = { toPos: PIPELINE1_POS.clone(), toTarget: PIPELINE1_TARGET.clone() };
+      return;
+    }
     setShowGreenhouse(true);
     setShowFarm1(true);
     setShowFarm2(true);
     setShowPipeline2(true);
+    setIsZoomedInFarm1(false);
     animRef.current = { toPos: OVERVIEW_POS.clone(), toTarget: OVERVIEW_TARGET.clone() };
   };
 
@@ -925,13 +1090,20 @@ export default function FarmModel3D({ led1On = false, led2On = false, led3On = f
       {/* 패널 헤더 */}
       <div className="farm3d__header">
         <div className="farm3d__title-row">
-          <Cpu size={16} color="#374151" />
+          <div className="farm3d__live-badge">
+            <span className="farm3d__live-dot" />
+            LIVE
+          </div>
+          <Cpu size={14} color="#374151" />
           <span className="farm3d__title">3D 스마트팜 모델</span>
         </div>
-        <div className="farm3d__leds">
-          <LedIndicator label="LED 1" on={led1On} />
-          <LedIndicator label="LED 2" on={led2On} />
-          <LedIndicator label="LED 3" on={led3On} />
+        <div className="farm3d__header-right">
+          <span className="farm3d__header-time">{timeStr}</span>
+          <div className="farm3d__leds">
+            <LedIndicator label="LED 1" on={led1On} />
+            <LedIndicator label="LED 2" on={led2On} />
+            <LedIndicator label="LED 3" on={led3On} />
+          </div>
         </div>
       </div>
 
@@ -991,13 +1163,22 @@ export default function FarmModel3D({ led1On = false, led2On = false, led3On = f
             </Canvas>
           )}
 
-          {/* 카메라 좌표 디버거 */}
-          {camInfo && (
+          {/* 카메라 좌표 디버거 (개발 모드 전용) */}
+          {import.meta.env.DEV && camInfo && (
             <div className="farm3d__cam-debug">
               <span>📷 pos&nbsp;&nbsp;{fmtVec(camInfo.pos)}</span>
               <span>🎯 target {fmtVec(camInfo.target)}</span>
             </div>
           )}
+
+          {/* 낮/밤 진행 오버레이 */}
+          <DayProgressOverlay weather={weather} time={currentTime} />
+
+          {/* 미니 센서 오버레이 - 전체보기 상태에서만 */}
+          {!isZoomedIn && <SensorOverlay data={sensorData} />}
+
+          {/* 날씨 강수 파티클 */}
+          {!weather.loading && <PrecipitationOverlay condition={weather.condition} />}
 
           {/* 팜 선택 버튼 — 전체보기 상태에서만 */}
           {!isZoomedIn && (
@@ -1008,7 +1189,11 @@ export default function FarmModel3D({ led1On = false, led2On = false, led3On = f
                 onMouseEnter={() => setFarm1Hovered(true)}
                 onMouseLeave={() => setFarm1Hovered(false)}
               >
-                🏭 팜 1
+                <span className="farm3d__farm-btn-emoji">🏭</span>
+                <span className="farm3d__farm-btn-text">
+                  <span className="farm3d__farm-btn-name">팜 1</span>
+                  <span className="farm3d__farm-btn-sub">진입하기 →</span>
+                </span>
               </button>
               <button
                 className={`farm3d__farm-btn${farm2Hovered ? ' farm3d__farm-btn--hovered' : ''}`}
@@ -1016,7 +1201,11 @@ export default function FarmModel3D({ led1On = false, led2On = false, led3On = f
                 onMouseEnter={() => setFarm2Hovered(true)}
                 onMouseLeave={() => setFarm2Hovered(false)}
               >
-                🏭 팜 2
+                <span className="farm3d__farm-btn-emoji">🏭</span>
+                <span className="farm3d__farm-btn-text">
+                  <span className="farm3d__farm-btn-name">팜 2</span>
+                  <span className="farm3d__farm-btn-sub">진입하기 →</span>
+                </span>
               </button>
             </div>
           )}
@@ -1026,7 +1215,7 @@ export default function FarmModel3D({ led1On = false, led2On = false, led3On = f
 
           {/* 팜1 hover 툴팁 */}
           {showGreenhouse && farm1Hovered && !isZoomedIn && (
-            <div className="farm3d__hover-tooltip">
+            <div className="farm3d__hover-tooltip farm3d__hover-tooltip--left">
               <div className="farm3d__hover-tooltip-title">
                 <span className="farm3d__hover-tooltip-icon">🏭</span>
                 <span>MVP용 스마트팜</span>
@@ -1047,7 +1236,7 @@ export default function FarmModel3D({ led1On = false, led2On = false, led3On = f
 
           {/* 팜2 hover 툴팁 */}
           {showFarm2 && farm2Hovered && !farm1Hovered && !isZoomedIn && (
-            <div className="farm3d__hover-tooltip">
+            <div className="farm3d__hover-tooltip farm3d__hover-tooltip--right">
               <div className="farm3d__hover-tooltip-title">
                 <span className="farm3d__hover-tooltip-icon">🏭</span>
                 <span>MVP용 스마트팜 2</span>
@@ -1073,8 +1262,29 @@ export default function FarmModel3D({ led1On = false, led2On = false, led3On = f
             </button>
           )}
 
+          {/* 팜1 진입 시 LED 컨트롤 패널 (식물상태확인 클로즈업 뷰에서는 숨김) */}
+          {isZoomedInFarm1 && !isPlantCheckView && (
+            <Farm1ControlPanel
+              led1={localLed1}
+              led2={localLed2}
+              led3={localLed3}
+              onToggleLed={(id, next) => {
+                if (id === 1) setLocalLed1(next);
+                else if (id === 2) setLocalLed2(next);
+                else setLocalLed3(next);
+                equipmentApi.control(id, next ? 'ON' : 'OFF').catch(console.error);
+              }}
+              onCheckPlants={() => {
+                setIsPlantCheckView(true);
+                animRef.current = { toPos: PLANT_CHECK_POS.clone(), toTarget: PLANT_CHECK_TARGET.clone() };
+              }}
+            />
+          )}
+
           <div className="farm3d__hint">
-            드래그하여 회전 · 스크롤하여 확대/축소
+            <span className="farm3d__hint-key">드래그</span> 회전
+            <span className="farm3d__hint-sep">·</span>
+            <span className="farm3d__hint-key">스크롤</span> 확대/축소
           </div>
         </div>
       )}

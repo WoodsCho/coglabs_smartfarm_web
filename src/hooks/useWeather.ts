@@ -15,6 +15,7 @@ export interface WeatherState {
   isDay: boolean;        // 현재 낮인지 밤인지
   sunProgress: number;   // 0~1: 일출=0, 정오=0.5, 일몰=1
   cloudiness: number;    // 0~1: 맑음=0, 완전흐림=1
+  temperature: number;   // 외기 온도 (°C)
   loading: boolean;
   error: string | null;
 }
@@ -27,6 +28,7 @@ export function useWeather(): WeatherState {
     isDay: true,
     sunProgress: 0.5,
     cloudiness: 0,
+    temperature: 0,
     loading: true,
     error: null,
   });
@@ -48,7 +50,7 @@ export function useWeather(): WeatherState {
 
     if (!API_KEY) {
       const { isDay, sunProgress } = calcFromTime();
-      setState({ condition: 'clear', isDay, sunProgress, cloudiness: 0, loading: false, error: null });
+      setState({ condition: 'clear', isDay, sunProgress, cloudiness: 0, temperature: 0, loading: false, error: null });
       return;
     }
 
@@ -77,11 +79,12 @@ export function useWeather(): WeatherState {
         else if (weatherId >= 700 && weatherId < 800) condition = 'mist';
         else if (weatherId >= 801) condition = 'clouds';
 
-        setState({ condition, isDay, sunProgress, cloudiness, loading: false, error: null });
+        const temperature = data.main?.temp ?? 0;
+        setState({ condition, isDay, sunProgress, cloudiness, temperature, loading: false, error: null });
       } catch (e: any) {
         // API 실패 시 시간 기반 fallback
         const { isDay, sunProgress } = calcFromTime();
-        setState({ condition: 'clear', isDay, sunProgress, cloudiness: 0, loading: false, error: e.message });
+        setState({ condition: 'clear', isDay, sunProgress, cloudiness: 0, temperature: 0, loading: false, error: e.message });
       }
     };
 

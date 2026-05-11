@@ -34,7 +34,9 @@
 /* LED 상태 */
 .farm3d__leds {
   display: flex;
-  gap: 10px;
+  gap: 8px;
+  padding-left: 8px;
+  border-left: 1px solid #E5E7EB;
 }
 
 .farm3d__led {
@@ -48,11 +50,14 @@
   height: 7px;
   border-radius: 50%;
   flex-shrink: 0;
+  box-shadow: 0 0 0 0 currentColor;
+  transition: box-shadow 0.2s;
 }
 
 .farm3d__led-label {
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 600;
+  letter-spacing: 0.2px;
 }
 
 /* Canvas 래퍼 */
@@ -67,20 +72,44 @@
 /* 힌트 텍스트 */
 .farm3d__hint {
   position: absolute;
-  bottom: 8px;
-  left: 0;
-  right: 0;
-  text-align: center;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 16px;
   font-size: 10px;
-  color: rgba(0, 0, 0, 0.35);
+  color: rgba(31, 41, 55, 0.7);
   pointer-events: none;
   user-select: none;
+  white-space: nowrap;
+  letter-spacing: 0.2px;
+}
+
+.farm3d__hint-key {
+  font-weight: 700;
+  color: #1F2937;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin: 0 2px;
+  font-size: 9.5px;
+}
+
+.farm3d__hint-sep {
+  color: rgba(0, 0, 0, 0.2);
+  margin: 0 2px;
 }
 
 /* 카메라 좌표 디버거 */
 .farm3d__cam-debug {
   position: absolute;
-  top: 8px;
+  bottom: 30px;
   left: 8px;
   background: rgba(0, 0, 0, 0.55);
   color: #e2e8f0;
@@ -100,22 +129,32 @@
 /* 스마트팜 hover 툴팁 */
 .farm3d__hover-tooltip {
   position: absolute;
-  bottom: 42px;
+  bottom: 115px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   flex-direction: column;
   gap: 8px;
   padding: 12px 16px;
-  background: rgba(17, 24, 39, 0.92);
+  background: rgba(17, 24, 39, 0.93);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   color: #ffffff;
-  border-radius: 10px;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.30);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.38);
   pointer-events: none;
-  animation: farm3d-tooltip-in 0.18s ease;
+  animation: farm3d-tooltip-in 0.16s ease;
   white-space: nowrap;
   z-index: 20;
   min-width: 200px;
+}
+
+.farm3d__hover-tooltip--left,
+.farm3d__hover-tooltip--right {
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
 }
 
 .farm3d__hover-tooltip-title {
@@ -349,17 +388,18 @@
    센서 말풍선 (drei Html 내부)
 ───────────────────────────────────────────────────────── */
 .farm3d__sensor-bubble {
-  background: rgba(15, 23, 42, 0.82);
-  backdrop-filter: blur(6px);
-  border: 1px solid rgba(255,255,255,0.15);
-  border-radius: 12px;
+  background: linear-gradient(160deg, rgba(15, 23, 42, 0.88), rgba(30, 41, 59, 0.78));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(125, 211, 252, 0.25);
+  border-radius: 14px;
   padding: 12px 16px;
   color: #f1f5f9;
   font-size: 14px;
   white-space: nowrap;
   pointer-events: none;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
-  min-width: 160px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+  min-width: 170px;
 }
 
 .farm3d__sensor-bubble::after {
@@ -429,35 +469,69 @@
 ───────────────────────────────────────────────────────── */
 .farm3d__farm-select-btns {
   position: absolute;
-  bottom: 38px;
+  bottom: 48px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
-  gap: 8px;
+  gap: 10px;
   z-index: 10;
 }
 
 .farm3d__farm-btn {
-  padding: 6px 16px;
-  border-radius: 20px;
-  border: 1.5px solid rgba(255,255,255,0.5);
-  background: rgba(15, 23, 42, 0.65);
-  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px 8px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.22);
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.78), rgba(30, 41, 59, 0.62));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   color: #f1f5f9;
-  font-size: 12px;
-  font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.28);
+}
+
+.farm3d__farm-btn-emoji {
+  font-size: 20px;
+  line-height: 1;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4));
+}
+
+.farm3d__farm-btn-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.1;
+  gap: 2px;
+}
+
+.farm3d__farm-btn-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.2px;
+}
+
+.farm3d__farm-btn-sub {
+  font-size: 10px;
+  font-weight: 500;
+  color: #93c5fd;
+  letter-spacing: 0.3px;
 }
 
 .farm3d__farm-btn:hover,
 .farm3d__farm-btn--hovered {
-  background: rgba(29, 78, 216, 0.75);
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.82), rgba(29, 78, 216, 0.65));
   border-color: #60a5fa;
-  color: #fff;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(29,78,216,0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(37, 99, 235, 0.45);
+}
+
+.farm3d__farm-btn:hover .farm3d__farm-btn-sub,
+.farm3d__farm-btn--hovered .farm3d__farm-btn-sub {
+  color: #dbeafe;
 }
 
 /* ────────────────────────────────────────────────────────
@@ -465,38 +539,366 @@
 ───────────────────────────────────────────────────────── */
 .farm3d__weather-widget {
   position: absolute;
-  bottom: 10px;
+  top: 10px;
   left: 10px;
+  bottom: auto;
   display: flex;
   align-items: center;
-  gap: 7px;
-  background: rgba(15, 23, 42, 0.65);
-  backdrop-filter: blur(6px);
-  border: 1px solid rgba(255,255,255,0.15);
-  border-radius: 10px;
-  padding: 5px 10px;
+  gap: 14px;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.85), rgba(30, 41, 59, 0.72));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 16px;
+  padding: 12px 18px 12px 14px;
   z-index: 10;
   pointer-events: none;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
 }
 
 .farm3d__weather-icon {
-  font-size: 18px;
+  font-size: 36px;
   line-height: 1;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
 }
 
 .farm3d__weather-info {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 2px;
+  line-height: 1.2;
+}
+
+.farm3d__weather-temp {
+  font-size: 22px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.5px;
+}
+
+.farm3d__weather-meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
 .farm3d__weather-label {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
-  color: #f1f5f9;
+  color: #e2e8f0;
+}
+
+.farm3d__weather-divider {
+  color: rgba(255,255,255,0.3);
+  font-size: 11px;
 }
 
 .farm3d__weather-sub {
-  font-size: 10px;
+  font-size: 11px;
   color: #94a3b8;
+  font-weight: 500;
+}
+
+/* ── 헤더 LIVE 뱃지 & 시각 ────────────────────────── */
+.farm3d__live-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #16a34a;
+  letter-spacing: 0.6px;
+}
+
+.farm3d__live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #16a34a;
+  flex-shrink: 0;
+  animation: live-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.5); }
+  50%       { opacity: 0.6; box-shadow: 0 0 0 4px rgba(22, 163, 74, 0); }
+}
+
+.farm3d__header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.farm3d__header-time {
+  font-size: 11px;
+  font-weight: 600;
+  color: #6B7280;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 0.3px;
+}
+
+/* ── 낮/밤 진행 오버레이 (상단 중앙) ─────────────── */
+.farm3d__day-overlay {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.72), rgba(30, 41, 59, 0.58));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+  padding: 5px 16px 5px 12px;
+  z-index: 10;
+  pointer-events: none;
+  white-space: nowrap;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
+.farm3d__day-time {
+  font-size: 12px;
+  font-weight: 700;
+  color: #f1f5f9;
+  font-family: 'SF Mono', 'Menlo', 'Courier New', monospace;
+  letter-spacing: 0.6px;
+}
+
+.farm3d__day-track {
+  position: relative;
+  width: 110px;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 3px;
+  overflow: visible;
+}
+
+.farm3d__day-fill {
+  height: 100%;
+  background: linear-gradient(to right, #fb923c 0%, #facc15 50%, #f97316 100%);
+  border-radius: 3px;
+  transition: width 2s linear;
+  box-shadow: 0 0 8px rgba(250, 204, 21, 0.6);
+}
+
+.farm3d__day-icon {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -55%);
+  font-size: 15px;
+  line-height: 1;
+  filter: drop-shadow(0 0 6px rgba(255, 220, 0, 0.95));
+  transition: left 2s linear;
+}
+
+/* ── 캔버스 내 미니 센서 패널 (우상단) ───────────── */
+.farm3d__sensor-overlay {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: linear-gradient(160deg, rgba(15, 23, 42, 0.85), rgba(30, 41, 59, 0.72));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  padding: 14px 18px;
+  z-index: 10;
+  pointer-events: none;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.32);
+  min-width: 200px;
+}
+
+.farm3d__sensor-overlay-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #7dd3fc;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  padding-bottom: 8px;
+  margin-bottom: 2px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.farm3d__sensor-overlay-row {
+  display: grid;
+  grid-template-columns: 22px 1fr auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.farm3d__sensor-overlay-icon {
+  font-size: 16px;
+  text-align: center;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.3));
+}
+
+.farm3d__sensor-overlay-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #cbd5e1;
+  letter-spacing: 0.2px;
+}
+
+.farm3d__sensor-overlay-val {
+  font-size: 14px;
+  font-weight: 800;
+  text-align: right;
+  white-space: nowrap;
+  letter-spacing: -0.3px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── 날씨 강수 파티클 ─────────────────────────────── */
+.farm3d__precip {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 6;
+}
+
+.farm3d__precip-drop {
+  position: absolute;
+  top: -20px;
+  width: 1.5px;
+  background: linear-gradient(to bottom, transparent, rgba(174, 194, 224, 0.65));
+  border-radius: 1px;
+  animation: precip-rain linear infinite;
+}
+
+@keyframes precip-rain {
+  0%   { transform: translateY(0) rotate(8deg); }
+  100% { transform: translateY(calc(100vh + 40px)) rotate(8deg); }
+}
+
+.farm3d__precip-flake {
+  position: absolute;
+  top: -12px;
+  background: rgba(220, 235, 255, 0.88);
+  border-radius: 50%;
+  animation: precip-snow ease-in-out infinite;
+}
+
+@keyframes precip-snow {
+  0%   { transform: translateY(0) translateX(0); opacity: 0; }
+  8%   { opacity: 1; }
+  40%  { transform: translateY(40vh) translateX(18px); }
+  70%  { transform: translateY(70vh) translateX(-12px); }
+  92%  { opacity: 0.7; }
+  100% { transform: translateY(calc(100vh + 30px)) translateX(8px); opacity: 0; }
+}
+
+/* ────────────────────────────────────────────────────────
+   Farm 1 진입 컨트롤 패널
+   ──────────────────────────────────────────────────────── */
+.farm3d__farm1-panel {
+  position: absolute;
+  bottom: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  background: rgba(15, 23, 42, 0.72);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+  pointer-events: auto;
+  animation: fadeInUp 0.25s ease;
+  white-space: nowrap;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateX(-50%) translateY(12px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.farm3d__farm1-panel-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.farm3d__farm1-led-row {
+  display: flex;
+  gap: 8px;
+}
+
+.farm3d__farm1-led-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.farm3d__farm1-led-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.farm3d__farm1-led-btn--on {
+  border-color: rgba(252, 211, 77, 0.55);
+  background: rgba(252, 211, 77, 0.12);
+  color: #fcd34d;
+  box-shadow: 0 0 10px rgba(252, 211, 77, 0.3);
+}
+
+.farm3d__farm1-led-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  flex-shrink: 0;
+}
+
+.farm3d__farm1-led-dot--on {
+  background: #fcd34d;
+  box-shadow: 0 0 5px rgba(252, 211, 77, 0.8);
+}
+
+.farm3d__farm1-led-status {
+  font-size: 10px;
+  font-weight: 700;
+  opacity: 0.75;
+  letter-spacing: 0.05em;
+}
+
+.farm3d__farm1-plants-btn {
+  width: 100%;
+  padding: 8px 16px;
+  border-radius: 9px;
+  border: 1px solid rgba(52, 211, 153, 0.4);
+  background: rgba(52, 211, 153, 0.12);
+  color: #34d399;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  text-align: center;
+}
+
+.farm3d__farm1-plants-btn:hover {
+  background: rgba(52, 211, 153, 0.22);
+  border-color: rgba(52, 211, 153, 0.65);
+  box-shadow: 0 0 12px rgba(52, 211, 153, 0.25);
 }

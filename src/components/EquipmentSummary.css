@@ -322,7 +322,23 @@
 
 .eq-card__btn:hover { opacity: 0.85; }
 
-.eq-card__btn--auto   { background: #7c3aed; color: #fff; }
-.eq-card__btn--manual { background: #ede9fe; color: #5b21b6; }
-.eq-card__btn--on     { background: #16a34a; color: #fff; }
-.eq-card__btn--off    { background: #fee2e2; color: #dc2626; }
+.eq-card__btn--auto    { background: #7c3aed; color: #fff; }
+.eq-card__btn--manual  { background: #ede9fe; color: #5b21b6; }
+.eq-card__btn--on      { background: #16a34a; color: #fff; }
+.eq-card__btn--off     { background: #fee2e2; color: #dc2626; }
+.eq-card__btn--loading { cursor: not-allowed; opacity: 0.7; }
+
+@keyframes eq-spin {
+  to { transform: rotate(360deg); }
+}
+
+.eq-card__btn-spinner {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: eq-spin 0.6s linear infinite;
+  vertical-align: middle;
+}

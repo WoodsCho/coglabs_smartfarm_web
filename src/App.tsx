@@ -4,6 +4,7 @@ import DashboardPage from './pages/DashboardPage';
 import HarvestPage from './pages/HarvestPage';
 import ShipmentPage from './pages/ShipmentPage';
 import SocialPage from './pages/SocialPage';
+import MobilePage from './pages/MobilePage';
 import { FarmProvider } from './contexts/FarmContext';
 
 function App() {
@@ -11,6 +12,9 @@ function App() {
     <FarmProvider>
       <BrowserRouter>
         <Routes>
+          {/* 모바일 앱 전용 — 레이아웃 없이 3D만 풀스크린 */}
+          <Route path="/mobile" element={<MobilePage />} />
+
           <Route element={<Layout />}>
             <Route index element={<DashboardPage />} />
             <Route path="/monitor"  element={<Placeholder title="환경 모니터링" />} />

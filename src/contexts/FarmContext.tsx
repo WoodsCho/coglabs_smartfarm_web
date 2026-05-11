@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { environmentApi } from '../api/environment';
-import { equipmentApi, REAL_DEVICE_MAP } from '../api/equipment';
+import { controllerApi, REAL_DEVICE_MAP } from '../api/equipment';
 import type {
   EnvironmentData, EquipmentGroup, Equipment,
   Crop, HarvestRequest, HarvestLog, Shipment, MarketPrice,
@@ -10,7 +10,7 @@ import type {
 interface FarmContextType {
   currentData: EnvironmentData;
   equipmentGroups: EquipmentGroup[];
-  toggleEquipmentStatus: (id: number, newStatus: string) => void;
+  toggleEquipmentStatus: (id: number, newStatus: string) => Promise<void>;
   toggleEquipmentAuto: (id: number, newAuto: boolean) => void;
   updateEquipmentTarget: (id: number, newTarget: number) => void;
 
@@ -149,6 +149,22 @@ export function FarmProvider({ children }: { children: ReactNode }) {
   const [neighbors, setNeighbors] = useState<NeighborFarm[]>(DEFAULT_NEIGHBORS);
   const [notifications, setNotifications] = useState<AppNotification[]>(DEFAULT_NOTIFS);
 
+  // 초기 로드 시 REAL_DEVICE_MAP 기기 실제 상태를 controllerApi로 직접 조회
+  useEffect(() => {
+    Object.entries(REAL_DEVICE_MAP).forEach(async ([idStr, deviceId]) => {
+      try {
+        const result = await controllerApi.getStatus(deviceId);
+        const equipmentId = Number(idStr);
+        setEquipmentGroups(prev => prev.map(g => ({
+          ...g,
+          equipment: g.equipment.map(eq =>
+            eq.id === equipmentId ? { ...eq, status: result.state as Equipment['status'] } : eq
+          ),
+        })));
+      } catch { /* 조회 실패 시 기본값 유지 */ }
+    });
+  }, []);
+
   // 60초마다 최신 환경 데이터 + 장비 상태 폴링
   useEffect(() => {
     const poll = async () => {
@@ -163,18 +179,6 @@ export function FarmProvider({ children }: { children: ReactNode }) {
           ...(apiData.ec != null && { ec: apiData.ec }),
           ...(apiData.oxygenLevel != null && { oxygenLevel: apiData.oxygenLevel }),
         }));
-        if (apiData.equipment) {
-          setEquipmentGroups(prev => prev.map(group => ({
-            ...group,
-            equipment: group.equipment.map(eq => {
-              const deviceId = REAL_DEVICE_MAP[eq.id];
-              if (deviceId && apiData.equipment![deviceId] != null) {
-                return { ...eq, status: apiData.equipment![deviceId] as Equipment['status'] };
-              }
-              return eq;
-            }),
-          })));
-        }
       } catch { /* 네트워크 오류 시 기존 값 유지 */ }
     };
     poll();
@@ -182,22 +186,28 @@ export function FarmProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(id);
   }, []);
 
-  // 낙관적 UI 업데이트 + IoT 제어 명령 전송 (fire-and-forget)
-  const toggleEquipmentStatus = (equipmentId: number, newStatus: string) => {
+  const toggleEquipmentStatus = async (equipmentId: number, newStatus: string): Promise<void> => {
+    const deviceId = REAL_DEVICE_MAP[equipmentId];
+
+    if (!deviceId) {
+      // 실제 기기 없는 장비는 즉시 UI 업데이트
+      setEquipmentGroups(prev => prev.map(g => ({
+        ...g,
+        equipment: g.equipment.map(eq =>
+          eq.id === equipmentId ? { ...eq, status: newStatus as Equipment['status'] } : eq
+        ),
+      })));
+      return;
+    }
+
+    const state = (['ON', 'ACTIVE', 'RUNNING'] as string[]).includes(newStatus) ? 'ON' : 'OFF';
+    const result = await controllerApi.control(deviceId, state);
     setEquipmentGroups(prev => prev.map(g => ({
       ...g,
       equipment: g.equipment.map(eq =>
-        eq.id === equipmentId ? { ...eq, status: newStatus as Equipment['status'] } : eq
+        eq.id === equipmentId ? { ...eq, status: result.state as Equipment['status'] } : eq
       ),
     })));
-
-    const deviceId = REAL_DEVICE_MAP[equipmentId];
-    if (!deviceId) return;
-
-    const state = (['ON', 'ACTIVE', 'RUNNING'] as string[]).includes(newStatus) ? 'ON' : 'OFF';
-    equipmentApi.controlDevice(deviceId, state).catch(err =>
-      console.error(`[FarmContext] 장비 제어 실패 (id=${equipmentId}):`, err)
-    );
   };
 
   const toggleEquipmentAuto = (equipmentId: number, newAuto: boolean) => {

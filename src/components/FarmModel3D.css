@@ -390,6 +390,40 @@
   color: #e2e8f0;
 }
 
+/* 말풍선 내부 CCTV 버튼 — 오버레이에 녹아드는 디자인 */
+.farm3d__sensor-bubble--interactive {
+  pointer-events: auto;
+}
+
+.farm3d__sensor-bubble-cctv {
+  margin-top: 9px;
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(125, 211, 252, 0.45);
+  background: linear-gradient(180deg, rgba(29, 78, 216, 0.55), rgba(29, 78, 216, 0.35));
+  color: #e0f2fe;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+}
+
+.farm3d__sensor-bubble-cctv:hover {
+  background: linear-gradient(180deg, rgba(59, 130, 246, 0.75), rgba(29, 78, 216, 0.55));
+  border-color: rgba(125, 211, 252, 0.75);
+}
+
+.farm3d__sensor-bubble-cctv:active {
+  transform: translateY(1px);
+}
+
 /* ────────────────────────────────────────────────────────
    팜 선택 버튼 오버레이
 ───────────────────────────────────────────────────────── */

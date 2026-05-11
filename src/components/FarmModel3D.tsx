@@ -668,6 +668,7 @@ interface SceneProps {
   weather: WeatherState;
   sensorData: EnvironmentData;
   isZoomedIn: boolean;
+  onCctvClick: () => void;
 }
 
 function Scene({
@@ -677,6 +678,7 @@ function Scene({
   onGreenhouseClick, onGreenhouseHover,
   onGreenhouse2Click, onGreenhouse2Hover,
   weather, sensorData, isZoomedIn,
+  onCctvClick,
 }: SceneProps) {
   const { scene } = useThree();
 
@@ -740,7 +742,7 @@ function Scene({
           {/* 팜1 센서 말풍선 — 지붕 위 */}
           {showFarm1 && (
             <Html position={[14, 22, -5]} center distanceFactor={55} zIndexRange={[10, 0]}>
-              <div className="farm3d__sensor-bubble">
+              <div className="farm3d__sensor-bubble farm3d__sensor-bubble--interactive">
                 <div className="farm3d__sensor-bubble-title">🏭 팜 1</div>
                 <div className="farm3d__sensor-bubble-row">
                   <span>🌡️</span><span>{sensorData.temperature.toFixed(1)}°C</span>
@@ -749,6 +751,15 @@ function Scene({
                 <div className="farm3d__sensor-bubble-row">
                   <span>💨</span><span>CO₂ {sensorData.co2.toFixed(0)}ppm</span>
                 </div>
+                <button
+                  className="farm3d__sensor-bubble-cctv"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCctvClick();
+                  }}
+                >
+                  <Video size={12} /> CCTV 보기
+                </button>
               </div>
             </Html>
           )}
@@ -975,6 +986,7 @@ export default function FarmModel3D({ led1On = false, led2On = false, led3On = f
                 weather={weather}
                 sensorData={sensorData}
                 isZoomedIn={isZoomedIn}
+                onCctvClick={() => setShowCctv(true)}
               />
             </Canvas>
           )}
@@ -1064,10 +1076,6 @@ export default function FarmModel3D({ led1On = false, led2On = false, led3On = f
           <div className="farm3d__hint">
             드래그하여 회전 · 스크롤하여 확대/축소
           </div>
-
-          <button className="farm3d__cctv-btn farm3d__cctv-btn--open" onClick={() => setShowCctv(true)}>
-            <Video size={13} /> CCTV
-          </button>
         </div>
       )}
     </div>

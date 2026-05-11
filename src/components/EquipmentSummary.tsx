@@ -27,6 +27,19 @@ function EquipmentCard({ eq }: { eq: Equipment }) {
   const st = STATUS_STYLE[eq.status] ?? DEFAULT_STYLE;
   const hasVals = eq.envValue != null && eq.target != null;
   const [editingTarget, setEditingTarget] = useState<string | null>(null);
+  const [controlling, setControlling] = useState(false);
+
+  const handleToggle = async () => {
+    if (controlling) return;
+    setControlling(true);
+    try {
+      await toggleEquipmentStatus(eq.id, isActive ? 'OFF' : 'ON');
+    } catch {
+      // 오류는 FarmContext에서 로깅
+    } finally {
+      setControlling(false);
+    }
+  };
 
   const commitTarget = () => {
     if (editingTarget === null) return;
@@ -107,10 +120,11 @@ function EquipmentCard({ eq }: { eq: Equipment }) {
       {/* 버튼: ON/OFF 왼쪽, 자동/수동 전환 오른쪽 */}
       <div className="eq-card__btns">
         <button
-          className={`eq-card__btn ${isActive ? 'eq-card__btn--on' : 'eq-card__btn--off'}`}
-          onClick={() => toggleEquipmentStatus(eq.id, isActive ? 'OFF' : 'ON')}
+          className={`eq-card__btn ${isActive ? 'eq-card__btn--on' : 'eq-card__btn--off'}${controlling ? ' eq-card__btn--loading' : ''}`}
+          onClick={handleToggle}
+          disabled={controlling}
         >
-          ⏻ {isActive ? 'ON' : 'OFF'}
+          {controlling ? <span className="eq-card__btn-spinner" /> : `⏻ ${isActive ? 'ON' : 'OFF'}`}
         </button>
         <button
           className={`eq-card__btn ${eq.auto ? 'eq-card__btn--auto' : 'eq-card__btn--manual'}`}

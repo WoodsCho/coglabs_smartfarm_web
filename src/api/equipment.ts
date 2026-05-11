@@ -5,6 +5,20 @@ export const REAL_DEVICE_MAP: Record<number, string> = {
   11: 'Mixer',
 };
 
+const CONTROLLER_BASE = 'https://k8s-worker01.tail63c20e.ts.net';
+
+export const controllerApi = {
+  control: (deviceId: string, state: 'ON' | 'OFF'): Promise<{ deviceId: string; state: string }> =>
+    fetch(`${CONTROLLER_BASE}/control`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ deviceId, state }),
+    }).then(r => r.json()),
+
+  getStatus: (deviceId: string): Promise<{ deviceId: string; state: string }> =>
+    fetch(`${CONTROLLER_BASE}/status/${deviceId}`).then(r => r.json()),
+};
+
 export const equipmentApi = {
   getGroups: () => apiClient.get<EquipmentGroup[]>('/equipment/groups'),
 

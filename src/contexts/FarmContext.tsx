@@ -1,12 +1,12 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { environmentApi } from '../api/environment';
-import { equipmentApi, REAL_DEVICE_MAP } from '../api/equipment';
+import { equipmentApi, controllerApi, REAL_DEVICE_MAP } from '../api/equipment';
 import type { EnvironmentData, EquipmentGroup, Equipment } from '../types/farm';
 
 interface FarmContextType {
   currentData: EnvironmentData;
   equipmentGroups: EquipmentGroup[];
-  toggleEquipmentStatus: (id: number, newStatus: string) => void;
+  toggleEquipmentStatus: (id: number, newStatus: string) => Promise<void>;
   toggleEquipmentAuto: (id: number, newAuto: boolean) => void;
   updateEquipmentTarget: (id: number, newTarget: number) => void;
 }
@@ -94,22 +94,28 @@ export function FarmProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(id);
   }, []);
 
-  // 낙관적 UI 업데이트 + IoT 제어 명령 전송 (fire-and-forget)
-  const toggleEquipmentStatus = (equipmentId: number, newStatus: string) => {
+  const toggleEquipmentStatus = async (equipmentId: number, newStatus: string): Promise<void> => {
+    const deviceId = REAL_DEVICE_MAP[equipmentId];
+
+    if (!deviceId) {
+      // 실제 기기 없는 장비는 즉시 UI 업데이트
+      setEquipmentGroups(prev => prev.map(g => ({
+        ...g,
+        equipment: g.equipment.map(eq =>
+          eq.id === equipmentId ? { ...eq, status: newStatus as Equipment['status'] } : eq
+        ),
+      })));
+      return;
+    }
+
+    const state = (['ON', 'ACTIVE', 'RUNNING'] as string[]).includes(newStatus) ? 'ON' : 'OFF';
+    const result = await controllerApi.control(deviceId, state);
     setEquipmentGroups(prev => prev.map(g => ({
       ...g,
       equipment: g.equipment.map(eq =>
-        eq.id === equipmentId ? { ...eq, status: newStatus as Equipment['status'] } : eq
+        eq.id === equipmentId ? { ...eq, status: result.state as Equipment['status'] } : eq
       ),
     })));
-
-    const deviceId = REAL_DEVICE_MAP[equipmentId];
-    if (!deviceId) return;
-
-    const state = (['ON', 'ACTIVE', 'RUNNING'] as string[]).includes(newStatus) ? 'ON' : 'OFF';
-    equipmentApi.controlDevice(deviceId, state).catch(err =>
-      console.error(`[FarmContext] 장비 제어 실패 (id=${equipmentId}):`, err)
-    );
   };
 
   const toggleEquipmentAuto = (equipmentId: number, newAuto: boolean) => {

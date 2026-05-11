@@ -965,6 +965,7 @@ export interface FarmModel3DProps {
   led2On?: boolean;
   led3On?: boolean;
   sensorData?: EnvironmentData;
+  mobileMode?: boolean;
 }
 
 const OVERVIEW_POS    = new Vector3(83.64, 25.96, -40.25);
@@ -1146,7 +1147,7 @@ const DEFAULT_SENSOR: EnvironmentData = {
   ph: 0, ec: 0, waterTemp: 0, oxygenLevel: 0,
 };
 
-export default function FarmModel3D({ led1On = false, led2On = false, led3On = false, sensorData = DEFAULT_SENSOR }: FarmModel3DProps) {
+export default function FarmModel3D({ led1On = false, led2On = false, led3On = false, sensorData = DEFAULT_SENSOR, mobileMode = false }: FarmModel3DProps) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const animRef = useRef<AnimTarget>(null);
   const weather = useWeather();
@@ -1159,6 +1160,27 @@ export default function FarmModel3D({ led1On = false, led2On = false, led3On = f
     return () => clearInterval(id);
   }, []);
   const timeStr = currentTime.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
+
+  // 앱 → 웹 명령 수신
+  useEffect(() => {
+    if (!mobileMode) return;
+    const handler = (e: MessageEvent) => {
+      try {
+        const msg = JSON.parse(typeof e.data === 'string' ? e.data : JSON.stringify(e.data));
+        if (msg.type === 'ENTER_FARM1') handleFarm1Click();
+        else if (msg.type === 'BACK_TO_OVERVIEW') handleBackClick();
+      } catch { /* ignore */ }
+    };
+    window.addEventListener('message', handler);
+    return () => window.removeEventListener('message', handler);
+  }, [mobileMode]);
+
+  // 웹 → 앱 센서 데이터 전송
+  useEffect(() => {
+    if (!mobileMode) return;
+    const rn = (window as any).ReactNativeWebView;
+    rn?.postMessage(JSON.stringify({ type: 'SENSOR_DATA', data: sensorData }));
+  }, [mobileMode, sensorData]);
 
   const [size, setSize] = useState({ w: 0, h: 0 });
   const [showGreenhouse, setShowGreenhouse] = useState(true); // 팜1 greenhouse 노드
@@ -1234,9 +1256,9 @@ export default function FarmModel3D({ led1On = false, led2On = false, led3On = f
   }, []);
 
   return (
-    <div className="farm3d">
-      {/* 패널 헤더 */}
-      <div className="farm3d__header">
+    <div className="farm3d" style={mobileMode ? { display: 'flex', flexDirection: 'column', width: '100%', height: '100%', padding: 0, border: 'none', borderRadius: 0 } : undefined}>
+      {/* 패널 헤더 — 모바일 모드에서 숨김 */}
+      {!mobileMode && <div className="farm3d__header">
         <div className="farm3d__title-row">
           <div className="farm3d__live-badge">
             <span className="farm3d__live-dot" />
@@ -1253,10 +1275,10 @@ export default function FarmModel3D({ led1On = false, led2On = false, led3On = f
             <LedIndicator label="LED 3" on={led3On} />
           </div>
         </div>
-      </div>
+      </div>}
 
       {/* Canvas 또는 CCTV 영상 */}
-      {showCctv ? (
+      {showCctv && !mobileMode ? (
         <div className="farm3d__cctv-wrap">
           {CAMERAS.map(cam => (
             <div key={cam.id} className="farm3d__cctv-cam">
@@ -1312,152 +1334,127 @@ export default function FarmModel3D({ led1On = false, led2On = false, led3On = f
             </Canvas>
           )}
 
-          {/* 카메라 좌표 디버거 (개발 모드 전용) */}
-          {import.meta.env.DEV && camInfo && (
-            <div className="farm3d__cam-debug">
-              <span>📷 pos&nbsp;&nbsp;{fmtVec(camInfo.pos)}</span>
-              <span>🎯 target {fmtVec(camInfo.target)}</span>
-            </div>
-          )}
-
-          {/* 낮/밤 진행 오버레이 */}
-          <DayProgressOverlay weather={weather} time={currentTime} />
-
-          {/* 미니 센서 오버레이 - 전체보기 상태에서만 */}
-          {!isZoomedIn && <SensorOverlay data={sensorData} />}
-
-          {/* 날씨 강수 파티클 — 온실(팜1) 진입 시 숨김 */}
-          {!weather.loading && !isZoomedInFarm1 && <PrecipitationOverlay condition={weather.condition} />}
-
-          {/* 팜 선택 버튼 — 전체보기 상태에서만 */}
-          {!isZoomedIn && (
-            <div className="farm3d__farm-select-btns">
-              <button
-                className={`farm3d__farm-btn${farm1Hovered ? ' farm3d__farm-btn--hovered' : ''}`}
-                onClick={handleFarm1Click}
-                onMouseEnter={() => setFarm1Hovered(true)}
-                onMouseLeave={() => setFarm1Hovered(false)}
-              >
-                <span className="farm3d__farm-btn-emoji">🏭</span>
-                <span className="farm3d__farm-btn-text">
-                  <span className="farm3d__farm-btn-name">팜 1</span>
-                  <span className="farm3d__farm-btn-sub">진입하기 →</span>
-                </span>
+          {/* 아래 오버레이들은 모바일 모드에서 전부 숨김 — 앱 네이티브 UI가 대신 담당 */}
+          {!mobileMode && <>
+            {import.meta.env.DEV && camInfo && (
+              <div className="farm3d__cam-debug">
+                <span>📷 pos&nbsp;&nbsp;{fmtVec(camInfo.pos)}</span>
+                <span>🎯 target {fmtVec(camInfo.target)}</span>
+              </div>
+            )}
+            <DayProgressOverlay weather={weather} time={currentTime} />
+            {!isZoomedIn && <SensorOverlay data={sensorData} />}
+            {!weather.loading && !isZoomedInFarm1 && <PrecipitationOverlay condition={weather.condition} />}
+            {!isZoomedIn && (
+              <div className="farm3d__farm-select-btns">
+                <button
+                  className={`farm3d__farm-btn${farm1Hovered ? ' farm3d__farm-btn--hovered' : ''}`}
+                  onClick={handleFarm1Click}
+                  onMouseEnter={() => setFarm1Hovered(true)}
+                  onMouseLeave={() => setFarm1Hovered(false)}
+                >
+                  <span className="farm3d__farm-btn-emoji">🏭</span>
+                  <span className="farm3d__farm-btn-text">
+                    <span className="farm3d__farm-btn-name">팜 1</span>
+                    <span className="farm3d__farm-btn-sub">진입하기 →</span>
+                  </span>
+                </button>
+                <button
+                  className={`farm3d__farm-btn farm3d__farm-btn--disabled${farm2Hovered ? ' farm3d__farm-btn--hovered' : ''}`}
+                  onClick={handleFarm2Click}
+                  onMouseEnter={() => setFarm2Hovered(true)}
+                  onMouseLeave={() => setFarm2Hovered(false)}
+                >
+                  <span className="farm3d__farm-btn-emoji">🏭</span>
+                  <span className="farm3d__farm-btn-text">
+                    <span className="farm3d__farm-btn-name">팜 2</span>
+                    <span className="farm3d__farm-btn-sub">준비 중</span>
+                  </span>
+                </button>
+              </div>
+            )}
+            <WeatherWidget weather={weather} />
+            {showGreenhouse && farm1Hovered && !isZoomedIn && (
+              <div className="farm3d__hover-tooltip farm3d__hover-tooltip--left">
+                <div className="farm3d__hover-tooltip-title">
+                  <span className="farm3d__hover-tooltip-icon">🏭</span>
+                  <span>MVP용 스마트팜</span>
+                </div>
+                <div className="farm3d__hover-tooltip-body">
+                  <div className="farm3d__hover-tooltip-row">
+                    <span className="farm3d__hover-tooltip-key">주소</span>
+                    <span className="farm3d__hover-tooltip-val">대악길 19-11</span>
+                  </div>
+                  <div className="farm3d__hover-tooltip-row">
+                    <span className="farm3d__hover-tooltip-key">수확 횟수</span>
+                    <span className="farm3d__hover-tooltip-val">1회</span>
+                  </div>
+                </div>
+                <div className="farm3d__hover-tooltip-hint">클릭하여 진입</div>
+              </div>
+            )}
+            {showFarm2 && farm2Hovered && !farm1Hovered && !isZoomedIn && (
+              <div className="farm3d__hover-tooltip farm3d__hover-tooltip--right">
+                <div className="farm3d__hover-tooltip-title">
+                  <span className="farm3d__hover-tooltip-icon">🏭</span>
+                  <span>MVP용 스마트팜 2</span>
+                </div>
+                <div className="farm3d__hover-tooltip-body">
+                  <div className="farm3d__hover-tooltip-row">
+                    <span className="farm3d__hover-tooltip-key">주소</span>
+                    <span className="farm3d__hover-tooltip-val">대악길 19-11</span>
+                  </div>
+                  <div className="farm3d__hover-tooltip-row">
+                    <span className="farm3d__hover-tooltip-key">수확 횟수</span>
+                    <span className="farm3d__hover-tooltip-val">1회</span>
+                  </div>
+                </div>
+                <div className="farm3d__hover-tooltip-hint">클릭하여 진입</div>
+              </div>
+            )}
+            {isZoomedIn && (
+              <button className="farm3d__back-btn" onClick={handleBackClick}>
+                ← 전체보기
               </button>
-              <button
-                className={`farm3d__farm-btn farm3d__farm-btn--disabled${farm2Hovered ? ' farm3d__farm-btn--hovered' : ''}`}
-                onClick={handleFarm2Click}
-                onMouseEnter={() => setFarm2Hovered(true)}
-                onMouseLeave={() => setFarm2Hovered(false)}
-              >
-                <span className="farm3d__farm-btn-emoji">🏭</span>
-                <span className="farm3d__farm-btn-text">
-                  <span className="farm3d__farm-btn-name">팜 2</span>
-                  <span className="farm3d__farm-btn-sub">준비 중</span>
-                </span>
-              </button>
-            </div>
-          )}
-
-          {/* 날씨 위젯 */}
-          <WeatherWidget weather={weather} />
-
-          {/* 팜1 hover 툴팁 */}
-          {showGreenhouse && farm1Hovered && !isZoomedIn && (
-            <div className="farm3d__hover-tooltip farm3d__hover-tooltip--left">
-              <div className="farm3d__hover-tooltip-title">
-                <span className="farm3d__hover-tooltip-icon">🏭</span>
-                <span>MVP용 스마트팜</span>
+            )}
+            {isZoomedInFarm1 && !isPlantCheckView && (
+              <div className="farm3d__farm1-controls-wrap">
+                <Farm1ControlPanel
+                  led1={localLed1}
+                  led2={localLed2}
+                  led3={localLed3}
+                  onToggleLed={(id, next) => {
+                    if (id === 1) setLocalLed1(next);
+                    else if (id === 2) setLocalLed2(next);
+                    else setLocalLed3(next);
+                    toggleEquipmentStatus(id, next ? 'ON' : 'OFF');
+                    equipmentApi.control(id, next ? 'ON' : 'OFF').catch(console.error);
+                  }}
+                  onCheckPlants={() => {
+                    setIsPlantCheckView(true);
+                    animRef.current = { toPos: PLANT_CHECK_POS.clone(), toTarget: PLANT_CHECK_TARGET.clone() };
+                  }}
+                />
               </div>
-              <div className="farm3d__hover-tooltip-body">
-                <div className="farm3d__hover-tooltip-row">
-                  <span className="farm3d__hover-tooltip-key">주소</span>
-                  <span className="farm3d__hover-tooltip-val">대악길 19-11</span>
-                </div>
-                <div className="farm3d__hover-tooltip-row">
-                  <span className="farm3d__hover-tooltip-key">수확 횟수</span>
-                  <span className="farm3d__hover-tooltip-val">1회</span>
+            )}
+            {isZoomedInFarm1 && !isPlantCheckView && <CctvMiniPanel />}
+            {isZoomedInFarm1 && !isPlantCheckView && <GreenhouseSpecPanel />}
+            {farm2Disabled && (
+              <div className="farm3d__farm2-toast">
+                <span className="farm3d__farm2-toast-icon">🚧</span>
+                <div className="farm3d__farm2-toast-body">
+                  <span className="farm3d__farm2-toast-title">팜 2 비활성</span>
+                  <span className="farm3d__farm2-toast-desc">현재 운영 준비 중입니다.</span>
                 </div>
               </div>
-              <div className="farm3d__hover-tooltip-hint">클릭하여 진입</div>
+            )}
+            {isPlantCheckView && <PlantStatusPanel />}
+            <div className="farm3d__hint">
+              <span className="farm3d__hint-key">드래그</span> 회전
+              <span className="farm3d__hint-sep">·</span>
+              <span className="farm3d__hint-key">스크롤</span> 확대/축소
             </div>
-          )}
-
-          {/* 팜2 hover 툴팁 */}
-          {showFarm2 && farm2Hovered && !farm1Hovered && !isZoomedIn && (
-            <div className="farm3d__hover-tooltip farm3d__hover-tooltip--right">
-              <div className="farm3d__hover-tooltip-title">
-                <span className="farm3d__hover-tooltip-icon">🏭</span>
-                <span>MVP용 스마트팜 2</span>
-              </div>
-              <div className="farm3d__hover-tooltip-body">
-                <div className="farm3d__hover-tooltip-row">
-                  <span className="farm3d__hover-tooltip-key">주소</span>
-                  <span className="farm3d__hover-tooltip-val">대악길 19-11</span>
-                </div>
-                <div className="farm3d__hover-tooltip-row">
-                  <span className="farm3d__hover-tooltip-key">수확 횟수</span>
-                  <span className="farm3d__hover-tooltip-val">1회</span>
-                </div>
-              </div>
-              <div className="farm3d__hover-tooltip-hint">클릭하여 진입</div>
-            </div>
-          )}
-
-          {/* 전체보기 복귀 버튼 */}
-          {isZoomedIn && (
-            <button className="farm3d__back-btn" onClick={handleBackClick}>
-              ← 전체보기
-            </button>
-          )}
-
-          {/* 팜1 진입 시 LED 컨트롤 패널 + CCTV 미니 (식물상태확인 클로즈업 뷰에서는 숨김) */}
-          {isZoomedInFarm1 && !isPlantCheckView && (
-            <div className="farm3d__farm1-controls-wrap">
-              <Farm1ControlPanel
-              led1={localLed1}
-              led2={localLed2}
-              led3={localLed3}
-              onToggleLed={(id, next) => {
-                if (id === 1) setLocalLed1(next);
-                else if (id === 2) setLocalLed2(next);
-                else setLocalLed3(next);
-                toggleEquipmentStatus(id, next ? 'ON' : 'OFF');
-                equipmentApi.control(id, next ? 'ON' : 'OFF').catch(console.error);
-              }}
-              onCheckPlants={() => {
-                setIsPlantCheckView(true);
-                animRef.current = { toPos: PLANT_CHECK_POS.clone(), toTarget: PLANT_CHECK_TARGET.clone() };
-              }}
-            />
-            </div>
-          )}
-
-          {/* 팜1 진입 시 CCTV 미니 (우측 끝) */}
-          {isZoomedInFarm1 && !isPlantCheckView && <CctvMiniPanel />}
-
-          {/* 팜1 진입 뷰 — 온실 스펙 패널 (좌측) */}
-          {isZoomedInFarm1 && !isPlantCheckView && <GreenhouseSpecPanel />}
-
-          {/* 팜2 비활성 토스트 */}
-          {farm2Disabled && (
-            <div className="farm3d__farm2-toast">
-              <span className="farm3d__farm2-toast-icon">🚧</span>
-              <div className="farm3d__farm2-toast-body">
-                <span className="farm3d__farm2-toast-title">팜 2 비활성</span>
-                <span className="farm3d__farm2-toast-desc">현재 운영 준비 중입니다.</span>
-              </div>
-            </div>
-          )}
-
-          {/* 식물상태확인 뷰 — AI 분석 결과 패널 */}
-          {isPlantCheckView && <PlantStatusPanel />}
-
-          <div className="farm3d__hint">
-            <span className="farm3d__hint-key">드래그</span> 회전
-            <span className="farm3d__hint-sep">·</span>
-            <span className="farm3d__hint-key">스크롤</span> 확대/축소
-          </div>
+          </>}
         </div>
       )}
     </div>

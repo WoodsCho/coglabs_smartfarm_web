@@ -15,6 +15,7 @@ export default function MobilePage() {
         led2On={ledOn(2)}
         led3On={ledOn(3)}
         sensorData={currentData}
+        mobileMode={true}
       />
     </div>
   );

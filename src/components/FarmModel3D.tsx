@@ -979,6 +979,12 @@ const PIPELINE1_TARGET = new Vector3(18.59,  7.01,  -4.41);
 const PLANT_CHECK_POS    = new Vector3( 8.07, 7.83, -10.54);
 const PLANT_CHECK_TARGET = new Vector3( 8.08, 7.83,  -7.98);
 
+// 모바일 전용 팜별 카메라 앵글 (캘리브레이션 필요 시 웹 DEV 카메라 디버거로 확인)
+const MOBILE_FARM1_POS    = PIPELINE1_POS;
+const MOBILE_FARM1_TARGET = PIPELINE1_TARGET;
+const MOBILE_FARM2_POS    = new Vector3(30.00, 18.00, 20.00);
+const MOBILE_FARM2_TARGET = new Vector3(10.00,  7.00, 10.00);
+
 
 const FUNNEL_BASE = 'https://k8s-worker02.tail63c20e.ts.net';
 const CAMERAS = [
@@ -1161,20 +1167,27 @@ export default function FarmModel3D({ led1On = false, led2On = false, led3On = f
   }, []);
   const timeStr = currentTime.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
 
+  // 모바일: 마운트 시 팜1 앵글로 즉시 이동
+  useEffect(() => {
+    if (!mobileMode) return;
+    animRef.current = { toPos: MOBILE_FARM1_POS.clone(), toTarget: MOBILE_FARM1_TARGET.clone() };
+  }, [mobileMode]);
+
   // 앱 → 웹 명령 수신
   useEffect(() => {
     if (!mobileMode) return;
+    const rn = (window as any).ReactNativeWebView;
     const handler = (e: MessageEvent) => {
       try {
         const msg = JSON.parse(typeof e.data === 'string' ? e.data : JSON.stringify(e.data));
-        if (msg.type === 'ENTER_FARM1') {
-          setShowGreenhouse(false); setShowFarm2(false); setShowPipeline2(false);
-          setFarm1Hovered(false); setIsZoomedInFarm1(true);
-          animRef.current = { toPos: PIPELINE1_POS.clone(), toTarget: PIPELINE1_TARGET.clone() };
-        } else if (msg.type === 'BACK_TO_OVERVIEW') {
-          setShowGreenhouse(true); setShowFarm1(true); setShowFarm2(true);
-          setShowPipeline2(true); setIsZoomedInFarm1(false);
-          animRef.current = { toPos: OVERVIEW_POS.clone(), toTarget: OVERVIEW_TARGET.clone() };
+        if (msg.type === 'SET_ACTIVE_FARM') {
+          const farmId: 1 | 2 = msg.farmId === 2 ? 2 : 1;
+          if (farmId === 1) {
+            animRef.current = { toPos: MOBILE_FARM1_POS.clone(), toTarget: MOBILE_FARM1_TARGET.clone() };
+          } else {
+            animRef.current = { toPos: MOBILE_FARM2_POS.clone(), toTarget: MOBILE_FARM2_TARGET.clone() };
+          }
+          rn?.postMessage(JSON.stringify({ type: 'FARM_CHANGED', farmId }));
         } else if (msg.type === 'TOGGLE_EQUIPMENT') {
           toggleEquipmentStatus(msg.id, msg.status);
         }

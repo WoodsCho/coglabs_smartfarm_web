@@ -61,7 +61,23 @@ export function FarmProvider({ children }: { children: ReactNode }) {
   const [currentData, setCurrentData] = useState<EnvironmentData>(DEFAULT_ENV);
   const [equipmentGroups, setEquipmentGroups] = useState<EquipmentGroup[]>(DEFAULT_EQUIPMENT);
 
-  // 60초마다 최신 환경 데이터 + 장비 상태 폴링
+  // 초기 로드 시 REAL_DEVICE_MAP 기기 실제 상태를 Funnel API로 직접 조회
+  useEffect(() => {
+    Object.entries(REAL_DEVICE_MAP).forEach(async ([idStr, deviceId]) => {
+      try {
+        const result = await controllerApi.getStatus(deviceId);
+        const equipmentId = Number(idStr);
+        setEquipmentGroups(prev => prev.map(g => ({
+          ...g,
+          equipment: g.equipment.map(eq =>
+            eq.id === equipmentId ? { ...eq, status: result.state as Equipment['status'] } : eq
+          ),
+        })));
+      } catch { /* 조회 실패 시 기본값 유지 */ }
+    });
+  }, []);
+
+  // 60초마다 최신 환경 데이터 + 장비 상태 폴링 (REAL_DEVICE_MAP 기기 제외)
   useEffect(() => {
     const poll = async () => {
       try {
@@ -75,18 +91,6 @@ export function FarmProvider({ children }: { children: ReactNode }) {
           ...(apiData.ec != null && { ec: apiData.ec }),
           ...(apiData.oxygenLevel != null && { oxygenLevel: apiData.oxygenLevel }),
         }));
-        if (apiData.equipment) {
-          setEquipmentGroups(prev => prev.map(group => ({
-            ...group,
-            equipment: group.equipment.map(eq => {
-              const deviceId = REAL_DEVICE_MAP[eq.id];
-              if (deviceId && apiData.equipment![deviceId] != null) {
-                return { ...eq, status: apiData.equipment![deviceId] as Equipment['status'] };
-              }
-              return eq;
-            }),
-          })));
-        }
       } catch { /* 네트워크 오류 시 기존 값 유지 */ }
     };
     poll();

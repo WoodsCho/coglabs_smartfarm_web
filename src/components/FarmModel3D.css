@@ -1332,7 +1332,7 @@
    ──────────────────────────────────────────────────────── */
 .farm3d__farm-name-label {
   position: absolute;
-  top: 18px;
+  top: 10%;
   left: 50%;
   transform: translateX(-50%);
   display: flex;

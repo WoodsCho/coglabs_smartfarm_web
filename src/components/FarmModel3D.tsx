@@ -1418,7 +1418,7 @@ export default function FarmModel3D({ led1On = false, led2On = false, led3On = f
               {selectedFarm === 'farm1' ? 'FARM 1' : 'FARM 2'}
             </span>
             <span className="farm3d__farm-name-text">
-              {selectedFarm === 'farm1' ? 'MVP 스마트팜' : 'CogLabs 스마트팜 2호'}
+              {selectedFarm === 'farm1' ? 'CogLabs 스마트팜 1호' : 'CogLabs 스마트팜 2호'}
             </span>
           </div>
 

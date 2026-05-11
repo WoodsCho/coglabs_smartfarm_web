@@ -21,6 +21,7 @@ import {
 } from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { useWeather } from '../hooks/useWeather';
+import { useFarm } from '../contexts/FarmContext';
 import type { WeatherState } from '../hooks/useWeather';
 import type { EnvironmentData } from '../types/farm';
 import { Cpu, Video, VideoOff } from 'lucide-react';
@@ -1007,6 +1008,7 @@ export default function FarmModel3D({ led1On = false, led2On = false, led3On = f
   const wrapRef = useRef<HTMLDivElement>(null);
   const animRef = useRef<AnimTarget>(null);
   const weather = useWeather();
+  const { toggleEquipmentStatus } = useFarm();
 
   const [currentTime, setCurrentTime] = useState(() => new Date());
   useEffect(() => {
@@ -1272,6 +1274,7 @@ export default function FarmModel3D({ led1On = false, led2On = false, led3On = f
                 if (id === 1) setLocalLed1(next);
                 else if (id === 2) setLocalLed2(next);
                 else setLocalLed3(next);
+                toggleEquipmentStatus(id, next ? 'ON' : 'OFF');
                 equipmentApi.control(id, next ? 'ON' : 'OFF').catch(console.error);
               }}
               onCheckPlants={() => {

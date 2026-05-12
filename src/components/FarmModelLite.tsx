@@ -41,7 +41,7 @@ const CAMERAS = [{ id: 'cam2', label: 'CAM 1' }, { id: 'cam1', label: 'CAM 2' }]
 const MOCK_PLANT = {
   analyzedAt: '2026-05-11 06:00',
   summary: '파이프 내 식물 없음 — 정식 준비 단계',
-  status: 'empty' as const,
+  status: 'empty' as 'healthy' | 'warning' | 'empty',
   details: [
     { label: '정식 여부', value: '미정식 — Net pot 슬롯 비어있음' },
     { label: '육묘 상태', value: '하단 플러그 트레이 발아 진행 중' },

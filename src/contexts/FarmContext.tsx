@@ -73,8 +73,8 @@ const DEFAULT_EQUIPMENT: EquipmentGroup[] = [
   {
     type: 'heater', displayName: '냉난방기', icon: 'flame', color: '#f44336',
     equipment: [
-      { id: 8, name: '히터 1', status: 'ON', auto: true, envValue: 24, target: 24, unit: '°C', envName: '온도' },
-      { id: 9, name: '쿨러 1', status: 'ON', auto: true, envValue: 23.5, target: 24, unit: '°C', envName: '온도' },
+      { id: 8, name: '팬코일',   status: 'ON', auto: true, envValue: 24,   target: 24, unit: '°C', envName: '온도' },
+      { id: 9, name: '히트펌프', status: 'ON', auto: true, envValue: 23.5, target: 24, unit: '°C', envName: '온도' },
     ],
   },
   {

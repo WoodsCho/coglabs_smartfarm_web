@@ -25,6 +25,7 @@ import type { WeatherState } from '../hooks/useWeather';
 import type { EnvironmentData } from '../types/farm';
 import { Cpu, Video, VideoOff } from 'lucide-react';
 import { equipmentApi } from '../api/equipment';
+import ActivityTimeline from './ActivityTimeline';
 import './FarmModel3D.css';
 
 // ────────────────────────────────────────────────────────
@@ -363,6 +364,28 @@ function deduplicateMaterials(root: any) {
 }
 
 // ────────────────────────────────────────────────────────
+// 장비 버튼 앵커 정의 — Blender Empty 이름 ↔ 장비 매핑
+// ────────────────────────────────────────────────────────
+export interface EquipButtonPos {
+  key: string;
+  label: string;
+  icon: string;
+  equipmentIds: number[];
+  ledId?: number;        // LED 버튼일 때 세팅 (1 | 2 | 3)
+  x: number; y: number;
+}
+
+const EQUIP_BUTTON_DEFS = [
+  { key: 'fan_coil_button',   label: '팬코일',  icon: '❄️',  equipmentIds: [8]    },
+  { key: 'heat_pump_button',  label: '히트펌프', icon: '🌡️', equipmentIds: [9]    },
+  { key: 'mixer_button',      label: '믹서',    icon: '🔄',  equipmentIds: [11]   },
+  { key: 'water_pump_button', label: '양액펌프', icon: '💧',  equipmentIds: [6, 7] },
+  { key: 'led1_button',       label: 'LED 1',   icon: '💡',  equipmentIds: [],    ledId: 1 },
+  { key: 'led2_button',       label: 'LED 2',   icon: '💡',  equipmentIds: [],    ledId: 2 },
+  { key: 'led3_button',       label: 'LED 3',   icon: '💡',  equipmentIds: [],    ledId: 3 },
+] as const;
+
+// ────────────────────────────────────────────────────────
 // 통합 스마트팜 모델 — pipeline.glb 단일 파일로 모든 노드 제어
 // ────────────────────────────────────────────────────────
 function SmartfarmModel({
@@ -373,6 +396,7 @@ function SmartfarmModel({
   showGreenhouse,
   onClick,
   onHoverChange,
+  onEquipButtonPositions,
 }: {
   url: string;
   led1On: boolean;
@@ -381,12 +405,13 @@ function SmartfarmModel({
   showGreenhouse: boolean;
   onClick: () => void;
   onHoverChange: (hovered: boolean) => void;
+  onEquipButtonPositions?: (btns: EquipButtonPos[]) => void;
 }) {
   const gltf = useLoader(GLTFLoader, url, setupGLTFLoader) as any;
   // Load leap & cup models to place at each anchor node inside pipeline GLB
   const leapGltf = useLoader(GLTFLoader, '/3d-model/leap.glb', setupGLTFLoader) as any;
   const cupGltf  = useLoader(GLTFLoader, '/3d-model/cup.glb',  setupGLTFLoader) as any;
-  const { camera, gl } = useThree();
+  const { camera, gl, size: canvasSize } = useThree();
   const [hovered, setHovered] = useState(false);
 
   const { scene, ghNode } = useMemo(() => {
@@ -567,6 +592,41 @@ function SmartfarmModel({
     gl.domElement.style.cursor = hovered && showGreenhouse ? 'pointer' : 'auto';
     return () => { gl.domElement.style.cursor = 'auto'; };
   }, [hovered, showGreenhouse, gl.domElement]);
+
+  // ── 장비 버튼 앵커 노드 수집 ──
+  const equipAnchorNodesRef = useRef<{ key: string; node: any }[]>([]);
+  useEffect(() => {
+    const found: { key: string; node: any }[] = [];
+    scene.traverse((o: any) => {
+      if (!o.name) return;
+      const match = EQUIP_BUTTON_DEFS.find(d => o.name.toLowerCase() === d.key.toLowerCase());
+      if (match) found.push({ key: match.key, node: o });
+    });
+    equipAnchorNodesRef.current = found;
+  }, [scene]);
+
+  // ── 매 프레임: 앵커 월드좌표 → 스크린 좌표 계산 → 콜백 ──
+  useFrame(() => {
+    if (!onEquipButtonPositions || equipAnchorNodesRef.current.length === 0) return;
+    const result: EquipButtonPos[] = [];
+    const worldPos = new Vector3();
+    for (const { key, node } of equipAnchorNodesRef.current) {
+      node.getWorldPosition(worldPos);
+      const projected = worldPos.clone().project(camera);
+      const x = (projected.x * 0.5 + 0.5) * canvasSize.width;
+      const y = (-projected.y * 0.5 + 0.5) * canvasSize.height;
+      // 카메라 뒤쪽(z>1)이면 스킵
+      if (projected.z > 1) continue;
+      const def = EQUIP_BUTTON_DEFS.find(d => d.key === key);
+      if (def) result.push({
+        key, label: def.label, icon: def.icon,
+        equipmentIds: [...def.equipmentIds] as number[],
+        ledId: ('ledId' in def) ? (def as any).ledId : undefined,
+        x, y,
+      });
+    }
+    onEquipButtonPositions(result);
+  });
 
   // 이벤트 대상이 greenhouse 노드 하위인지 확인
   const isInGreenhouse = (obj: any): boolean => {
@@ -771,6 +831,7 @@ interface SceneProps {
   onGreenhouseHover: (hovered: boolean) => void;
   onGreenhouse2Click: () => void;
   onGreenhouse2Hover: (hovered: boolean) => void;
+  onEquipButtonPositions: (btns: EquipButtonPos[]) => void;
   weather: WeatherState;
 }
 
@@ -780,6 +841,7 @@ function Scene({
   animRef, onCameraUpdate,
   onGreenhouseClick, onGreenhouseHover,
   onGreenhouse2Click, onGreenhouse2Hover,
+  onEquipButtonPositions,
   weather,
 }: SceneProps) {
   const { scene } = useThree();
@@ -802,6 +864,7 @@ function Scene({
             showGreenhouse={showGreenhouse}
             onClick={onGreenhouseClick}
             onHoverChange={onGreenhouseHover}
+            onEquipButtonPositions={onEquipButtonPositions}
           />
         )}
         {/* Leap 인스턴스는 pipeline.glb 내부 scene의 origin을 기준으로 SmartfarmModel 안에서 추가됩니다 */}
@@ -1180,40 +1243,6 @@ function GreenhouseSpecPanel() {
     </div>
   );
 }
-interface Farm1ControlPanelProps {
-  led1: boolean; led2: boolean; led3: boolean;
-  onToggleLed: (id: number, next: boolean) => void;
-  onCheckPlants: () => void;
-}
-function Farm1ControlPanel({ led1, led2, led3, onToggleLed, onCheckPlants }: Farm1ControlPanelProps) {
-  const leds = [
-    { id: 1, label: 'LED 1', on: led1 },
-    { id: 2, label: 'LED 2', on: led2 },
-    { id: 3, label: 'LED 3', on: led3 },
-  ];
-  return (
-    <div className="farm3d__farm1-panel">
-      <div className="farm3d__farm1-panel-title">팜 1 제어</div>
-      <div className="farm3d__farm1-led-row">
-        {leds.map(({ id, label, on }) => (
-          <button
-            key={id}
-            className={`farm3d__farm1-led-btn${on ? ' farm3d__farm1-led-btn--on' : ''}`}
-            onClick={() => onToggleLed(id, !on)}
-          >
-            <span className={`farm3d__farm1-led-dot${on ? ' farm3d__farm1-led-dot--on' : ''}`} />
-            {label}
-            <span className="farm3d__farm1-led-status">{on ? 'ON' : 'OFF'}</span>
-          </button>
-        ))}
-      </div>
-      <button className="farm3d__farm1-plants-btn" onClick={onCheckPlants}>
-        🌿 현재 식물 상태 확인
-      </button>
-    </div>
-  );
-}
-
 // 기본 센서 데이터 (sensorData prop 없을 때 fallback)
 const DEFAULT_SENSOR: EnvironmentData = {
   temperature: 0, humidity: 0, co2: 0, light: 0,
@@ -1224,7 +1253,7 @@ export default function FarmModel3D({ led1On = false, led2On = false, led3On = f
   const wrapRef = useRef<HTMLDivElement>(null);
   const animRef = useRef<AnimTarget>(null);
   const weather = useWeather();
-  const { toggleEquipmentStatus } = useFarm();
+  const { toggleEquipmentStatus, equipmentGroups } = useFarm();
 
   const [currentTime, setCurrentTime] = useState(() => new Date());
   useEffect(() => {
@@ -1237,10 +1266,10 @@ export default function FarmModel3D({ led1On = false, led2On = false, led3On = f
   const [size, setSize] = useState({ w: 0, h: 0 });
   const [selectedFarm, setSelectedFarm] = useState<'farm1' | 'farm2'>('farm1');
   const [canvasKey,    setCanvasKey]    = useState(0);
-  const [showGreenhouse, setShowGreenhouse] = useState(true); // 팜1 greenhouse 노드
-  const [showFarm1,      setShowFarm1]      = useState(true);  // 팜1 전체
-  const [showFarm2,      setShowFarm2]      = useState(false); // 팜2 전체 (초기: 팜1 선택)
-  const [showPipeline2,  setShowPipeline2]  = useState(false); // pipeline2.glb (팜2 세트, 초기: 팜1 선택이므로 false)
+  const [showGreenhouse, setShowGreenhouse] = useState(true);
+  const [showFarm1,      setShowFarm1]      = useState(true);
+  const [showFarm2,      setShowFarm2]      = useState(false);
+  const [showPipeline2,  setShowPipeline2]  = useState(false);
   const [camInfo,        setCamInfo]        = useState<{ pos: Vector3; target: Vector3 } | null>(null);
   const [showCctv,       setShowCctv]       = useState(false);
   const [farm1Hovered,     setFarm1Hovered]     = useState(false);
@@ -1248,9 +1277,10 @@ export default function FarmModel3D({ led1On = false, led2On = false, led3On = f
   const [isZoomedInFarm1,  setIsZoomedInFarm1]  = useState(false);
   const [isPlantCheckView, setIsPlantCheckView] = useState(false);
   const [farm2Disabled, setFarm2Disabled] = useState(false);
+  // 장비 버튼 오버레이용 스크린 좌표 state
+  const [equipBtnPositions, setEquipBtnPositions] = useState<EquipButtonPos[]>([]);
   const farm2TimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (farm2TimerRef.current) clearTimeout(farm2TimerRef.current); }, []);
-  // 팜1 진입 시 로컬 LED 제어 (props 초기값으로 초기화)
   const [localLed1, setLocalLed1] = useState(led1On);
   const [localLed2, setLocalLed2] = useState(led2On);
   const [localLed3, setLocalLed3] = useState(led3On);
@@ -1399,10 +1429,53 @@ export default function FarmModel3D({ led1On = false, led2On = false, led3On = f
                 onGreenhouseHover={setFarm1Hovered}
                 onGreenhouse2Click={handleFarm2Click}
                 onGreenhouse2Hover={setFarm2Hovered}
+                onEquipButtonPositions={setEquipBtnPositions}
                 weather={weather}
               />
             </Canvas>
           )}
+
+          {/* ── 장비/LED 버튼 오버레이 (Canvas 위 절대 위치 HTML) ── */}
+          {isZoomedInFarm1 && !isPlantCheckView && equipBtnPositions.map(btn => {
+            // LED 버튼이면 localLed 상태, 아니면 equipmentGroups 상태
+            let isOn: boolean;
+            if (btn.ledId != null) {
+              isOn = btn.ledId === 1 ? localLed1 : btn.ledId === 2 ? localLed2 : localLed3;
+            } else {
+              const allEquip = equipmentGroups.flatMap((g: import('../types/farm').EquipmentGroup) => g.equipment);
+              isOn = btn.equipmentIds.some(id => {
+                const eq = allEquip.find((e: import('../types/farm').Equipment) => e.id === id);
+                return eq && eq.status !== 'OFF';
+              });
+            }
+            return (
+              <button
+                key={btn.key}
+                className={`farm3d__equip-btn${isOn ? ' farm3d__equip-btn--on' : ''}`}
+                style={{ left: btn.x, top: btn.y }}
+                onClick={() => {
+                  const next = !isOn;
+                  if (btn.ledId != null) {
+                    const setFn = btn.ledId === 1 ? setLocalLed1 : btn.ledId === 2 ? setLocalLed2 : setLocalLed3;
+                    setFn(next);
+                    toggleEquipmentStatus(btn.ledId, next ? 'ON' : 'OFF');
+                    equipmentApi.control(btn.ledId, next ? 'ON' : 'OFF').catch(console.error);
+                  } else {
+                    btn.equipmentIds.forEach(id => {
+                      toggleEquipmentStatus(id, next ? 'ON' : 'OFF');
+                      equipmentApi.control(id, next ? 'ON' : 'OFF').catch(console.error);
+                    });
+                  }
+                }}
+              >
+                <span className="farm3d__equip-btn-icon">{btn.icon}</span>
+                <span className="farm3d__equip-btn-label">{btn.label}</span>
+                <span className="farm3d__equip-btn-status">
+                  {isOn ? 'ON' : 'OFF'}
+                </span>
+              </button>
+            );
+          })}
 
           {/* 카메라 좌표 디버거 (개발 모드 전용) */}
           {import.meta.env.DEV && camInfo && (
@@ -1552,25 +1625,23 @@ export default function FarmModel3D({ led1On = false, led2On = false, led3On = f
             </button>
           )}
 
-          {/* 팜1 진입 시 LED 컨트롤 패널 + CCTV 미니 (식물상태확인 클로즈업 뷰에서는 숨김) */}
+          {/* 팜1 진입 시 식물 상태 확인 버튼 (우측 하단) */}
           {isZoomedInFarm1 && !isPlantCheckView && (
-            <div className="farm3d__farm1-controls-wrap">
-              <Farm1ControlPanel
-              led1={localLed1}
-              led2={localLed2}
-              led3={localLed3}
-              onToggleLed={(id, next) => {
-                if (id === 1) setLocalLed1(next);
-                else if (id === 2) setLocalLed2(next);
-                else setLocalLed3(next);
-                toggleEquipmentStatus(id, next ? 'ON' : 'OFF');
-                equipmentApi.control(id, next ? 'ON' : 'OFF').catch(console.error);
-              }}
-              onCheckPlants={() => {
+            <button
+              className="farm3d__plant-check-btn"
+              onClick={() => {
                 setIsPlantCheckView(true);
                 animRef.current = { toPos: PLANT_CHECK_POS.clone(), toTarget: PLANT_CHECK_TARGET.clone() };
               }}
-            />
+            >
+              🌿 식물 상태 확인
+            </button>
+          )}
+
+          {/* 팜1 활동 로그 패널 (우측) */}
+          {isZoomedInFarm1 && !isPlantCheckView && (
+            <div className="farm3d__activity-panel">
+              <ActivityTimeline />
             </div>
           )}
 

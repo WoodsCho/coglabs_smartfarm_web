@@ -5,6 +5,9 @@ import './EquipmentSummary.css';
 
 const STATUS_ACTIVE = new Set(['ON', 'ACTIVE', 'RUNNING']);
 
+// 실제 하드웨어가 연결된 장비 ID (LED 1·2·3, Mixer)
+const REAL_EQUIPMENT_IDS = new Set([1, 2, 3, 11]);
+
 const STATUS_STYLE: Record<string, { bg: string; border: string; dot: string; label: string; labelColor: string }> = {
   ON: { bg: '#f0fdf4', border: '#bbf7d0', dot: '#22c55e', label: '가동', labelColor: '#16a34a' },
   ACTIVE: { bg: '#f0fdf4', border: '#bbf7d0', dot: '#22c55e', label: '가동', labelColor: '#16a34a' },
@@ -26,6 +29,7 @@ function EquipmentCard({ eq }: { eq: Equipment }) {
   const isActive = STATUS_ACTIVE.has(eq.status);
   const st = STATUS_STYLE[eq.status] ?? DEFAULT_STYLE;
   const hasVals = eq.envValue != null && eq.target != null;
+  const isVirtual = !REAL_EQUIPMENT_IDS.has(eq.id);
   const [editingTarget, setEditingTarget] = useState<string | null>(null);
   const [controlling, setControlling] = useState(false);
 
@@ -54,10 +58,13 @@ function EquipmentCard({ eq }: { eq: Equipment }) {
   };
 
   return (
-    <div className="eq-card" style={{ background: st.bg, borderColor: st.border }}>
+    <div className={`eq-card${isVirtual ? ' eq-card--virtual' : ''}`} style={{ background: st.bg, borderColor: st.border }}>
       {/* 헤더: 이름 + 가동상태 + 자동/수동 */}
       <div className="eq-card__head">
-        <span className="eq-card__name">{eq.name}</span>
+        <span className="eq-card__name">
+          {eq.name}
+          {isVirtual && <span className="eq-card__virtual-badge">가상</span>}
+        </span>
         <div className="eq-card__badges">
           <span className="eq-card__status" style={{ color: st.labelColor }}>
             <span className="eq-card__dot" style={{ background: st.dot }} />

@@ -157,6 +157,65 @@
   margin: 0 2px;
 }
 
+/* ── 장비 버튼 오버레이 ── */
+.farm3d__equip-btn {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  background: rgba(15, 18, 26, 0.82);
+  color: #d0dae8;
+  font-size: 11px;
+  font-family: inherit;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  z-index: 30;
+  pointer-events: auto;
+  white-space: nowrap;
+  user-select: none;
+  line-height: 1;
+}
+.farm3d__equip-btn:hover {
+  background: rgba(30, 40, 60, 0.92);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #fff;
+}
+.farm3d__equip-btn--on {
+  background: rgba(15, 18, 26, 0.82);
+  border-color: rgba(80, 200, 120, 0.55);
+  color: #a8f0c0;
+}
+.farm3d__equip-btn--on:hover {
+  border-color: rgba(80, 200, 120, 0.9);
+  color: #c8ffd8;
+}
+.farm3d__equip-btn-icon {
+  font-size: 13px;
+  line-height: 1;
+  opacity: 0.85;
+}
+.farm3d__equip-btn-label {
+  font-size: 11px;
+  font-weight: 500;
+}
+.farm3d__equip-btn-status {
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(255, 100, 90, 0.85);
+  letter-spacing: 0.02em;
+}
+.farm3d__equip-btn--on .farm3d__equip-btn-status {
+  color: rgba(80, 210, 130, 0.9);
+}
+
 /* 카메라 좌표 디버거 */
 .farm3d__cam-debug {
   position: absolute;
@@ -325,6 +384,106 @@
 
 .farm3d__back-btn:hover {
   background: #F3F4F6;
+}
+
+/* 식물 상태 확인 버튼 (우측 하단) */
+.farm3d__plant-check-btn {
+  position: absolute;
+  right: 14px;
+  bottom: 40px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 20px;
+  background: rgba(15, 18, 26, 0.82);
+  color: #b8e8c0;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid rgba(80, 180, 100, 0.4);
+  border-radius: 5px;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  pointer-events: auto;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  z-index: 30;
+  white-space: nowrap;
+  letter-spacing: 0.04em;
+}
+.farm3d__plant-check-btn:hover {
+  background: rgba(20, 40, 25, 0.9);
+  border-color: rgba(80, 200, 110, 0.75);
+  color: #d0f5d8;
+}
+
+/* ── 활동 로그 오버레이 패널 (우측) ── */
+.farm3d__activity-panel {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  transform: translateY(-50%);
+  width: 158px;
+  max-height: 315px;
+  z-index: 25;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ActivityTimeline 다크 테마 오버라이드 */
+.farm3d__activity-panel .timeline {
+  background: rgba(12, 16, 26, 0.84);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  box-shadow: none;
+  padding: 8px 9px;
+  gap: 6px;
+  height: 100%;
+  overflow: hidden;
+}
+.farm3d__activity-panel .timeline__title {
+  color: #c8d8f0;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+.farm3d__activity-panel .timeline__tab {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #7a8fa8;
+  font-size: 10px;
+}
+.farm3d__activity-panel .timeline__tab--active {
+  background: rgba(59, 130, 246, 0.7);
+  border-color: transparent;
+  color: #fff;
+}
+.farm3d__activity-panel .timeline__time {
+  color: #5a7090;
+}
+.farm3d__activity-panel .timeline__category {
+  font-size: 10px;
+  opacity: 0.85;
+}
+.farm3d__activity-panel .timeline__event {
+  color: #c0d0e8;
+  font-size: 11px;
+}
+.farm3d__activity-panel .timeline__desc {
+  color: #5a7090;
+  font-size: 10px;
+}
+.farm3d__activity-panel .timeline__line {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+/* 인비저블 스크롤바 — 공간 차지 없이 스크롤만 */
+.farm3d__activity-panel .timeline__list {
+  scrollbar-width: none;       /* Firefox */
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.farm3d__activity-panel .timeline__list::-webkit-scrollbar {
+  display: none;               /* Chrome / Safari */
 }
 .farm3d__cam-info {
   position: absolute;
@@ -929,38 +1088,38 @@
   top: 50%;
   left: 10px;
   transform: translateY(-50%);
-  width: 192px;
+  width: 144px;
   background: linear-gradient(160deg, rgba(15, 23, 42, 0.88), rgba(30, 41, 59, 0.76));
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 14px;
-  padding: 12px 13px;
+  padding: 9px 10px;
   z-index: 10;
   pointer-events: none;
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.38);
 }
 
 .farm3d__status-section-label {
-  font-size: 9px;
+  font-size: 8px;
   font-weight: 700;
   color: #7dd3fc;
   letter-spacing: 1.3px;
   text-transform: uppercase;
-  padding-bottom: 6px;
+  padding-bottom: 5px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.10);
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .farm3d__status-section-label--mt {
-  margin-top: 10px;
+  margin-top: 8px;
 }
 
 /* 환경값 2열 그리드 */
 .farm3d__status-env-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 5px 8px;
+  gap: 4px 6px;
 }
 
 .farm3d__status-env-cell {
@@ -970,18 +1129,18 @@
 }
 
 .farm3d__status-env-icon {
-  font-size: 11px;
+  font-size: 9px;
 }
 
 .farm3d__status-env-label {
-  font-size: 9px;
+  font-size: 8px;
   color: #94a3b8;
   font-weight: 500;
   letter-spacing: 0.2px;
 }
 
 .farm3d__status-env-val {
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 800;
   letter-spacing: -0.3px;
   font-variant-numeric: tabular-nums;
@@ -991,26 +1150,26 @@
 .farm3d__status-equip-list {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 4px;
 }
 
 .farm3d__status-equip-row {
   display: grid;
   grid-template-columns: 1fr auto;
   grid-template-rows: auto 3px;
-  column-gap: 6px;
-  row-gap: 3px;
+  column-gap: 5px;
+  row-gap: 2px;
   align-items: center;
 }
 
 .farm3d__status-equip-name {
-  font-size: 10px;
+  font-size: 8px;
   color: #cbd5e1;
   font-weight: 500;
 }
 
 .farm3d__status-equip-count {
-  font-size: 10px;
+  font-size: 8px;
   font-weight: 700;
   letter-spacing: -0.2px;
 }

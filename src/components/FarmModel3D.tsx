@@ -383,11 +383,74 @@ function SmartfarmModel({
   onHoverChange: (hovered: boolean) => void;
 }) {
   const gltf = useLoader(GLTFLoader, url, setupGLTFLoader) as any;
+  // Load leap & cup models to place at each anchor node inside pipeline GLB
+  const leapGltf = useLoader(GLTFLoader, '/3d-model/leap.glb', setupGLTFLoader) as any;
+  const cupGltf  = useLoader(GLTFLoader, '/3d-model/cup.glb',  setupGLTFLoader) as any;
   const { camera, gl } = useThree();
   const [hovered, setHovered] = useState(false);
 
   const { scene, ghNode } = useMemo(() => {
     const cloned = gltf.scene.clone(true);
+    // ─── Leap 모델을 pipeline GLB 안의 모든 앵커 노드에 배치 ────────────
+    // pipeline.glb 안에 이름이 'leap_anchor'(또는 'leap'+'anchor' 포함)인
+    // Empty/노드를 모두 찾아, 각 앵커의 자식으로 leap.glb 씬 clone을 추가합니다.
+    try {
+      // 1. pipeline clone 안에서 앵커 노드 전부 수집
+      const anchorNodes: any[] = [];
+      cloned.traverse((o: any) => {
+        if (o.name && typeof o.name === 'string') {
+          const n = o.name.toLowerCase();
+          if (n.includes('leap') && n.includes('anchor')) anchorNodes.push(o);
+        }
+      });
+      // eslint-disable-next-line no-console
+      console.log('[LeapGrid] anchor nodes found:', anchorNodes.map((o: any) => o.name));
+
+      if (anchorNodes.length > 0) {
+        // 2. 각 앵커에 leap 씬 clone 추가
+        for (const anchor of anchorNodes) {
+          const leapClone = leapGltf.scene.clone(true);
+          // 재질 설정 (양면 렌더링, 클리핑 방지)
+          leapClone.traverse((o: any) => {
+            if (o.isMesh) {
+              const mats = Array.isArray(o.material) ? o.material : [o.material];
+              mats.forEach((mat: any) => {
+                if (!mat) return;
+                mat.side = DoubleSide;
+                mat.needsUpdate = true;
+              });
+              o.castShadow    = true;
+              o.receiveShadow = true;
+            }
+          });
+          anchor.add(leapClone);
+
+          // cup 모델: 앵커 기준 Y -0.15 아래에 배치, 크기 1/3로 축소
+          const cupClone = cupGltf.scene.clone(true);
+          cupClone.position.set(0, -0.08, 0);
+          cupClone.scale.setScalar(1 / 3);
+          cupClone.traverse((o: any) => {
+            if (o.isMesh) {
+              const mats = Array.isArray(o.material) ? o.material : [o.material];
+              mats.forEach((mat: any) => {
+                if (!mat) return;
+                mat.side = DoubleSide;
+                mat.needsUpdate = true;
+              });
+              o.castShadow    = true;
+              o.receiveShadow = true;
+            }
+          });
+          anchor.add(cupClone);
+        }
+      } else {
+        // eslint-disable-next-line no-console
+        console.warn('[LeapGrid] No anchor nodes found in pipeline GLB. ' +
+          "Add Empty objects named 'leap_anchor' in Blender and re-export.");
+      }
+    } catch (err) {
+      // 오류 시 무시 (leap 없이 파이프라인만 표시)
+    }
     applyMaterialDefaults(cloned);
     deduplicateMaterials(cloned);
     const sz = new Box3().setFromObject(cloned).getSize(new Vector3()).length();
@@ -607,6 +670,8 @@ function Greenhouse2Model({
   );
 }
 
+
+
 // ────────────────────────────────────────────────────────
 // 날씨/시간 기반 환경 조명
 // ────────────────────────────────────────────────────────
@@ -739,6 +804,7 @@ function Scene({
             onHoverChange={onGreenhouseHover}
           />
         )}
+        {/* Leap 인스턴스는 pipeline.glb 내부 scene의 origin을 기준으로 SmartfarmModel 안에서 추가됩니다 */}
         {/* 팜2: 추후 통합 GLB 교체 예정 */}
         {showFarm2 && (
           <Greenhouse2Model
@@ -983,8 +1049,8 @@ const PIPELINE1_POS    = new Vector3(47.32, 17.89, -28.11);
 const PIPELINE1_TARGET = new Vector3(18.59,  7.01,  -4.41);
 
 // 팜1 식물 상태 확인 시 클로즈업 좌표
-const PLANT_CHECK_POS    = new Vector3( 8.07, 7.83, -10.54);
-const PLANT_CHECK_TARGET = new Vector3( 8.08, 7.83,  -7.98);
+const PLANT_CHECK_POS    = new Vector3( 8.41, 6.46, -1.64);
+const PLANT_CHECK_TARGET = new Vector3( 8.45, 6.42,  0.36);
 
 
 const FUNNEL_BASE = 'https://k8s-worker02.tail63c20e.ts.net';

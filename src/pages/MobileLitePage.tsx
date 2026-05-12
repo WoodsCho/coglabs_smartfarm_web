@@ -1,7 +1,7 @@
-import FarmModel3DMobile from '../components/FarmModel3DMobile';
+import FarmModelLite from '../components/FarmModelLite';
 import { useFarm } from '../contexts/FarmContext';
 
-export default function MobilePage() {
+export default function MobileLitePage() {
   const { currentData, equipmentGroups } = useFarm();
 
   const ledGroup = equipmentGroups.find(g => g.type === 'led');
@@ -9,7 +9,7 @@ export default function MobilePage() {
     ledGroup?.equipment.find(e => e.id === id)?.status === 'ON';
 
   return (
-    <FarmModel3DMobile
+    <FarmModelLite
       led1On={ledOn(1)}
       led2On={ledOn(2)}
       led3On={ledOn(3)}

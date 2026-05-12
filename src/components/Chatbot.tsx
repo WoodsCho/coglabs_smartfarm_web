@@ -25,7 +25,7 @@ function formatDate(ts: number): string {
   return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
 }
 
-export default function Chatbot({ embedded = false }: { embedded?: boolean }) {
+export default function Chatbot({ embedded = false, noAutoFocus = false }: { embedded?: boolean; noAutoFocus?: boolean }) {
   const [open, setOpen] = useState(false);
   const [view, setView] = useState<'chat' | 'history'>('chat');
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -43,7 +43,7 @@ export default function Chatbot({ embedded = false }: { embedded?: boolean }) {
   useEffect(() => {
     if (open || embedded) {
       bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-      if (embedded) setTimeout(() => inputRef.current?.focus(), 100);
+      if (embedded && !noAutoFocus) setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [open, embedded, messages]);
 

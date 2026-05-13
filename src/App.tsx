@@ -5,6 +5,9 @@ import HarvestPage from './pages/HarvestPage';
 import ShipmentPage from './pages/ShipmentPage';
 import SocialPage from './pages/SocialPage';
 import MonitorPage from './pages/MonitorPage';
+import ControlPage from './pages/ControlPage';
+import LogsPage from './pages/LogsPage';
+import TodosPage from './pages/TodosPage';
 import MobilePage from './pages/MobilePage';
 import MobileLitePage from './pages/MobileLitePage';
 import { FarmProvider } from './contexts/FarmContext';
@@ -21,12 +24,12 @@ function App() {
           <Route element={<Layout />}>
             <Route index element={<DashboardPage />} />
             <Route path="/monitor" element={<MonitorPage />} />
-            <Route path="/control" element={<Placeholder title="장비 제어" />} />
+            <Route path="/control" element={<ControlPage />} />
             <Route path="/harvest" element={<HarvestPage />} />
             <Route path="/shipment" element={<ShipmentPage />} />
             <Route path="/social" element={<SocialPage />} />
-            <Route path="/logs" element={<Placeholder title="활동 로그" />} />
-            <Route path="/todos" element={<Placeholder title="작업 관리" />} />
+            <Route path="/logs" element={<LogsPage />} />
+            <Route path="/todos" element={<TodosPage />} />
             <Route path="/mypage" element={<Placeholder title="마이페이지" />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

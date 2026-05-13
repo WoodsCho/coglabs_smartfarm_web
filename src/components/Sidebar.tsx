@@ -64,6 +64,7 @@ export default function Sidebar({ collapsed, onToggle, onMyPage, onSignOut }: Si
             className={({ isActive }) =>
               `sidebar__item${isActive ? ' sidebar__item--active' : ''}`
             }
+            title={collapsed ? item.label : undefined}
           >
             <span className="sidebar__icon">{item.icon}</span>
             {!collapsed && <span className="sidebar__label">{item.label}</span>}
@@ -90,12 +91,12 @@ export default function Sidebar({ collapsed, onToggle, onMyPage, onSignOut }: Si
           )}
         </a>
 
-        <button className="sidebar__item" onClick={onMyPage}>
+        <button className="sidebar__item" onClick={onMyPage} title={collapsed ? '마이페이지' : undefined}>
           <span className="sidebar__icon"><User size={20} /></span>
           {!collapsed && <span className="sidebar__label">마이페이지</span>}
         </button>
 
-        <button className="sidebar__item sidebar__item--danger" onClick={onSignOut}>
+        <button className="sidebar__item sidebar__item--danger" onClick={onSignOut} title={collapsed ? '로그아웃' : undefined}>
           <span className="sidebar__icon"><LogOut size={20} /></span>
           {!collapsed && <span className="sidebar__label">로그아웃</span>}
         </button>

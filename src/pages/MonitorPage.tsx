@@ -48,7 +48,7 @@ function pickTicks(data: ChartDataPoint[], n = 6): string[] {
   if (data.length <= n) return data.map(d => d.time);
   const step = Math.floor(data.length / (n - 1));
   const ticks = data.filter((_, i) => i % step === 0).map(d => d.time);
-  const last = data.at(-1)?.time;
+  const last = data[data.length - 1]?.time;
   if (last && !ticks.includes(last)) ticks.push(last);
   return ticks;
 }
@@ -78,7 +78,6 @@ function SensorRow({
 }) {
   const { data } = useSensorChart(meta.type, 3);
   const status = getStatus(currentValue, meta.optimal);
-  const { Icon } = meta;
 
   return (
     <button

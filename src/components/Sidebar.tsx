@@ -12,6 +12,8 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  ShoppingBag,
+  ArrowUpRight,
 } from 'lucide-react';
 import './Sidebar.css';
 
@@ -23,14 +25,14 @@ interface MenuItem {
 }
 
 const menuItems: MenuItem[] = [
-  { id: 'main',     label: '통합 대시보드', icon: <LayoutDashboard size={20} />, path: '/' },
-  { id: 'monitor',  label: '환경 모니터링', icon: <Thermometer size={20} />,     path: '/monitor' },
-  { id: 'control',  label: '장비 제어',     icon: <Settings size={20} />,        path: '/control' },
-  { id: 'harvest',  label: '수확 관리',     icon: <Scissors size={20} />,        path: '/harvest' },
-  { id: 'shipment', label: '출하 · 유통',   icon: <Truck size={20} />,           path: '/shipment' },
-  { id: 'social',   label: '농장 스토리',   icon: <Users size={20} />,           path: '/social' },
-  { id: 'logs',     label: '활동 로그',     icon: <ClipboardList size={20} />,   path: '/logs' },
-  { id: 'todos',    label: '작업 관리',     icon: <CheckSquare size={20} />,     path: '/todos' },
+  { id: 'main', label: '통합 대시보드', icon: <LayoutDashboard size={20} />, path: '/' },
+  { id: 'monitor', label: '환경 모니터링', icon: <Thermometer size={20} />, path: '/monitor' },
+  { id: 'control', label: '장비 제어', icon: <Settings size={20} />, path: '/control' },
+  { id: 'harvest', label: '수확 관리', icon: <Scissors size={20} />, path: '/harvest' },
+  { id: 'shipment', label: '출하 · 유통', icon: <Truck size={20} />, path: '/shipment' },
+  { id: 'social', label: '농장 스토리', icon: <Users size={20} />, path: '/social' },
+  { id: 'logs', label: '활동 로그', icon: <ClipboardList size={20} />, path: '/logs' },
+  { id: 'todos', label: '작업 관리', icon: <CheckSquare size={20} />, path: '/todos' },
 ];
 
 interface SidebarProps {
@@ -71,6 +73,23 @@ export default function Sidebar({ collapsed, onToggle, onMyPage, onSignOut }: Si
 
       {/* 하단 메뉴 */}
       <div className="sidebar__bottom">
+        <div className="sidebar__market-divider" />
+        <a
+          href="https://market.cog-labs.com/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="sidebar__item sidebar__item--market"
+          title="CoG Market"
+        >
+          <span className="sidebar__icon"><ShoppingBag size={20} /></span>
+          {!collapsed && (
+            <>
+              <span className="sidebar__label">CoG Market</span>
+              <ArrowUpRight size={14} className="sidebar__market-arrow" />
+            </>
+          )}
+        </a>
+
         <button className="sidebar__item" onClick={onMyPage}>
           <span className="sidebar__icon"><User size={20} /></span>
           {!collapsed && <span className="sidebar__label">마이페이지</span>}

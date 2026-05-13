@@ -18,21 +18,21 @@ const LED_DEFS = [
 ] as const;
 
 const EQUIP_DEFS = [
-  { ids: [8]    as const, label: '팬코일',  group: 'climate' },
-  { ids: [9]    as const, label: '히트펌프', group: 'climate' },
-  { ids: [11]   as const, label: '믹서',    group: 'nutrition' },
+  { ids: [8] as const, label: '팬코일', group: 'climate' },
+  { ids: [9] as const, label: '히트펌프', group: 'climate' },
+  { ids: [11] as const, label: '믹서', group: 'nutrition' },
   { ids: [6, 7] as const, label: '양액펌프', group: 'nutrition' },
 ];
 
 const SENSORS = [
-  { key: 'temperature', label: 'TEMPERATURE', unit: '°C',   color: '#dc2626', fmt: (v: number) => v.toFixed(1) },
-  { key: 'humidity',    label: 'HUMIDITY',    unit: '%',    color: '#2563eb', fmt: (v: number) => v.toFixed(1) },
-  { key: 'co2',         label: 'CO₂',         unit: 'ppm',  color: '#7c3aed', fmt: (v: number) => v.toFixed(0) },
-  { key: 'light',       label: 'LIGHT',       unit: '%',    color: '#d97706', fmt: (v: number) => v.toFixed(0) },
-  { key: 'ph',          label: 'pH',          unit: '',     color: '#059669', fmt: (v: number) => v.toFixed(1) },
-  { key: 'ec',          label: 'EC',          unit: 'dS/m', color: '#0891b2', fmt: (v: number) => v.toFixed(1) },
-  { key: 'waterTemp',   label: 'WATER TEMP',  unit: '°C',   color: '#0284c7', fmt: (v: number) => v.toFixed(1) },
-  { key: 'oxygenLevel', label: 'DO',          unit: 'mg/L', color: '#16a34a', fmt: (v: number) => v.toFixed(1) },
+  { key: 'temperature', label: 'TEMPERATURE', unit: '°C', color: '#dc2626', fmt: (v: number) => v.toFixed(1) },
+  { key: 'humidity', label: 'HUMIDITY', unit: '%', color: '#2563eb', fmt: (v: number) => v.toFixed(1) },
+  { key: 'co2', label: 'CO₂', unit: 'ppm', color: '#7c3aed', fmt: (v: number) => v.toFixed(0) },
+  { key: 'light', label: 'LIGHT', unit: '%', color: '#d97706', fmt: (v: number) => v.toFixed(0) },
+  { key: 'ph', label: 'pH', unit: '', color: '#059669', fmt: (v: number) => v.toFixed(1) },
+  { key: 'ec', label: 'EC', unit: 'dS/m', color: '#0891b2', fmt: (v: number) => v.toFixed(1) },
+  { key: 'waterTemp', label: 'WATER TEMP', unit: '°C', color: '#0284c7', fmt: (v: number) => v.toFixed(1) },
+  { key: 'oxygenLevel', label: 'DO', unit: 'mg/L', color: '#16a34a', fmt: (v: number) => v.toFixed(1) },
 ] as const;
 
 const FUNNEL_BASE = 'https://k8s-worker02.tail63c20e.ts.net';
@@ -55,7 +55,7 @@ const MOCK_PLANT = {
 // ── Drag-to-close ─────────────────────────────────────────
 function useDragToClose(onClose: () => void) {
   const sheetRef = useRef<HTMLDivElement>(null);
-  const startY   = useRef(0);
+  const startY = useRef(0);
 
   const onTouchStart = (e: React.TouchEvent) => {
     startY.current = e.touches[0].clientY;
@@ -110,11 +110,11 @@ function Toggle({ on, onChange }: { on: boolean; onChange: () => void }) {
 // ── Bottom nav ────────────────────────────────────────────
 type NavId = 'status' | 'monitor' | 'log' | 'ai' | 'market';
 const NAV_ITEMS: { id: NavId; label: string }[] = [
-  { id: 'status',  label: '현황' },
+  { id: 'status', label: '현황' },
   { id: 'monitor', label: '모니터' },
-  { id: 'log',     label: '로그' },
-  { id: 'ai',      label: 'AI' },
-  { id: 'market',  label: '마켓' },
+  { id: 'log', label: '로그' },
+  { id: 'ai', label: 'AI' },
+  { id: 'market', label: '마켓' },
 ];
 
 function LiteBottomNav({ active, onSelect }: { active: NavId; onSelect: (id: NavId) => void }) {
@@ -198,9 +198,9 @@ function LiteAiPanel({ onClose }: { onClose: () => void }) {
 
 // ── Market overlay ────────────────────────────────────────
 const MARKET_ACTIONS = [
-  { label: '퀵 등록', desc: '수확물을 빠르게 마켓에 등록합니다' },
-  { label: '내 물품 조회', desc: '등록한 물품 현황을 확인합니다' },
-  { label: '거래 내역', desc: '최근 거래 내역을 확인합니다' },
+  { label: '퀵 등록', desc: '수확물 판매 등록' },
+  { label: '내 판매 현황', desc: '등록 품목 조회' },
+  { label: '시세 확인', desc: '오늘의 농산물 시세' },
 ];
 
 function LiteMarketPanel({ onClose }: { onClose: () => void }) {
@@ -367,7 +367,7 @@ function MonitorScreen() {
         ))}
       </div>
       <div className="farmlite__scroll">
-        {activeTab === 'cctv'  && <LiteCctvPanel />}
+        {activeTab === 'cctv' && <LiteCctvPanel />}
         {activeTab === 'plant' && <LitePlantPanel />}
       </div>
     </div>
@@ -405,8 +405,25 @@ export default function FarmModelLite({
   const [localLed3, setLocalLed3] = useState(led3On);
   const [activeScreen, setActiveScreen] = useState<'status' | 'monitor' | 'log'>('status');
   const [showSettings, setShowSettings] = useState(false);
-  const [showAi, setShowAi]     = useState(false);
+  const [showAi, setShowAi] = useState(false);
   const [showMarket, setShowMarket] = useState(false);
+
+  useEffect(() => {
+    const handleNativeBack = () => {
+      const rn = (window as any).ReactNativeWebView;
+      if (!rn) return;
+      if (showSettings || showAi || showMarket) {
+        setShowSettings(false);
+        setShowAi(false);
+        setShowMarket(false);
+        rn.postMessage(JSON.stringify({ type: 'backResult', hadOverlay: true }));
+      } else {
+        rn.postMessage(JSON.stringify({ type: 'backResult', hadOverlay: false }));
+      }
+    };
+    window.addEventListener('nativeBack', handleNativeBack);
+    return () => window.removeEventListener('nativeBack', handleNativeBack);
+  }, [showSettings, showAi, showMarket]);
 
   useEffect(() => {
     const id = setInterval(() => setCurrentTime(new Date()), 60_000);
@@ -440,8 +457,8 @@ export default function FarmModelLite({
   };
 
   const handleNav = (id: NavId) => {
-    if (id === 'ai')     { setShowAi(true);     return; }
-    if (id === 'market') { setShowMarket(true);  return; }
+    if (id === 'ai') { setShowAi(true); return; }
+    if (id === 'market') { setShowMarket(true); return; }
     setActiveScreen(id as 'status' | 'monitor' | 'log');
   };
 
@@ -482,7 +499,7 @@ export default function FarmModelLite({
         </div>
       ) : (
         <>
-          {activeScreen === 'status'  && (
+          {activeScreen === 'status' && (
             <StatusScreen
               sensorData={sensorData}
               getLedOn={getLedOn}
@@ -492,15 +509,15 @@ export default function FarmModelLite({
             />
           )}
           {activeScreen === 'monitor' && <MonitorScreen />}
-          {activeScreen === 'log'     && <LogScreen />}
+          {activeScreen === 'log' && <LogScreen />}
         </>
       )}
 
       <LiteBottomNav active={navActive} onSelect={handleNav} />
 
       {showSettings && <LiteSettingsOverlay onClose={() => setShowSettings(false)} />}
-      {showAi       && <LiteAiPanel         onClose={() => setShowAi(false)} />}
-      {showMarket   && <LiteMarketPanel     onClose={() => setShowMarket(false)} />}
+      {showAi && <LiteAiPanel onClose={() => setShowAi(false)} />}
+      {showMarket && <LiteMarketPanel onClose={() => setShowMarket(false)} />}
     </div>
   );
 }

@@ -20,6 +20,32 @@ import ActivityTimeline from './ActivityTimeline';
 import Chatbot from './Chatbot';
 import './FarmModel3DMobile.css';
 
+// ── Sky color sync (mirrors WeatherLighting scene.background) ──
+function lerpRGB(a: [number, number, number], b: [number, number, number], t: number): [number, number, number] {
+  return [
+    Math.round(a[0] + (b[0] - a[0]) * t),
+    Math.round(a[1] + (b[1] - a[1]) * t),
+    Math.round(a[2] + (b[2] - a[2]) * t),
+  ];
+}
+
+function computeSkyInfo(weather: WeatherState): { bg: string; isDark: boolean } {
+  if (weather.loading) return { bg: 'rgb(10,15,30)', isDark: true };
+  const { isDay, sunProgress, condition } = weather;
+  let rgb: [number, number, number];
+  if (!isDay)                                          rgb = [10, 15, 30];
+  else if (condition === 'rain' || condition === 'thunderstorm') rgb = [74, 85, 104];
+  else if (condition === 'clouds')                     rgb = [158, 175, 194];
+  else if (condition === 'mist')                       rgb = [200, 212, 220];
+  else if (sunProgress < 0.15) rgb = lerpRGB([249, 115, 22], [96, 165, 250], sunProgress / 0.15);
+  else if (sunProgress > 0.85) rgb = lerpRGB([96, 165, 250], [249, 115, 22], (sunProgress - 0.85) / 0.15);
+  else                                                 rgb = [135, 206, 235];
+  const [r, g, b] = rgb;
+  const lin = (c: number) => { const s = c / 255; return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4; };
+  const lum = 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+  return { bg: `rgb(${r},${g},${b})`, isDark: lum < 0.35 };
+}
+
 // ── Draco decoder ────────────────────────────────────────
 const dracoLoader = new DRACOLoader();
 dracoLoader.setDecoderPath('/draco/gltf/');
@@ -481,13 +507,16 @@ function DayProgress({ weather, time }: { weather: WeatherState; time: Date }) {
   );
 }
 
-function SensorBar({ data }: { data: EnvironmentData }) {
+function SensorBar({ data, isDark }: { data: EnvironmentData; isDark: boolean }) {
+  const c = isDark
+    ? { temp: '#f87171', hum: '#60a5fa', co2: '#c084fc', ec: '#fbbf24' }
+    : { temp: '#dc2626', hum: '#0369a1', co2: '#6d28d9', ec: '#92400e' };
   return (
     <div className="farm3dm__sensors">
-      <div className="farm3dm__sensor-item"><span>🌡️</span><span className="farm3dm__sensor-val" style={{ color: '#fb7185' }}>{data.temperature.toFixed(1)}°C</span></div>
-      <div className="farm3dm__sensor-item"><span>💧</span><span className="farm3dm__sensor-val" style={{ color: '#38bdf8' }}>{data.humidity.toFixed(1)}%</span></div>
-      <div className="farm3dm__sensor-item"><span>💨</span><span className="farm3dm__sensor-val" style={{ color: '#a78bfa' }}>{data.co2.toFixed(0)}ppm</span></div>
-      <div className="farm3dm__sensor-item"><span>⚡</span><span className="farm3dm__sensor-val" style={{ color: '#facc15' }}>{data.ec.toFixed(1)}dS/m</span></div>
+      <div className="farm3dm__sensor-item"><span>🌡️</span><span className="farm3dm__sensor-val" style={{ color: c.temp }}>{data.temperature.toFixed(1)}°C</span></div>
+      <div className="farm3dm__sensor-item"><span>💧</span><span className="farm3dm__sensor-val" style={{ color: c.hum }}>{data.humidity.toFixed(1)}%</span></div>
+      <div className="farm3dm__sensor-item"><span>💨</span><span className="farm3dm__sensor-val" style={{ color: c.co2 }}>{data.co2.toFixed(0)}ppm</span></div>
+      <div className="farm3dm__sensor-item"><span>⚡</span><span className="farm3dm__sensor-val" style={{ color: c.ec }}>{data.ec.toFixed(1)}dS/m</span></div>
     </div>
   );
 }
@@ -522,14 +551,14 @@ function FarmStatusPanel({ data }: { data: EnvironmentData }) {
   const [activeTab, setActiveTab] = useState<'env' | 'log'>('env');
 
   const envItems = useMemo(() => [
-    { key: 'temp', icon: '🌡️', label: '온도', value: `${data.temperature.toFixed(1)}°C`, color: '#fb7185' },
-    { key: 'hum', icon: '💧', label: '습도', value: `${data.humidity.toFixed(1)}%`, color: '#38bdf8' },
-    { key: 'co2', icon: '💨', label: 'CO₂', value: `${data.co2.toFixed(0)} ppm`, color: '#a78bfa' },
-    { key: 'lux', icon: '☀️', label: '조도', value: `${data.light.toFixed(0)}%`, color: '#fbbf24' },
-    { key: 'ph', icon: '🧪', label: 'pH', value: data.ph.toFixed(1), color: '#34d399' },
-    { key: 'ec', icon: '⚡', label: 'EC', value: `${data.ec.toFixed(1)} dS/m`, color: '#facc15' },
-    { key: 'wt', icon: '🌊', label: '수온', value: `${data.waterTemp.toFixed(1)}°C`, color: '#22d3ee' },
-    { key: 'o2', icon: '🫧', label: '용존O₂', value: `${data.oxygenLevel.toFixed(1)} mg/L`, color: '#86efac' },
+    { key: 'temp', icon: '🌡️', label: '온도', value: `${data.temperature.toFixed(1)}°C`, color: '#e11d48' },
+    { key: 'hum', icon: '💧', label: '습도', value: `${data.humidity.toFixed(1)}%`, color: '#0284c7' },
+    { key: 'co2', icon: '💨', label: 'CO₂', value: `${data.co2.toFixed(0)} ppm`, color: '#7c3aed' },
+    { key: 'lux', icon: '☀️', label: '조도', value: `${data.light.toFixed(0)}%`, color: '#d97706' },
+    { key: 'ph', icon: '🧪', label: 'pH', value: data.ph.toFixed(1), color: '#059669' },
+    { key: 'ec', icon: '⚡', label: 'EC', value: `${data.ec.toFixed(1)} dS/m`, color: '#b45309' },
+    { key: 'wt', icon: '🌊', label: '수온', value: `${data.waterTemp.toFixed(1)}°C`, color: '#0891b2' },
+    { key: 'o2', icon: '🫧', label: '용존O₂', value: `${data.oxygenLevel.toFixed(1)} mg/L`, color: '#16a34a' },
   ], [data.temperature, data.humidity, data.co2, data.light, data.ph, data.ec, data.waterTemp, data.oxygenLevel]);
 
   const equipSummary = useMemo(() => equipmentGroups.map(grp => {
@@ -706,7 +735,7 @@ function EquipFloatPanel({ getIsOn, onToggle }: EquipFloatPanelProps) {
 // ── Bottom navigation ────────────────────────────────────
 function IconGrid() {
   return (
-    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
       <rect x="1.5" y="1.5" width="5" height="5" rx="1.2" /><rect x="9.5" y="1.5" width="5" height="5" rx="1.2" />
       <rect x="1.5" y="9.5" width="5" height="5" rx="1.2" /><rect x="9.5" y="9.5" width="5" height="5" rx="1.2" />
     </svg>
@@ -714,7 +743,7 @@ function IconGrid() {
 }
 function IconTrend() {
   return (
-    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
       <polyline points="1,12 4.5,7.5 8,10 12,4.5 15,6.5" />
       <line x1="1" y1="14.5" x2="15" y2="14.5" />
     </svg>
@@ -722,7 +751,7 @@ function IconTrend() {
 }
 function IconShop() {
   return (
-    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
       <path d="M2.5 6h11l-1.5 7.5H4L2.5 6z" />
       <path d="M5.5 6V4.5a2.5 2.5 0 015 0V6" />
     </svg>
@@ -730,7 +759,7 @@ function IconShop() {
 }
 function IconSliders() {
   return (
-    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
       <line x1="1" y1="5" x2="15" y2="5" />
       <line x1="1" y1="11" x2="15" y2="11" />
       <circle cx="5" cy="5" r="2" fill="currentColor" stroke="none" />
@@ -744,9 +773,9 @@ type AppMode = 'high' | 'lite';
 
 const NAV_ITEMS: { id: NavId; label: string; icon: React.ReactNode }[] = [
   { id: 'dashboard', label: '대시보드', icon: <IconGrid /> },
-  { id: 'analytics', label: 'AI',    icon: <IconTrend /> },
-  { id: 'market',    label: '마켓',  icon: <IconShop /> },
-  { id: 'settings',  label: '설정',  icon: <IconSliders /> },
+  { id: 'analytics', label: 'AI', icon: <IconTrend /> },
+  { id: 'market', label: '마켓', icon: <IconShop /> },
+  { id: 'settings', label: '설정', icon: <IconSliders /> },
 ];
 
 function BottomNav({ active, onSelect }: { active: NavId; onSelect: (id: NavId) => void }) {
@@ -822,7 +851,7 @@ function AiOverlay({ onClose }: { onClose: () => void }) {
 function MarketOverlay({ onClose }: { onClose: () => void }) {
   const { sheetRef, handleProps } = useDragToClose(onClose);
   const actions = [
-    { label: '빠른 등록', desc: '수확물 판매 등록' },
+    { label: '퀵 등록', desc: '수확물 판매 등록' },
     { label: '내 판매 현황', desc: '등록 품목 조회' },
     { label: '시세 확인', desc: '오늘의 농산물 시세' },
   ];
@@ -925,6 +954,7 @@ export default function FarmModel3DMobile({
   const camDebugRef = useRef({ pos: new Vector3(), target: new Vector3() });
   const [camDebug, setCamDebug] = useState({ px: 0, py: 0, pz: 0, tx: 0, ty: 0, tz: 0 });
   const weather = useWeather();
+  const skyInfo = useMemo(() => computeSkyInfo(weather), [weather]);
   const { toggleEquipmentStatus, equipmentGroups } = useFarm();
 
   const [currentTime, setCurrentTime] = useState(() => new Date());
@@ -944,6 +974,24 @@ export default function FarmModel3DMobile({
   const [showSettings, setShowSettings] = useState(false);
   const [showAi, setShowAi] = useState(false);
   const [showMarket, setShowMarket] = useState(false);
+
+  useEffect(() => {
+    const handleNativeBack = () => {
+      const rn = (window as any).ReactNativeWebView;
+      if (!rn) return;
+      if (showSettings || showAi || showMarket) {
+        setShowSettings(false);
+        setShowAi(false);
+        setShowMarket(false);
+        rn.postMessage(JSON.stringify({ type: 'backResult', hadOverlay: true }));
+      } else {
+        rn.postMessage(JSON.stringify({ type: 'backResult', hadOverlay: false }));
+      }
+    };
+    window.addEventListener('nativeBack', handleNativeBack);
+    return () => window.removeEventListener('nativeBack', handleNativeBack);
+  }, [showSettings, showAi, showMarket]);
+
   const readyFiredRef = useRef(false);
   const handleReady = useCallback(() => {
     if (readyFiredRef.current) return;
@@ -1064,12 +1112,21 @@ export default function FarmModel3DMobile({
   };
 
   return (
-    <div className="farm3dm__root">
+    <div
+      className="farm3dm__root"
+      style={{
+        '--sky-bg': skyInfo.bg,
+        '--sky-text': skyInfo.isDark ? '#ffffff' : '#0f172a',
+        '--sky-text-muted': skyInfo.isDark ? 'rgba(255,255,255,0.6)' : '#475569',
+        '--sky-text-dim': skyInfo.isDark ? 'rgba(255,255,255,0.28)' : '#94a3b8',
+        '--sky-border': skyInfo.isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.09)',
+      } as React.CSSProperties}
+    >
       {/* 상단 바: 날씨 / 진행 / 센서 */}
       <div className="farm3dm__topbar">
         <WeatherWidget weather={weather} />
         <DayProgress weather={weather} time={currentTime} />
-        <SensorBar data={sensorData} />
+        <SensorBar data={sensorData} isDark={skyInfo.isDark} />
       </div>
 
       {/* CCTV 전체보기 */}
@@ -1214,6 +1271,9 @@ export default function FarmModel3DMobile({
       <BottomNav
         active={showSettings ? 'settings' : showAi ? 'analytics' : showMarket ? 'market' : 'dashboard'}
         onSelect={(id) => {
+          setShowSettings(false);
+          setShowAi(false);
+          setShowMarket(false);
           if (id === 'settings') setShowSettings(true);
           else if (id === 'analytics') setShowAi(true);
           else if (id === 'market') setShowMarket(true);

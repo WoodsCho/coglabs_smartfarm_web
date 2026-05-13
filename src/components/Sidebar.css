@@ -114,6 +114,28 @@
   gap: 2px;
 }
 
+.sidebar__market-divider {
+  height: 1px;
+  background: #F3F4F6;
+  margin: 4px 4px 6px;
+}
+
+.sidebar__item--market {
+  color: #EA580C;
+  text-decoration: none;
+}
+
+.sidebar__item--market:hover {
+  background: #FFF7ED;
+  color: #C2410C;
+}
+
+.sidebar__market-arrow {
+  margin-left: auto;
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
 /* 토글 버튼 */
 .sidebar__toggle {
   display: flex;

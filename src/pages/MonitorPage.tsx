@@ -78,6 +78,7 @@ function SensorRow({
 }) {
   const { data } = useSensorChart(meta.type, 3);
   const status = getStatus(currentValue, meta.optimal);
+  const { Icon } = meta;
 
   return (
     <button
@@ -152,7 +153,6 @@ export default function MonitorPage() {
         {SENSOR_META.map(meta => {
           const val = currentData[meta.type];
           const st = getStatus(val, meta.optimal);
-          const { Icon } = meta;
           const isSel = meta.type === selectedType;
           return (
             <button

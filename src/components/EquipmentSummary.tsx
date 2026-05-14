@@ -5,8 +5,8 @@ import './EquipmentSummary.css';
 
 const STATUS_ACTIVE = new Set(['ON', 'ACTIVE', 'RUNNING']);
 
-// 실제 하드웨어가 연결된 장비 ID (LED 1·2·3, Mixer, 4-TH 2 채널 4개)
-const REAL_EQUIPMENT_IDS = new Set([1, 2, 3, 6, 7, 11, 12, 13]);
+// 실제 하드웨어가 연결된 장비 ID (LED 1·2·3, 히트펌프, Mixer, 4-TH 2 채널 4개)
+const REAL_EQUIPMENT_IDS = new Set([1, 2, 3, 6, 7, 9, 11, 12, 13]);
 
 const STATUS_STYLE: Record<string, { bg: string; border: string; dot: string; label: string; labelColor: string }> = {
   ON: { bg: '#f0fdf4', border: '#bbf7d0', dot: '#22c55e', label: '가동', labelColor: '#16a34a' },

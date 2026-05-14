@@ -6,6 +6,7 @@ export const REAL_DEVICE_MAP: Record<number, string> = {
   2:  '0x70b3d52b6008b199',
   6:  '4th2_ch1',
   7:  '4th2_ch2',
+  9:  'Heat-pump',
   11: 'Mixer',
   12: '4th2_ch109',
   13: '4th2_ch108',

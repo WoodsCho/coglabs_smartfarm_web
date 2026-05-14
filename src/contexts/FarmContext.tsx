@@ -180,6 +180,18 @@ export function FarmProvider({ children }: { children: ReactNode }) {
           ...(apiData.oxygenLevel != null && { oxygenLevel: apiData.oxygenLevel }),
           ...(apiData.heatPumpPower != null && { heatPumpPower: apiData.heatPumpPower }),
         }));
+        if (apiData.equipment) {
+          setEquipmentGroups(prev => prev.map(g => ({
+            ...g,
+            equipment: g.equipment.map(eq => {
+              const deviceName = REAL_DEVICE_MAP[eq.id];
+              if (!deviceName) return eq;
+              const newStatus = apiData.equipment![deviceName];
+              if (newStatus == null) return eq;
+              return { ...eq, status: newStatus as Equipment['status'] };
+            }),
+          })));
+        }
       } catch { /* 네트워크 오류 시 기존 값 유지 */ }
     };
     poll();

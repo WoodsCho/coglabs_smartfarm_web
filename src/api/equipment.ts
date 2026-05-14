@@ -2,6 +2,8 @@ import { apiClient } from './client';
 import type { EquipmentGroup, Equipment } from '../types/farm';
 
 export const REAL_DEVICE_MAP: Record<number, string> = {
+  1:  'solenoid_valve',
+  2:  '0x70b3d52b6008b199',
   11: 'Mixer',
 };
 

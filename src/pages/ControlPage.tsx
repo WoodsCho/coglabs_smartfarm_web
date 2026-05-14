@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import {
   Lightbulb, Wind, Droplets, Thermometer, CloudCog,
@@ -9,12 +9,13 @@ import {
   PieChart, Pie, Cell, Tooltip as ReTooltip, ResponsiveContainer,
 } from 'recharts';
 import { useFarm } from '../contexts/FarmContext';
+import { environmentApi } from '../api/environment';
 import type { Equipment, EquipmentGroup } from '../types/farm';
 import './ControlPage.css';
 
 /* ── Constants ───────────────────────────────────────────────── */
 const STATUS_ACTIVE = new Set(['ON', 'ACTIVE', 'RUNNING']);
-const REAL_EQUIPMENT_IDS = new Set([1, 2, 3, 11]);
+const REAL_EQUIPMENT_IDS = new Set([1, 2, 3, 9, 11]);
 
 const GROUP_META: Record<string, { Icon: LucideIcon; color: string }> = {
   led: { Icon: Lightbulb, color: '#F59E0B' },
@@ -153,7 +154,7 @@ function EquipmentRow({
   eq, groupColor, groupType,
   scheduleOpenId, onToggleScheduler,
   scheduleOverrides, onToggleSchedule,
-  onOpenHistory,
+  onOpenHistory, heatPumpTodayKwh,
 }: {
   eq: Equipment;
   groupColor: string;
@@ -163,8 +164,9 @@ function EquipmentRow({
   scheduleOverrides: Record<number, number[]>;
   onToggleSchedule: (eqId: number, groupType: string, h: number) => void;
   onOpenHistory: (eq: Equipment) => void;
+  heatPumpTodayKwh: number | null;
 }) {
-  const { toggleEquipmentStatus, toggleEquipmentAuto, updateEquipmentTarget } = useFarm();
+  const { toggleEquipmentStatus, toggleEquipmentAuto, updateEquipmentTarget, currentData } = useFarm();
   const [controlling, setControlling] = useState(false);
 
   const isActive = STATUS_ACTIVE.has(eq.status);
@@ -172,7 +174,10 @@ function EquipmentRow({
   const st = STATUS_LABEL[eq.status] ?? DEFAULT_STATUS_META;
   const hasTarget = eq.target != null && eq.unit != null;
   const errors = mockErrors(eq.id);
-  const kwh = mockKwh(eq.id);
+  const isHeatPump = eq.id === 9;
+  const liveKw = isHeatPump && currentData.heatPumpPower != null
+    ? parseFloat((currentData.heatPumpPower / 1000).toFixed(2))
+    : mockKwh(eq.id);
   const isSchedOpen = scheduleOpenId === eq.id;
 
   const handleToggle = async () => {
@@ -218,10 +223,17 @@ function EquipmentRow({
           <div className="ctrl-row__slider-empty" />
         )}
 
-        {/* kWh */}
+        {/* 실시간 kW */}
         <div className="ctrl-row__kwh">
           <Zap size={10} style={{ color: '#F59E0B' }} />
-          <span>{kwh}</span>
+          <span>{liveKw} kW</span>
+        </div>
+
+        {/* 오늘 kWh */}
+        <div className="ctrl-row__kwh-today">
+          {isHeatPump && heatPumpTodayKwh != null
+            ? <span>{heatPumpTodayKwh} kWh</span>
+            : <span className="ctrl-row__kwh-today--mock">{mockKwh(eq.id)} kWh</span>}
         </div>
 
         {/* Mode toggle */}
@@ -280,7 +292,7 @@ function EquipmentRow({
 /* ── Group Card ──────────────────────────────────────────────── */
 function GroupCard({
   group, scheduleOpenId, onToggleScheduler,
-  scheduleOverrides, onToggleSchedule, onOpenHistory,
+  scheduleOverrides, onToggleSchedule, onOpenHistory, heatPumpTodayKwh,
 }: {
   group: EquipmentGroup;
   scheduleOpenId: number | null;
@@ -288,6 +300,7 @@ function GroupCard({
   scheduleOverrides: Record<number, number[]>;
   onToggleSchedule: (eqId: number, groupType: string, h: number) => void;
   onOpenHistory: (eq: Equipment) => void;
+  heatPumpTodayKwh: number | null;
 }) {
   const { toggleEquipmentStatus, toggleEquipmentAuto } = useFarm();
   const [collapsed, setCollapsed] = useState(false);
@@ -357,7 +370,8 @@ function GroupCard({
             <span>상태</span>
             <span>환경 현황</span>
             <span>목표 조정</span>
-            <span>kWh</span>
+            <span>전력 (kW)</span>
+            <span>사용량 (kWh)</span>
             <span>모드</span>
             <span>제어</span>
             <span />
@@ -373,6 +387,7 @@ function GroupCard({
               scheduleOverrides={scheduleOverrides}
               onToggleSchedule={onToggleSchedule}
               onOpenHistory={onOpenHistory}
+              heatPumpTodayKwh={heatPumpTodayKwh}
             />
           ))}
         </div>
@@ -627,6 +642,29 @@ export default function ControlPage() {
   const [schedOpenId, setSchedOpenId] = useState<number | null>(null);
   const [schedOverrides, setSchedOverrides] = useState<Record<number, number[]>>({});
   const [showEnergy, setShowEnergy] = useState(false);
+  const [heatPumpTodayKwh, setHeatPumpTodayKwh] = useState<number | null>(null);
+
+  useEffect(() => {
+    const fetchTodayKwh = async () => {
+      try {
+        const today = new Date();
+        const startDate = today.toLocaleDateString('sv'); // YYYY-MM-DD
+        const res = await environmentApi.getHistory({ sensorType: 'heatPumpPower', startDate, endDate: startDate });
+        const points = res.data;
+        if (points.length < 2) return;
+        let wattSeconds = 0;
+        for (let i = 1; i < points.length; i++) {
+          const dt = points[i].timestamp - points[i - 1].timestamp;
+          const avgW = (points[i].value + points[i - 1].value) / 2;
+          wattSeconds += avgW * dt;
+        }
+        setHeatPumpTodayKwh(parseFloat((wattSeconds / 3_600_000).toFixed(2)));
+      } catch { /* 오류 시 null 유지 */ }
+    };
+    fetchTodayKwh();
+    const id = setInterval(fetchTodayKwh, 60_000);
+    return () => clearInterval(id);
+  }, []);
 
   const toggleScheduler = useCallback((id: number) => {
     setSchedOpenId(prev => (prev === id ? null : id));
@@ -693,6 +731,7 @@ export default function ControlPage() {
               scheduleOverrides={schedOverrides}
               onToggleSchedule={toggleScheduleHour}
               onOpenHistory={setHistoryEq}
+              heatPumpTodayKwh={heatPumpTodayKwh}
             />
           ))}
         </div>

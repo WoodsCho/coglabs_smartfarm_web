@@ -7,6 +7,7 @@ export interface EnvironmentData {
   ec: number;
   waterTemp: number;
   oxygenLevel: number;
+  heatPumpPower?: number;
 }
 
 export interface Equipment {

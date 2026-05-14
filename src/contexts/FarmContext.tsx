@@ -178,6 +178,7 @@ export function FarmProvider({ children }: { children: ReactNode }) {
           ...(apiData.ph != null && { ph: apiData.ph }),
           ...(apiData.ec != null && { ec: apiData.ec }),
           ...(apiData.oxygenLevel != null && { oxygenLevel: apiData.oxygenLevel }),
+          ...(apiData.heatPumpPower != null && { heatPumpPower: apiData.heatPumpPower }),
         }));
       } catch { /* 네트워크 오류 시 기존 값 유지 */ }
     };

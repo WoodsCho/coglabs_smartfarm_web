@@ -1495,10 +1495,25 @@
   left: 50%;
   transform: translateX(-50%);
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 4px;
   z-index: 10;
   pointer-events: none;
+}
+
+.farm3d__farm-name-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.farm3d__farm-name-addr {
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.42);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
 }
 
 .farm3d__farm-name-badge {

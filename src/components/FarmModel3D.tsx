@@ -1553,11 +1553,16 @@ export default function FarmModel3D({ led1On = false, led2On = false, led3On = f
 
           {/* 팜 이름 라벨 (상단 중앙) */}
           <div className="farm3d__farm-name-label">
-            <span className="farm3d__farm-name-badge">
-              {selectedFarm === 'farm1' ? 'FARM 1' : 'FARM 2'}
-            </span>
-            <span className="farm3d__farm-name-text">
-              {selectedFarm === 'farm1' ? 'CogLabs 스마트팜 1호' : 'CogLabs 스마트팜 2호'}
+            <div className="farm3d__farm-name-row">
+              <span className="farm3d__farm-name-badge">
+                {selectedFarm === 'farm1' ? 'FARM 1' : 'FARM 2'}
+              </span>
+              <span className="farm3d__farm-name-text">
+                {selectedFarm === 'farm1' ? 'CogLabs 스마트팜 1호' : 'CogLabs 스마트팜 2호'}
+              </span>
+            </div>
+            <span className="farm3d__farm-name-addr">
+              {selectedFarm === 'farm1' ? '전라남도 장성군 대악길 19-11' : ''}
             </span>
           </div>
 

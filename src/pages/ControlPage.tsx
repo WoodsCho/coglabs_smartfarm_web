@@ -15,7 +15,7 @@ import './ControlPage.css';
 
 /* ── Constants ───────────────────────────────────────────────── */
 const STATUS_ACTIVE = new Set(['ON', 'ACTIVE', 'RUNNING']);
-const REAL_EQUIPMENT_IDS = new Set([1, 2, 3, 9, 11]);
+const REAL_EQUIPMENT_IDS = new Set([1, 2, 3, 6, 7, 9, 11, 12, 13]);
 
 const GROUP_META: Record<string, { Icon: LucideIcon; color: string }> = {
   led: { Icon: Lightbulb, color: '#F59E0B' },
@@ -38,8 +38,10 @@ const DEFAULT_STATUS_META = { label: '—', color: '#6B7280', bg: '#F3F4F6' };
 function mockKwh(id: number): number {
   return parseFloat(((id * 1.73 + 0.5) % 8.5 + 1.2).toFixed(1));
 }
+// 실제 매핑 장비(1,2,6,7,9,11,12,13)는 0, 가상 장비에만 총 8개 분배
+const ERROR_MAP: Record<number, number> = { 4: 3, 5: 1, 8: 2, 10: 2 };
 function mockErrors(id: number): number {
-  return [0, 0, 1, 0, 2, 0, 1, 0, 0, 3, 0, 1][id % 12];
+  return ERROR_MAP[id] ?? 0;
 }
 function mockLastErrorDate(id: number): string | null {
   if (!mockErrors(id)) return null;

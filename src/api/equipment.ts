@@ -2,7 +2,13 @@ import { apiClient } from './client';
 import type { EquipmentGroup, Equipment } from '../types/farm';
 
 export const REAL_DEVICE_MAP: Record<number, string> = {
+  1:  'solenoid_valve',
+  2:  '0x70b3d52b6008b199',
+  6:  '4th2_ch1',
+  7:  '4th2_ch2',
   11: 'Mixer',
+  12: '4th2_ch109',
+  13: '4th2_ch108',
 };
 
 const CONTROLLER_BASE = 'https://k8s-worker01.tail63c20e.ts.net';

@@ -52,7 +52,7 @@ const DEFAULT_EQUIPMENT: EquipmentGroup[] = [
     equipment: [
       { id: 1, name: 'LED 1', status: 'ON', auto: true, envValue: 80, target: 80, unit: '%', envName: '조도' },
       { id: 2, name: 'LED 2', status: 'ON', auto: true, envValue: 75, target: 80, unit: '%', envName: '조도' },
-      { id: 3, name: 'LED 3', status: 'ON', auto: true, envValue: 82, target: 80, unit: '%', envName: '조도' },
+      { id: 3, name: 'LED 3', status: 'OFF', auto: false },
     ],
   },
   {
@@ -65,9 +65,11 @@ const DEFAULT_EQUIPMENT: EquipmentGroup[] = [
   {
     type: 'pump', displayName: '양액', icon: 'water', color: '#4caf50',
     equipment: [
-      { id: 6, name: '양액펌프 1', status: 'ACTIVE', auto: true, envValue: 2.1, target: 2.0, unit: 'dS/m', envName: 'EC', lastOn: '10분 전', todayRuntime: '2시간 15분' },
-      { id: 7, name: '양액펌프 2', status: 'ACTIVE', auto: true, envValue: 6.0, target: 6.2, unit: '', envName: 'pH', lastOn: '25분 전', todayRuntime: '1시간 50분' },
-      { id: 11, name: 'Mixer', status: 'OFF', auto: false },
+      { id: 6,  name: '양액 회수', status: 'OFF', auto: false },
+      { id: 7,  name: '양액 공급', status: 'OFF', auto: false },
+      { id: 13, name: '양액 A',   status: 'OFF', auto: false },
+      { id: 12, name: '양액 B',   status: 'OFF', auto: false },
+      { id: 11, name: 'Mixer',    status: 'OFF', auto: false },
     ],
   },
   {
@@ -180,6 +182,18 @@ export function FarmProvider({ children }: { children: ReactNode }) {
           ...(apiData.oxygenLevel != null && { oxygenLevel: apiData.oxygenLevel }),
           ...(apiData.heatPumpPower != null && { heatPumpPower: apiData.heatPumpPower }),
         }));
+        if (apiData.equipment) {
+          setEquipmentGroups(prev => prev.map(g => ({
+            ...g,
+            equipment: g.equipment.map(eq => {
+              const deviceName = REAL_DEVICE_MAP[eq.id];
+              if (!deviceName) return eq;
+              const newStatus = apiData.equipment![deviceName];
+              if (newStatus == null) return eq;
+              return { ...eq, status: newStatus as Equipment['status'] };
+            }),
+          })));
+        }
       } catch { /* 네트워크 오류 시 기존 값 유지 */ }
     };
     poll();

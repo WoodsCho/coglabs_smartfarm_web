@@ -380,9 +380,9 @@ const EQUIP_BUTTON_DEFS = [
   { key: 'heat_pump_button',  label: '히트펌프', icon: '🌡️', equipmentIds: [9]    },
   { key: 'mixer_button',      label: '믹서',    icon: '🔄',  equipmentIds: [11]   },
   { key: 'water_pump_button', label: '양액펌프', icon: '💧',  equipmentIds: [6, 7] },
-  { key: 'led1_button',       label: 'LED 1',   icon: '💡',  equipmentIds: [],    ledId: 1 },
+  { key: 'led1_button',       label: 'LED 3',   icon: '💡',  equipmentIds: [],    ledId: 3 },
   { key: 'led2_button',       label: 'LED 2',   icon: '💡',  equipmentIds: [],    ledId: 2 },
-  { key: 'led3_button',       label: 'LED 3',   icon: '💡',  equipmentIds: [],    ledId: 3 },
+  { key: 'led3_button',       label: 'LED 1',   icon: '💡',  equipmentIds: [],    ledId: 1 },
 ] as const;
 
 // ────────────────────────────────────────────────────────
@@ -515,12 +515,12 @@ function SmartfarmModel({
         spots.push(obj);
       }
     });
-    // 18개 Spot을 순서대로 3그룹으로 분할 (light3 / light2 / light1 — 1·3 swap)
+    // 18개 Spot을 순서대로 3그룹으로 분할 (traverse 순서: light3=상단, light2=중단, light1=하단)
     const size = Math.ceil(spots.length / 3);
     spotGroupsRef.current = [
-      spots.slice(size * 2),       // led1 → 마지막 그룹
+      spots.slice(0, size),        // led1 → 첫 번째 그룹 (상단)
       spots.slice(size, size * 2), // led2 → 중간 그룹
-      spots.slice(0, size),        // led3 → 첫 번째 그룹
+      spots.slice(size * 2),       // led3 → 마지막 그룹 (하단)
     ];
   }, [scene]);
 
@@ -553,9 +553,9 @@ function SmartfarmModel({
     });
     // -off 메시 그룹 visibility (OFF일 때 표시)
     const pairs = [
-      { onKey: NODE.light1On, offKey: NODE.light1Off, state: led1On },
+      { onKey: NODE.light3On, offKey: NODE.light3Off, state: led1On },
       { onKey: NODE.light2On, offKey: NODE.light2Off, state: led2On },
-      { onKey: NODE.light3On, offKey: NODE.light3Off, state: led3On },
+      { onKey: NODE.light1On, offKey: NODE.light1Off, state: led3On },
     ];
     pairs.forEach(({ onKey, offKey, state }) => {
       setNodeGroupVisible(offKey, !state);
@@ -1553,11 +1553,16 @@ export default function FarmModel3D({ led1On = false, led2On = false, led3On = f
 
           {/* 팜 이름 라벨 (상단 중앙) */}
           <div className="farm3d__farm-name-label">
-            <span className="farm3d__farm-name-badge">
-              {selectedFarm === 'farm1' ? 'FARM 1' : 'FARM 2'}
-            </span>
-            <span className="farm3d__farm-name-text">
-              {selectedFarm === 'farm1' ? 'CogLabs 스마트팜 1호' : 'CogLabs 스마트팜 2호'}
+            <div className="farm3d__farm-name-row">
+              <span className="farm3d__farm-name-badge">
+                {selectedFarm === 'farm1' ? 'FARM 1' : 'FARM 2'}
+              </span>
+              <span className="farm3d__farm-name-text">
+                {selectedFarm === 'farm1' ? 'CogLabs 스마트팜 1호' : 'CogLabs 스마트팜 2호'}
+              </span>
+            </div>
+            <span className="farm3d__farm-name-addr">
+              {selectedFarm === 'farm1' ? '전라남도 장성군 대악길 19-11' : ''}
             </span>
           </div>
 

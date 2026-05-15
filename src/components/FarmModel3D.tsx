@@ -1252,7 +1252,9 @@ const DEFAULT_SENSOR: EnvironmentData = {
 export default function FarmModel3D({ led1On = false, led2On = false, led3On = false, sensorData = DEFAULT_SENSOR }: FarmModel3DProps) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const animRef = useRef<AnimTarget>(null);
-  const weather = useWeather();
+  const weatherRaw = useWeather();
+  // TODO: 테스트용 강제 야간 모드 — 실서비스 시 아래 줄 제거하고 weatherRaw → weather 로 복원
+  const weather = { ...weatherRaw, isDay: false, sunProgress: 0 };
   const { toggleEquipmentStatus, equipmentGroups } = useFarm();
 
   const [currentTime, setCurrentTime] = useState(() => new Date());

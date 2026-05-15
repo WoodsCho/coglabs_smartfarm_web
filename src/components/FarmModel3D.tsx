@@ -432,25 +432,14 @@ function SmartfarmModel({
       console.log('[LeapGrid] anchor nodes found:', anchorNodes.map((o: any) => o.name));
 
       if (anchorNodes.length > 0) {
-        // 2. 각 앵커에 leap 씬 clone 추가
+        // 2. 각 앵커에 cup 씬 clone 추가 (식물 leap 모델은 테스트용으로 비활성화)
         for (const anchor of anchorNodes) {
-          const leapClone = leapGltf.scene.clone(true);
-          // 재질 설정 (양면 렌더링, 클리핑 방지)
-          leapClone.traverse((o: any) => {
-            if (o.isMesh) {
-              const mats = Array.isArray(o.material) ? o.material : [o.material];
-              mats.forEach((mat: any) => {
-                if (!mat) return;
-                mat.side = DoubleSide;
-                mat.needsUpdate = true;
-              });
-              o.castShadow    = true;
-              o.receiveShadow = true;
-            }
-          });
-          anchor.add(leapClone);
+          // TODO: 테스트용으로 leap(식물) 비활성화 — 복원 시 아래 주석 해제
+          // const leapClone = leapGltf.scene.clone(true);
+          // leapClone.traverse((o: any) => { ... });
+          // anchor.add(leapClone);
 
-          // cup 모델: 앵커 기준 Y -0.15 아래에 배치, 크기 1/3로 축소
+          // cup 모델: 앵커 기준 Y -0.08 아래에 배치, 크기 1/3로 축소
           const cupClone = cupGltf.scene.clone(true);
           cupClone.position.set(0, -0.08, 0);
           cupClone.scale.setScalar(1 / 3);

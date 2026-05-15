@@ -369,6 +369,34 @@
   cursor: not-allowed;
 }
 
+/* ── 빠른 선택지 ── */
+.chatbot__suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 12px 4px;
+  border-top: 1px solid #f3f4f6;
+  background: #fff;
+  flex-shrink: 0;
+}
+
+.chatbot__suggestion-btn {
+  font-size: 12px;
+  padding: 5px 11px;
+  border-radius: 16px;
+  border: 1px solid #f97316;
+  background: #fff7ed;
+  color: #c2410c;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  white-space: nowrap;
+}
+
+.chatbot__suggestion-btn:hover {
+  background: #ffedd5;
+  transform: scale(1.04);
+}
+
 /* ── 히스토리 패널 ── */
 .chatbot__history {
   flex: 1;

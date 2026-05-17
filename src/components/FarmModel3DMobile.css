@@ -1046,3 +1046,192 @@
   color: #cbd5e1;
   flex-shrink: 0;
 }
+
+/* ================================================================
+   DARK MODE — .farm3dm__root--dark 하위 모든 UI 패널 오버라이드
+   (야간/어두운 하늘일 때 자동 적용)
+   ================================================================ */
+
+.farm3dm__root--dark .farm3dm__bottombar {
+  background: rgba(10, 18, 36, 0.97);
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+.farm3dm__root--dark .farm3dm__nav-item { color: rgba(255,255,255,0.25); }
+.farm3dm__root--dark .farm3dm__nav-item--active { color: #e2e8f0; }
+.farm3dm__root--dark .farm3dm__nav-item--active::before { background: #e2e8f0; }
+
+.farm3dm__root--dark .farm3dm__farmtabs {
+  background: rgba(15, 23, 42, 0.95);
+  border-color: rgba(255,255,255,0.1);
+}
+.farm3dm__root--dark .farm3dm__farmtab { color: rgba(255,255,255,0.35); }
+.farm3dm__root--dark .farm3dm__farmtab--active {
+  background: rgba(255,255,255,0.12);
+  color: #e2e8f0;
+  box-shadow: none;
+}
+
+.farm3dm__root--dark .farm3dm__left-panel {
+  background: rgba(10, 18, 36, 0.94);
+  border-color: rgba(255,255,255,0.08);
+  box-shadow: 0 2px 16px rgba(0,0,0,0.5);
+}
+.farm3dm__root--dark .farm3dm__panel-title { color: #e2e8f0; }
+.farm3dm__root--dark .farm3dm__panel-section { color: rgba(255,255,255,0.35); }
+.farm3dm__root--dark .farm3dm__panel-divider { background: rgba(255,255,255,0.07); }
+.farm3dm__root--dark .farm3dm__panel-row span:first-child { color: rgba(255,255,255,0.4); }
+.farm3dm__root--dark .farm3dm__panel-row span:last-child { color: #cbd5e1; }
+.farm3dm__root--dark .farm3dm__status-env-label { color: rgba(255,255,255,0.4); }
+.farm3dm__root--dark .farm3dm__status-env-val { color: #e2e8f0; }
+.farm3dm__root--dark .farm3dm__status-equip-name { color: rgba(255,255,255,0.4); }
+.farm3dm__root--dark .farm3dm__status-equip-bar { background: rgba(255,255,255,0.08); }
+
+.farm3dm__root--dark .farm3dm__panel-tab {
+  background: rgba(255,255,255,0.07);
+  border-color: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.45);
+}
+.farm3dm__root--dark .farm3dm__panel-tab--active {
+  background: rgba(255,255,255,0.18);
+  border-color: rgba(255,255,255,0.25);
+  color: #e2e8f0;
+}
+
+.farm3dm__root--dark .farm3dm__panel-action-btn {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.5);
+}
+.farm3dm__root--dark .farm3dm__panel-action-btn--active {
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(255,255,255,0.3);
+  color: #e2e8f0;
+}
+
+.farm3dm__root--dark .farm3dm__activity-toggle {
+  background: rgba(10, 18, 36, 0.9);
+  border-color: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.55);
+}
+.farm3dm__root--dark .farm3dm__activity-panel {
+  background: rgba(10, 18, 36, 0.94);
+  border-color: rgba(255,255,255,0.08);
+}
+.farm3dm__root--dark .farm3dm__activity-panel .timeline__title { color: #e2e8f0; }
+.farm3dm__root--dark .farm3dm__activity-panel .timeline__tab {
+  background: rgba(255,255,255,0.07);
+  border-color: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.4);
+}
+.farm3dm__root--dark .farm3dm__activity-panel .timeline__tab--active {
+  background: rgba(255,255,255,0.18);
+  border-color: transparent;
+  color: #e2e8f0;
+}
+.farm3dm__root--dark .farm3dm__activity-panel .timeline__event { color: #cbd5e1; }
+.farm3dm__root--dark .farm3dm__activity-panel .timeline__time { color: rgba(255,255,255,0.3); }
+.farm3dm__root--dark .farm3dm__activity-panel .timeline__line { background: rgba(255,255,255,0.07); }
+
+.farm3dm__root--dark .farm3dm__equip-float-btn {
+  background: rgba(10, 18, 36, 0.88);
+  border-color: rgba(255,255,255,0.1);
+}
+.farm3dm__root--dark .farm3dm__equip-float-btn--on {
+  background: rgba(10, 18, 36, 0.96);
+  border-color: rgba(255,255,255,0.2);
+}
+.farm3dm__root--dark .farm3dm__equip-float-label { color: #cbd5e1; }
+.farm3dm__root--dark .farm3dm__equip-float-status { color: rgba(255,255,255,0.3); }
+
+.farm3dm__root--dark .farm3dm__back-btn {
+  background: rgba(10, 18, 36, 0.88);
+  border-color: rgba(255,255,255,0.1);
+  color: #cbd5e1;
+}
+.farm3dm__root--dark .farm3dm__enter-btn {
+  background: rgba(10, 18, 36, 0.88);
+  border-color: rgba(255,255,255,0.1);
+  color: #e2e8f0;
+}
+.farm3dm__root--dark .farm3dm__plant-check-btn {
+  background: rgba(10, 18, 36, 0.88);
+  border-color: rgba(16,185,129,0.35);
+  color: #34d399;
+}
+
+.farm3dm__root--dark .farm3dm__plant-panel {
+  background: rgba(10, 18, 36, 0.97);
+  border-color: rgba(255,255,255,0.08);
+}
+.farm3dm__root--dark .farm3dm__plant-title { color: #e2e8f0; }
+.farm3dm__root--dark .farm3dm__plant-summary { color: rgba(255,255,255,0.5); }
+.farm3dm__root--dark .farm3dm__plant-detail-label { color: rgba(255,255,255,0.3); }
+.farm3dm__root--dark .farm3dm__plant-detail-val { color: #cbd5e1; }
+.farm3dm__root--dark .farm3dm__plant-rec {
+  background: rgba(37,99,235,0.12);
+  border-color: rgba(96,165,250,0.25);
+  color: #93c5fd;
+}
+
+.farm3dm__root--dark .farm3dm__cctv-expand-btn {
+  background: rgba(10, 18, 36, 0.88);
+  border-color: rgba(255,255,255,0.1);
+  color: #cbd5e1;
+}
+.farm3dm__root--dark .farm3dm__cctv-mini-label { color: rgba(255,255,255,0.45); }
+
+.farm3dm__root--dark .farm3dm__hint {
+  background: rgba(10, 18, 36, 0.82);
+  border-color: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.35);
+}
+.farm3dm__root--dark .farm3dm__hint-key {
+  color: #cbd5e1;
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.1);
+}
+
+.farm3dm__root--dark .farm3dm__settings-sheet {
+  background: #0b1220;
+  border-top-color: rgba(255,255,255,0.08);
+  box-shadow: 0 -6px 28px rgba(0,0,0,0.5);
+}
+.farm3dm__root--dark .farm3dm__settings-handle { background: rgba(255,255,255,0.15); }
+.farm3dm__root--dark .farm3dm__settings-title { color: rgba(255,255,255,0.4); }
+.farm3dm__root--dark .farm3dm__settings-section-label { color: rgba(255,255,255,0.35); }
+.farm3dm__root--dark .farm3dm__settings-close {
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.5);
+}
+.farm3dm__root--dark .farm3dm__mode-btn {
+  background: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.1);
+}
+.farm3dm__root--dark .farm3dm__mode-btn--active {
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.3);
+}
+.farm3dm__root--dark .farm3dm__mode-dot { background: #e2e8f0; }
+.farm3dm__root--dark .farm3dm__mode-title { color: rgba(255,255,255,0.35); }
+.farm3dm__root--dark .farm3dm__mode-btn--active .farm3dm__mode-title { color: #e2e8f0; }
+.farm3dm__root--dark .farm3dm__mode-desc { color: rgba(255,255,255,0.2); }
+.farm3dm__root--dark .farm3dm__mode-btn--active .farm3dm__mode-desc { color: rgba(255,255,255,0.45); }
+
+.farm3dm__root--dark .farm3dm__ai-sheet {
+  background: #0b1220;
+  border-top-color: rgba(255,255,255,0.08);
+}
+.farm3dm__root--dark .farm3dm__mkt-sheet {
+  background: #0b1220;
+  border-top-color: rgba(255,255,255,0.08);
+}
+.farm3dm__root--dark .farm3dm__mkt-title { color: rgba(255,255,255,0.4); }
+.farm3dm__root--dark .farm3dm__mkt-coming { color: rgba(255,255,255,0.3); }
+.farm3dm__root--dark .farm3dm__mkt-action-row {
+  background: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.08);
+}
+.farm3dm__root--dark .farm3dm__mkt-action-label { color: #cbd5e1; }
+.farm3dm__root--dark .farm3dm__mkt-action-desc { color: rgba(255,255,255,0.3); }
+.farm3dm__root--dark .farm3dm__mkt-action-arrow { color: rgba(255,255,255,0.2); }

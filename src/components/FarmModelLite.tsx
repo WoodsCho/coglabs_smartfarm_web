@@ -20,8 +20,11 @@ const LED_DEFS = [
 const EQUIP_DEFS = [
   { ids: [8] as const, label: '팬코일', group: 'climate' },
   { ids: [9] as const, label: '히트펌프', group: 'climate' },
+  { ids: [6] as const, label: '양액 회수', group: 'nutrition' },
+  { ids: [7] as const, label: '양액 공급', group: 'nutrition' },
+  { ids: [13] as const, label: '양액 A', group: 'nutrition' },
+  { ids: [12] as const, label: '양액 B', group: 'nutrition' },
   { ids: [11] as const, label: '믹서', group: 'nutrition' },
-  { ids: [6, 7] as const, label: '양액펌프', group: 'nutrition' },
 ];
 
 const SENSORS = [
@@ -477,8 +480,12 @@ export default function FarmModelLite({
   const navActive: NavId = showAi ? 'ai' : showMarket ? 'market' : activeScreen;
   const timeStr = currentTime.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
 
+  const isDark = !weather.loading && !weather.isDay;
+  // URL에 ?dark=1 붙이면 낮에도 다크테마 강제 적용 (테스트용)
+  const forceDark = new URLSearchParams(window.location.search).get('dark') === '1';
+
   return (
-    <div className="farmlite__root">
+    <div className={`farmlite__root${(isDark || forceDark) ? ' farmlite__root--dark' : ''}`}>
 
       {/* ── Top bar ── */}
       <div className="farmlite__topbar">

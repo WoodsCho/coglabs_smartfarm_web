@@ -97,8 +97,11 @@ function deduplicateMaterials(root: any) {
 const EQUIP_BUTTON_DEFS = [
   { key: 'fan_coil_button', label: '팬코일', icon: '❄️', equipmentIds: [8] },
   { key: 'heat_pump_button', label: '히트펌프', icon: '🌡️', equipmentIds: [9] },
+  { key: 'nutrient_return_button', label: '양액 회수', icon: '�', equipmentIds: [6] },
+  { key: 'nutrient_supply_button', label: '양액 공급', icon: '💧', equipmentIds: [7] },
+  { key: 'nutrient_a_button', label: '양액 A', icon: '🧪', equipmentIds: [13] },
+  { key: 'nutrient_b_button', label: '양액 B', icon: '🧫', equipmentIds: [12] },
   { key: 'mixer_button', label: '믹서', icon: '🔄', equipmentIds: [11] },
-  { key: 'water_pump_button', label: '양액펌프', icon: '💧', equipmentIds: [6, 7] },
   { key: 'led1_button', label: 'LED 1', icon: '💡', equipmentIds: [], ledId: 1 },
   { key: 'led2_button', label: 'LED 2', icon: '💡', equipmentIds: [], ledId: 2 },
   { key: 'led3_button', label: 'LED 3', icon: '💡', equipmentIds: [], ledId: 3 },
@@ -107,8 +110,11 @@ const EQUIP_BUTTON_DEFS = [
 const EQUIP_COLORS: Record<string, string> = {
   fan_coil_button: '#60A5FA',
   heat_pump_button: '#F97316',
+  nutrient_return_button: '#34D399',
+  nutrient_supply_button: '#2DD4BF',
+  nutrient_a_button: '#4ADE80',
+  nutrient_b_button: '#22D3EE',
   mixer_button: '#A78BFA',
-  water_pump_button: '#34D399',
   led1_button: '#FDE047',
   led2_button: '#FB923C',
   led3_button: '#F472B6',
@@ -1109,7 +1115,7 @@ export default function FarmModel3DMobile({
 
   return (
     <div
-      className="farm3dm__root"
+      className={`farm3dm__root${skyInfo.isDark ? ' farm3dm__root--dark' : ''}`}
       style={{
         '--sky-bg': skyInfo.bg,
         '--sky-text': skyInfo.isDark ? '#ffffff' : '#0f172a',

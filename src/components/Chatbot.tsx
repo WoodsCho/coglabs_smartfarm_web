@@ -37,15 +37,23 @@ export default function Chatbot({ embedded = false, noAutoFocus = false }: { emb
   const [sessions, setSessions] = useState<SessionInfo[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const lastAssistantRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const userId = useRef(getUserId());
+  const prevLoadingRef = useRef(false);
 
   useEffect(() => {
     if (open || embedded) {
-      bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+      // 답변이 막 도착했을 때 (loading: true → false) → 답변 첫 부분으로 스크롤
+      if (prevLoadingRef.current && !loading) {
+        lastAssistantRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }
+      prevLoadingRef.current = loading;
       if (embedded && !noAutoFocus) setTimeout(() => inputRef.current?.focus(), 100);
     }
-  }, [open, embedded, messages]);
+  }, [open, embedded, messages, loading]);
 
   const send = useCallback(async () => {
     const text = input.trim();
@@ -127,7 +135,7 @@ export default function Chatbot({ embedded = false, noAutoFocus = false }: { emb
 
   const SUGGESTIONS = [
     '현재 온실 온도와 습도가 어때?',
-    '오늘 수확 예정 작물이 있어?',
+    '현재 식물 상태 어때?',
     '이상 감지된 센서가 있어?',
     '오늘 병해충 위험도 알려줘',
   ];
@@ -224,27 +232,36 @@ export default function Chatbot({ embedded = false, noAutoFocus = false }: { emb
         <>
           {/* 메시지 목록 */}
           <div className="chatbot__messages">
-            {messages.map((msg, i) => (
-              <div key={i} className={`chatbot__message chatbot__message--${msg.role}`}>
-                <div className="chatbot__bubble">
-                  {msg.role === 'assistant'
-                    ? <ReactMarkdown
-                        remarkPlugins={[[remarkGfm, { singleTilde: false }]]}
-                        components={{
-                          img: ({ src, alt }) => (
-                            <img
-                              src={src}
-                              alt={alt ?? 'CCTV'}
-                              style={{ maxWidth: '100%', borderRadius: '8px', marginTop: '6px', display: 'block' }}
-                            />
-                          ),
-                        }}
-                      >{msg.content}</ReactMarkdown>
-                    : msg.content
-                  }
+            {messages.map((msg, i) => {
+              const isLastAssistant =
+                msg.role === 'assistant' &&
+                messages.slice(i + 1).every((m) => m.role !== 'assistant');
+              return (
+                <div
+                  key={i}
+                  ref={isLastAssistant ? lastAssistantRef : undefined}
+                  className={`chatbot__message chatbot__message--${msg.role}`}
+                >
+                  <div className="chatbot__bubble">
+                    {msg.role === 'assistant'
+                      ? <ReactMarkdown
+                          remarkPlugins={[[remarkGfm, { singleTilde: false }]]}
+                          components={{
+                            img: ({ src, alt }) => (
+                              <img
+                                src={src}
+                                alt={alt ?? 'CCTV'}
+                                style={{ maxWidth: '100%', borderRadius: '8px', marginTop: '6px', display: 'block' }}
+                              />
+                            ),
+                          }}
+                        >{msg.content}</ReactMarkdown>
+                      : msg.content
+                    }
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
             {loading && (
               <div className="chatbot__message chatbot__message--assistant">
                 <div className="chatbot__bubble chatbot__bubble--loading">

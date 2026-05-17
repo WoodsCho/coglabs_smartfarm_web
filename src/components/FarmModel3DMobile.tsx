@@ -702,23 +702,26 @@ const ALL_EQUIP_DEFS = [
 
 interface EquipFloatPanelProps {
   getIsOn: (d: EquipCtrl) => boolean;
+  getIsMaintenance: (d: EquipCtrl) => boolean;
   onToggle: (d: EquipCtrl) => void;
 }
-function EquipFloatPanel({ getIsOn, onToggle }: EquipFloatPanelProps) {
+function EquipFloatPanel({ getIsOn, getIsMaintenance, onToggle }: EquipFloatPanelProps) {
   return (
     <div className="farm3dm__equip-float">
       {ALL_EQUIP_DEFS.map(def => {
         const isOn = getIsOn(def);
+        const isMaint = getIsMaintenance(def);
         const color = EQUIP_COLORS[def.key] ?? '#94a3b8';
         return (
           <button key={def.key}
-            className={`farm3dm__equip-float-btn${isOn ? ' farm3dm__equip-float-btn--on' : ''}`}
-            style={isOn ? { borderColor: color, background: `${color}22` } : { borderColor: `${color}44` }}
-            onClick={() => onToggle(def)}
+            className={`farm3dm__equip-float-btn${isOn && !isMaint ? ' farm3dm__equip-float-btn--on' : ''}${isMaint ? ' farm3dm__equip-float-btn--maintenance' : ''}`}
+            style={isOn && !isMaint ? { borderColor: color, background: `${color}22` } : { borderColor: `${color}44` }}
+            onClick={() => !isMaint && onToggle(def)}
+            disabled={isMaint}
           >
-            <span className="farm3dm__equip-float-dot" style={{ background: color, boxShadow: `0 0 6px ${color}` }} />
-            <span className="farm3dm__equip-float-label">{def.icon} {def.label}</span>
-            <span className="farm3dm__equip-float-status" style={isOn ? { color } : {}}>{isOn ? 'ON' : 'OFF'}</span>
+            <span className="farm3dm__equip-float-dot" style={{ background: isMaint ? '#9ca3af' : color, boxShadow: isMaint ? 'none' : `0 0 6px ${color}` }} />
+            <span className="farm3dm__equip-float-label">{isMaint ? '🔧' : def.icon} {def.label}</span>
+            <span className="farm3dm__equip-float-status" style={isOn && !isMaint ? { color } : {}}>{isMaint ? '수리중' : isOn ? 'ON' : 'OFF'}</span>
           </button>
         );
       })}
@@ -1062,7 +1065,16 @@ export default function FarmModel3DMobile({
     });
   };
 
+  const getIsMaintenance = (btn: EquipCtrl): boolean => {
+    if (btn.ledId != null) {
+      const allEquip = equipmentGroups.flatMap(g => g.equipment);
+      return allEquip.find(e => e.id === btn.ledId)?.status === 'MAINTENANCE';
+    }
+    return false;
+  };
+
   const handleEquipClick = (btn: EquipCtrl) => {
+    if (getIsMaintenance(btn)) return;
     const next = !getIsOn(btn);
     if (btn.ledId != null) {
       const setFn = btn.ledId === 1 ? setLocalLed1 : btn.ledId === 2 ? setLocalLed2 : setLocalLed3;
@@ -1205,7 +1217,7 @@ export default function FarmModel3DMobile({
 
           {/* ── Zoomed: 플로팅 장비 제어 버튼 ── */}
           {isZoomedInFarm1 && !isPlantCheckView && (
-            <EquipFloatPanel getIsOn={getIsOn} onToggle={handleEquipClick} />
+            <EquipFloatPanel getIsOn={getIsOn} getIsMaintenance={getIsMaintenance} onToggle={handleEquipClick} />
           )}
 
 

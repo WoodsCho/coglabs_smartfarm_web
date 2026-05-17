@@ -739,6 +739,13 @@
 .farm3dm__equip-float-btn--on .farm3dm__equip-float-status {
   color: var(--eq-color);
 }
+.farm3dm__equip-float-btn--maintenance {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.farm3dm__equip-float-btn--maintenance .farm3dm__equip-float-status {
+  color: #9ca3af;
+}
 
 /* ── Settings overlay ────────────────────────────────────── */
 .farm3dm__settings-backdrop {

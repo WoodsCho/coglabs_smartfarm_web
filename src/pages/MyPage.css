@@ -1,0 +1,315 @@
+/* ── MyPage root ─────────────────────────────────── */
+.mypage {
+  padding: 28px 32px;
+  max-width: 960px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ── Heading ─────────────────────────────────────── */
+.mypage__heading {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.mypage__heading-icon {
+  color: #16a34a;
+  flex-shrink: 0;
+}
+
+.mypage__title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.mypage__subtitle {
+  font-size: 13px;
+  color: #9ca3af;
+  margin: 2px 0 0;
+}
+
+/* ── Grid ────────────────────────────────────────── */
+.mypage__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+/* ── Card ────────────────────────────────────────── */
+.mypage-card {
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  overflow: hidden;
+  position: relative;
+}
+
+.mypage-card__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 18px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #374151;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.mypage-card__body {
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.mypage-card__section-title {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 2px;
+}
+
+/* ── Info grid ───────────────────────────────────── */
+.mypage-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 16px;
+}
+
+.mypage-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mypage-info-label {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+.mypage-info-val {
+  font-size: 13px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.mypage-info-val--accent {
+  color: #16a34a;
+}
+
+.mypage-info-val--highlight {
+  color: #ea580c;
+}
+
+.mypage-info-val--badge {
+  display: inline-block;
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+  border-radius: 6px;
+  padding: 1px 8px;
+  font-size: 11px;
+}
+
+/* ── Action buttons ──────────────────────────────── */
+.mypage-action-row {
+  display: flex;
+  gap: 8px;
+}
+
+.mypage-action-btn {
+  flex: 1;
+  background: #f9fafb;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.mypage-action-btn:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+.mypage-action-btn--open {
+  background: #f0fdf4;
+  border-color: #16a34a;
+  color: #15803d;
+}
+
+/* ── Sub panel ───────────────────────────────────── */
+.mypage-sub-panel {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 14px 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mypage-sub-panel__title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7280;
+}
+
+/* ── Option grid ─────────────────────────────────── */
+.mypage-option-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.mypage-option-btn {
+  padding: 8px 4px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.mypage-option-btn:hover { background: #f3f4f6; border-color: #d1d5db; }
+.mypage-option-btn--active {
+  background: #f0fdf4;
+  border-color: #16a34a;
+  color: #15803d;
+}
+
+/* ── Form ────────────────────────────────────────── */
+.mypage-form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mypage-label {
+  font-size: 11px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.mypage-input {
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13px;
+  color: #111827;
+  outline: none;
+  transition: border-color 0.15s;
+  background: #fff;
+  width: 100%;
+  box-sizing: border-box;
+}
+.mypage-input:focus { border-color: #16a34a; }
+
+/* ── Preview ─────────────────────────────────────── */
+.mypage-preview {
+  font-size: 12px;
+  color: #6b7280;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+.mypage-preview strong { color: #111827; }
+
+/* ── Submit button ───────────────────────────────── */
+.mypage-submit-btn {
+  background: #16a34a;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 0;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  width: 100%;
+}
+.mypage-submit-btn:hover { background: #15803d; }
+.mypage-submit-btn:disabled { background: #d1d5db; cursor: not-allowed; }
+
+/* ── Heatpump chips ──────────────────────────────── */
+.mypage-chips {
+  display: flex;
+  gap: 8px;
+}
+
+.mypage-chip {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 11px;
+}
+
+.mypage-chip--heating {
+  background: #fff1f2;
+  border: 1px solid #fecdd3;
+}
+
+.mypage-chip--cooling {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+}
+
+.mypage-chip-label {
+  font-weight: 700;
+  font-size: 10px;
+  color: #6b7280;
+}
+.mypage-chip--heating .mypage-chip-label { color: #dc2626; }
+.mypage-chip--cooling .mypage-chip-label { color: #2563eb; }
+
+.mypage-chip-val {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.mypage-chip-power {
+  color: #9ca3af;
+  font-size: 10px;
+}
+
+/* ── Toast ───────────────────────────────────────── */
+.mypage-toast {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1f2937;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 7px 16px;
+  border-radius: 20px;
+  white-space: nowrap;
+  animation: mypage-toast-in 0.2s ease;
+  z-index: 10;
+}
+
+@keyframes mypage-toast-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(-6px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}

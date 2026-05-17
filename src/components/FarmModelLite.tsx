@@ -308,17 +308,26 @@ function StatusScreen({ sensorData, getLedOn, toggleLed, getEquipOn, toggleEquip
         <div className="farmlite__card-label">장비 제어</div>
 
         <div className="farmlite__equip-group-label">조명</div>
-        {LED_DEFS.map(led => (
-          <div key={led.id} className="farmlite__equip-row">
-            <span className="farmlite__equip-name">{led.label}</span>
-            <div className="farmlite__equip-row-right">
-              <span className={`farmlite__equip-status${getLedOn(led.id) ? ' farmlite__equip-status--on' : ''}`}>
-                {getLedOn(led.id) ? 'ON' : 'OFF'}
-              </span>
-              <Toggle on={getLedOn(led.id)} onChange={() => toggleLed(led.id)} />
+        {LED_DEFS.map(led => {
+          const isMaint = getLedMaintenance(led.id);
+          return (
+            <div key={led.id} className="farmlite__equip-row">
+              <span className="farmlite__equip-name">{led.label}</span>
+              <div className="farmlite__equip-row-right">
+                {isMaint ? (
+                  <span className="farmlite__equip-status farmlite__equip-status--maintenance">🔧 수리중</span>
+                ) : (
+                  <>
+                    <span className={`farmlite__equip-status${getLedOn(led.id) ? ' farmlite__equip-status--on' : ''}`}>
+                      {getLedOn(led.id) ? 'ON' : 'OFF'}
+                    </span>
+                    <Toggle on={getLedOn(led.id)} onChange={() => toggleLed(led.id)} />
+                  </>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
 
         <div className="farmlite__equip-group-label">환경 제어</div>
         {EQUIP_DEFS.filter(d => d.group === 'climate').map(d => (
@@ -437,8 +446,10 @@ export default function FarmModelLite({
   const allEquip = useMemo(() => equipmentGroups.flatMap(g => g.equipment), [equipmentGroups]);
 
   const getLedOn = (id: number) => id === 1 ? localLed1 : id === 2 ? localLed2 : localLed3;
+  const getLedMaintenance = (id: number) => allEquip.find(e => e.id === id)?.status === 'MAINTENANCE';
 
   const toggleLed = (id: number) => {
+    if (getLedMaintenance(id)) return;
     const next = !getLedOn(id);
     (id === 1 ? setLocalLed1 : id === 2 ? setLocalLed2 : setLocalLed3)(next);
     toggleEquipmentStatus(id, next ? 'ON' : 'OFF');

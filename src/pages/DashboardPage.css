@@ -7,6 +7,307 @@
   overflow: hidden;
 }
 
+/* ── Welcome Modal ──────────────────────────────── */
+.dash-modal__backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dash-modal__box {
+  background: #fff;
+  border-radius: 18px;
+  width: 420px;
+  max-width: 94vw;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.dash-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.dash-modal__title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.dash-modal__close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #9ca3af;
+  padding: 4px;
+  line-height: 0;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+.dash-modal__close:hover { background: #f3f4f6; color: #374151; }
+
+.dash-modal__body {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.dash-modal__section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 0 10px;
+}
+
+.dash-modal__section-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #9ca3af;
+  margin-bottom: 2px;
+}
+
+.dash-modal__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+
+.dash-modal__key {
+  color: #6b7280;
+}
+
+.dash-modal__val {
+  font-weight: 600;
+  color: #111827;
+}
+
+.dash-modal__val--highlight {
+  color: #ea580c;
+}
+
+.dash-modal__divider {
+  height: 1px;
+  background: #f3f4f6;
+  margin: 4px 0 12px;
+}
+
+.dash-modal__chips {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.dash-modal__chip {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 11px;
+}
+
+.dash-modal__chip--heating {
+  background: #fff1f2;
+  border: 1px solid #fecdd3;
+}
+
+.dash-modal__chip--cooling {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+}
+
+.dash-modal__chip-label {
+  font-weight: 700;
+  font-size: 10px;
+  color: #6b7280;
+}
+
+.dash-modal__chip--heating .dash-modal__chip-label { color: #dc2626; }
+.dash-modal__chip--cooling .dash-modal__chip-label { color: #2563eb; }
+
+.dash-modal__chip-val {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.dash-modal__chip-power {
+  color: #9ca3af;
+  font-size: 10px;
+}
+
+.dash-modal__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px 18px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.dash-modal__no-show {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #9ca3af;
+  cursor: pointer;
+  user-select: none;
+}
+
+.dash-modal__confirm {
+  background: #16a34a;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 24px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.dash-modal__confirm:hover { background: #15803d; }
+.dash-modal__confirm:disabled { background: #d1d5db; cursor: not-allowed; }
+
+.dash-modal__back {
+  background: none;
+  border: none;
+  font-size: 22px;
+  line-height: 1;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0 8px 0 0;
+  margin-right: -4px;
+}
+.dash-modal__back:hover { color: #111827; }
+
+.dash-modal__footer--single {
+  justify-content: flex-end;
+}
+
+/* 옵션 그리드 */
+.dash-modal__option-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.dash-modal__option-btn {
+  padding: 9px 4px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  background: #f9fafb;
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.dash-modal__option-btn:hover { background: #f3f4f6; border-color: #d1d5db; }
+.dash-modal__option-btn--active {
+  background: #f0fdf4;
+  border-color: #16a34a;
+  color: #15803d;
+}
+
+/* 폼 행 */
+.dash-modal__form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dash-modal__label {
+  font-size: 11px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.dash-modal__input {
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13px;
+  color: #111827;
+  outline: none;
+  transition: border-color 0.15s;
+  background: #fff;
+  width: 100%;
+  box-sizing: border-box;
+}
+.dash-modal__input:focus { border-color: #16a34a; }
+
+/* 미리보기 */
+.dash-modal__preview {
+  font-size: 12px;
+  color: #6b7280;
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-top: 4px;
+}
+.dash-modal__preview strong { color: #111827; }
+
+
+.dash-modal__action-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.dash-modal__action-btn {
+  flex: 1;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 7px 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.dash-modal__action-btn:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.dash-modal__toast {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1f2937;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 7px 16px;
+  border-radius: 20px;
+  white-space: nowrap;
+  animation: dash-toast-in 0.2s ease;
+  z-index: 10;
+}
+
+@keyframes dash-toast-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(-6px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
 @media (min-width: 1920px) {
   .dash { gap: 14px; }
 }

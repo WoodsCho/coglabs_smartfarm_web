@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useFarm } from '../contexts/FarmContext';
-import type { Equipment, EquipmentGroup as EqGroup } from '../types/farm';
+import type { Equipment, EquipmentGroup as EqGroup, EnvironmentData } from '../types/farm';
 import './EquipmentSummary.css';
 
 const STATUS_ACTIVE = new Set(['ON', 'ACTIVE', 'RUNNING']);
@@ -14,6 +14,7 @@ const STATUS_STYLE: Record<string, { bg: string; border: string; dot: string; la
   RUNNING: { bg: '#eff6ff', border: '#bfdbfe', dot: '#3b82f6', label: '운전', labelColor: '#1d4ed8' },
   STANDBY: { bg: '#fffbeb', border: '#fde68a', dot: '#f59e0b', label: '대기', labelColor: '#b45309' },
   OFF: { bg: '#fff1f2', border: '#fecdd3', dot: '#f43f5e', label: '정지', labelColor: '#e11d48' },
+  MAINTENANCE: { bg: '#fafafa', border: '#e5e7eb', dot: '#9ca3af', label: '수리중', labelColor: '#6b7280' },
 };
 const DEFAULT_STYLE = { bg: '#f9fafb', border: '#e5e7eb', dot: '#9ca3af', label: '-', labelColor: '#6b7280' };
 
@@ -21,12 +22,13 @@ const GROUP_COLORS: Record<string, string> = {
   led: '#f59e0b', fan: '#3b82f6', pump: '#10b981', heater: '#ef4444', co2: '#9ca3af',
 };
 const GROUP_FILTER_LABELS: Record<string, string> = {
-  all: '전체', led: 'LED 조명', fan: '환기팬', pump: '양액', heater: '냉난방기', co2: 'CO2 공급',
+  all: '전체', led: 'LED 조명', pump: '양액', heater: '냉난방기', co2: 'CO2 공급',
 };
 
 function EquipmentCard({ eq }: { eq: Equipment }) {
   const { toggleEquipmentStatus, toggleEquipmentAuto, updateEquipmentTarget } = useFarm();
   const isActive = STATUS_ACTIVE.has(eq.status);
+  const isMaintenance = eq.status === 'MAINTENANCE';
   const st = STATUS_STYLE[eq.status] ?? DEFAULT_STYLE;
   const hasVals = eq.envValue != null && eq.target != null;
   const isVirtual = !REAL_EQUIPMENT_IDS.has(eq.id);
@@ -129,13 +131,15 @@ function EquipmentCard({ eq }: { eq: Equipment }) {
         <button
           className={`eq-card__btn ${isActive ? 'eq-card__btn--on' : 'eq-card__btn--off'}${controlling ? ' eq-card__btn--loading' : ''}`}
           onClick={handleToggle}
-          disabled={controlling}
+          disabled={controlling || isMaintenance}
+          title={isMaintenance ? '수리중 — 제어 불가' : undefined}
         >
-          {controlling ? <span className="eq-card__btn-spinner" /> : `⏻ ${isActive ? 'ON' : 'OFF'}`}
+          {controlling ? <span className="eq-card__btn-spinner" /> : isMaintenance ? '🔧 수리중' : `⏻ ${isActive ? 'ON' : 'OFF'}`}
         </button>
         <button
           className={`eq-card__btn ${eq.auto ? 'eq-card__btn--auto' : 'eq-card__btn--manual'}`}
           onClick={() => toggleEquipmentAuto(eq.id, !eq.auto)}
+          disabled={isMaintenance}
         >
           {eq.auto ? '자동' : '수동'}
         </button>
@@ -144,13 +148,44 @@ function EquipmentCard({ eq }: { eq: Equipment }) {
   );
 }
 
-function GroupSection({ group }: { group: EqGroup }) {
+const HEATER_SENSORS: { key: keyof EnvironmentData; label: string; unit: string; color: string }[] = [
+  { key: 'temperature', label: '온도',   unit: '°C',   color: '#ef4444' },
+  { key: 'humidity',    label: '습도',   unit: '%',    color: '#3b82f6' },
+  { key: 'co2',         label: 'CO₂',   unit: 'ppm',  color: '#10b981' },
+  { key: 'light',       label: '조도',   unit: '%',    color: '#eab308' },
+];
+
+const PUMP_SENSORS: { key: keyof EnvironmentData; label: string; unit: string; color: string }[] = [
+  { key: 'ph',          label: 'pH',    unit: '',      color: '#8b5cf6' },
+  { key: 'ec',          label: 'EC',    unit: 'dS/m',  color: '#ec4899' },
+  { key: 'waterTemp',   label: '수온',  unit: '°C',    color: '#f97316' },
+  { key: 'oxygenLevel', label: 'DO',    unit: 'mg/L',  color: '#06b6d4' },
+];
+
+function SensorChips({ sensors, data }: { sensors: typeof HEATER_SENSORS; data: EnvironmentData }) {
+  return (
+    <div className="eq-sensor-chips">
+      {sensors.map(s => (
+        <div key={s.key} className="eq-sensor-chip">
+          <span className="eq-sensor-chip__label">{s.label}</span>
+          <span className="eq-sensor-chip__val" style={{ color: s.color }}>
+            {(data[s.key] as number).toFixed(1)}{s.unit}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function GroupSection({ group, data }: { group: EqGroup; data: EnvironmentData }) {
   return (
     <div className="eq-group">
       <div className="eq-group__header">
         <span className="eq-group__dot" style={{ color: GROUP_COLORS[group.type] ?? '#9ca3af' }}>●</span>
         <span className="eq-group__name">{group.displayName}</span>
       </div>
+      {group.type === 'heater' && <SensorChips sensors={HEATER_SENSORS} data={data} />}
+      {group.type === 'pump'   && <SensorChips sensors={PUMP_SENSORS}   data={data} />}
       <div className="eq-group__cards">
         {group.equipment.map(eq => <EquipmentCard key={eq.id} eq={eq} />)}
       </div>
@@ -159,7 +194,7 @@ function GroupSection({ group }: { group: EqGroup }) {
 }
 
 export default function EquipmentSummary() {
-  const { equipmentGroups } = useFarm();
+  const { equipmentGroups, currentData } = useFarm();
   const [filter, setFilter] = useState('all');
 
   const activeCount = equipmentGroups.flatMap(g => g.equipment).filter(eq => STATUS_ACTIVE.has(eq.status)).length;
@@ -188,7 +223,7 @@ export default function EquipmentSummary() {
       </div>
 
       <div className="eq-summary__list">
-        {visibleGroups.map(g => <GroupSection key={g.type} group={g} />)}
+        {visibleGroups.map(g => <GroupSection key={g.type} group={g} data={currentData} />)}
       </div>
     </div>
   );

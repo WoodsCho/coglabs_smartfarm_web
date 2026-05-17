@@ -215,6 +215,22 @@
 .farm3d__equip-btn--on .farm3d__equip-btn-status {
   color: rgba(80, 210, 130, 0.9);
 }
+.farm3d__equip-btn--maintenance {
+  background: rgba(20, 22, 30, 0.7);
+  border-color: rgba(156, 163, 175, 0.4);
+  color: #9ca3af;
+  cursor: not-allowed;
+  opacity: 0.75;
+}
+.farm3d__equip-btn--maintenance .farm3d__equip-btn-status {
+  color: #9ca3af;
+}
+
+/* 양액 그룹 인라인 버튼 (position 오버라이드) */
+.farm3d__equip-btn--inline {
+  position: static;
+  transform: none;
+}
 
 /* 카메라 좌표 디버거 */
 .farm3d__cam-debug {
@@ -1509,11 +1525,14 @@
 }
 
 .farm3d__farm-name-addr {
-  font-size: 11px;
-  font-weight: 400;
+  font-size: 12px;
+  font-weight: 500;
   letter-spacing: 0.06em;
-  color: rgba(255, 255, 255, 0.42);
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  color: rgba(255, 255, 255, 0.82);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.75), 0 0 12px rgba(0,0,0,0.4);
+  background: rgba(0, 0, 0, 0.28);
+  padding: 2px 10px;
+  border-radius: 20px;
 }
 
 .farm3d__farm-name-badge {

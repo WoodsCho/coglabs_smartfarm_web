@@ -125,6 +125,34 @@ export default function Chatbot({ embedded = false, noAutoFocus = false }: { emb
     }
   }, []);
 
+  const SUGGESTIONS = [
+    '현재 온실 온도와 습도가 어때?',
+    '오늘 수확 예정 작물이 있어?',
+    '이상 감지된 센서가 있어?',
+    '오늘 병해충 위험도 알려줘',
+  ];
+
+  const sendSuggestion = useCallback((text: string) => {
+    setInput(text);
+    // 다음 렌더 후 send 호출을 위해 setTimeout 사용
+    setTimeout(() => {
+      setInput('');
+      setMessages((prev) => [...prev, { role: 'user', content: text }]);
+      setLoading(true);
+      chatApi.sendMessage(userId.current, sessionId ?? '', text)
+        .then(({ reply, session_id }) => {
+          if (!sessionId && session_id) setSessionId(session_id);
+          setMessages((prev) => [...prev, { role: 'assistant', content: reply }]);
+        })
+        .catch(() => {
+          setMessages((prev) => [...prev, { role: 'assistant', content: '오류가 발생했습니다. 잠시 후 다시 시도해 주세요.' }]);
+        })
+        .finally(() => setLoading(false));
+    }, 0);
+  }, [sessionId]);
+
+  const isInitialState = messages.length === 1 && messages[0].role === 'assistant';
+
   const chatWindow = (
     <div className={`chatbot__window${embedded ? ' chatbot__window--embedded' : ''}`}>
       {/* 헤더 */}
@@ -226,6 +254,17 @@ export default function Chatbot({ embedded = false, noAutoFocus = false }: { emb
             )}
             <div ref={bottomRef} />
           </div>
+
+          {/* 빠른 선택지 */}
+          {isInitialState && !loading && (
+            <div className="chatbot__suggestions">
+              {SUGGESTIONS.map((s) => (
+                <button key={s} className="chatbot__suggestion-btn" onClick={() => sendSuggestion(s)}>
+                  {s}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* 입력창 */}
           <div className="chatbot__input-area">

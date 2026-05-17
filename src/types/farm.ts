@@ -13,7 +13,7 @@ export interface EnvironmentData {
 export interface Equipment {
   id: number;
   name: string;
-  status: 'ON' | 'OFF' | 'ACTIVE' | 'RUNNING' | 'STANDBY';
+  status: 'ON' | 'OFF' | 'ACTIVE' | 'RUNNING' | 'STANDBY' | 'MAINTENANCE';
   auto: boolean;
   envValue?: number;
   target?: number;

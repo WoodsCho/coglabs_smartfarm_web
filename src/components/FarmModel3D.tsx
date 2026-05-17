@@ -375,10 +375,16 @@ export interface EquipButtonPos {
   x: number; y: number;
 }
 
+const PUMP_GROUP_ITEMS = [
+  { label: '양액 A',  icon: '🧪', ids: [13] },
+  { label: '양액 B',  icon: '🧫', ids: [12] },
+  { label: '믹서',    icon: '🔄', ids: [11] },
+  { label: '양액펌프', icon: '💧', ids: [6, 7] },
+] as const;
+
 const EQUIP_BUTTON_DEFS = [
   { key: 'fan_coil_button',   label: '팬코일',  icon: '❄️',  equipmentIds: [8]    },
   { key: 'heat_pump_button',  label: '히트펌프', icon: '🌡️', equipmentIds: [9]    },
-  { key: 'mixer_button',      label: '믹서',    icon: '🔄',  equipmentIds: [11]   },
   { key: 'water_pump_button', label: '양액펌프', icon: '💧',  equipmentIds: [6, 7] },
   { key: 'led1_button',       label: 'LED 3',   icon: '💡',  equipmentIds: [],    ledId: 3 },
   { key: 'led2_button',       label: 'LED 2',   icon: '💡',  equipmentIds: [],    ledId: 2 },
@@ -409,7 +415,7 @@ function SmartfarmModel({
 }) {
   const gltf = useLoader(GLTFLoader, url, setupGLTFLoader) as any;
   // Load leap & cup models to place at each anchor node inside pipeline GLB
-  const leapGltf = useLoader(GLTFLoader, '/3d-model/leap.glb', setupGLTFLoader) as any;
+  void useLoader(GLTFLoader, '/3d-model/leap.glb', setupGLTFLoader); // 식물 모델 비활성화 중 — 훅 규칙상 호출은 유지
   const cupGltf  = useLoader(GLTFLoader, '/3d-model/cup.glb',  setupGLTFLoader) as any;
   const { camera, gl, size: canvasSize } = useThree();
   const [hovered, setHovered] = useState(false);
@@ -432,25 +438,14 @@ function SmartfarmModel({
       console.log('[LeapGrid] anchor nodes found:', anchorNodes.map((o: any) => o.name));
 
       if (anchorNodes.length > 0) {
-        // 2. 각 앵커에 leap 씬 clone 추가
+        // 2. 각 앵커에 cup 씬 clone 추가 (식물 leap 모델은 테스트용으로 비활성화)
         for (const anchor of anchorNodes) {
-          const leapClone = leapGltf.scene.clone(true);
-          // 재질 설정 (양면 렌더링, 클리핑 방지)
-          leapClone.traverse((o: any) => {
-            if (o.isMesh) {
-              const mats = Array.isArray(o.material) ? o.material : [o.material];
-              mats.forEach((mat: any) => {
-                if (!mat) return;
-                mat.side = DoubleSide;
-                mat.needsUpdate = true;
-              });
-              o.castShadow    = true;
-              o.receiveShadow = true;
-            }
-          });
-          anchor.add(leapClone);
+          // TODO: 테스트용으로 leap(식물) 비활성화 — 복원 시 아래 주석 해제
+          // const leapClone = leapGltf.scene.clone(true);
+          // leapClone.traverse((o: any) => { ... });
+          // anchor.add(leapClone);
 
-          // cup 모델: 앵커 기준 Y -0.15 아래에 배치, 크기 1/3로 축소
+          // cup 모델: 앵커 기준 Y -0.08 아래에 배치, 크기 1/3로 축소
           const cupClone = cupGltf.scene.clone(true);
           cupClone.position.set(0, -0.08, 0);
           cupClone.scale.setScalar(1 / 3);
@@ -1041,18 +1036,18 @@ function PrecipitationOverlay({ condition }: { condition: string }) {
 // ────────────────────────────────────────────────────────
 // LED status indicator
 // ────────────────────────────────────────────────────────
-function LedIndicator({ label, on }: { label: string; on: boolean }) {
+function LedIndicator({ label, on, maintenance }: { label: string; on: boolean; maintenance?: boolean }) {
   return (
     <div className="farm3d__led">
       <span
         className="farm3d__led-dot"
         style={{
-          background: on ? '#FCD34D' : '#D1D5DB',
-          boxShadow: on ? '0 0 6px rgba(252, 211, 77, 0.85)' : 'none',
+          background: maintenance ? '#9ca3af' : on ? '#FCD34D' : '#D1D5DB',
+          boxShadow: on && !maintenance ? '0 0 6px rgba(252, 211, 77, 0.85)' : 'none',
         }}
       />
-      <span className="farm3d__led-label" style={{ color: on ? '#92400E' : '#9CA3AF' }}>
-        {label}
+      <span className="farm3d__led-label" style={{ color: maintenance ? '#6b7280' : on ? '#92400E' : '#9CA3AF' }}>
+        {label}{maintenance ? ' 🔧' : ''}
       </span>
     </div>
   );
@@ -1240,6 +1235,22 @@ function GreenhouseSpecPanel() {
           <span className="farm3d__gh-spec-chip-power">1.3 kW</span>
         </div>
       </div>
+
+      <div className="farm3d__gh-spec-divider" />
+
+      <div className="farm3d__gh-spec-section-label">구독 정보</div>
+      <div className="farm3d__gh-spec-row">
+        <span className="farm3d__gh-spec-key">구독 기간</span>
+        <span className="farm3d__gh-spec-val">5/14 ~ 7/14</span>
+      </div>
+      <div className="farm3d__gh-spec-row">
+        <span className="farm3d__gh-spec-key">계약 식물</span>
+        <span className="farm3d__gh-spec-val highlight">바질 214모종</span>
+      </div>
+      <div className="farm3d__gh-spec-row">
+        <span className="farm3d__gh-spec-key">정식 예정일</span>
+        <span className="farm3d__gh-spec-val">5월 20일</span>
+      </div>
     </div>
   );
 }
@@ -1374,7 +1385,9 @@ export default function FarmModel3D({ led1On = false, led2On = false, led3On = f
           <div className="farm3d__leds">
             <LedIndicator label="LED 1" on={led1On} />
             <LedIndicator label="LED 2" on={led2On} />
-            <LedIndicator label="LED 3" on={led3On} />
+            <LedIndicator label="LED 3" on={led3On} maintenance={
+              equipmentGroups.flatMap((g: import('../types/farm').EquipmentGroup) => g.equipment).find((e: import('../types/farm').Equipment) => e.id === 3)?.status === 'MAINTENANCE'
+            } />
           </div>
         </div>
       </div>
@@ -1437,12 +1450,60 @@ export default function FarmModel3D({ led1On = false, led2On = false, led3On = f
 
           {/* ── 장비/LED 버튼 오버레이 (Canvas 위 절대 위치 HTML) ── */}
           {isZoomedInFarm1 && !isPlantCheckView && equipBtnPositions.map(btn => {
+            const allEquip = equipmentGroups.flatMap((g: import('../types/farm').EquipmentGroup) => g.equipment);
+
+            // 양액펌프 위치에 양액A/B/믹서/양액펌프 세로 그룹 렌더
+            if (btn.key === 'water_pump_button') {
+              return (
+                <div
+                  key={btn.key}
+                  style={{
+                    position: 'absolute',
+                    left: btn.x,
+                    top: btn.y,
+                    transform: 'translate(-50%, -50%)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 4,
+                    zIndex: 30,
+                    pointerEvents: 'auto',
+                  }}
+                >
+                  {PUMP_GROUP_ITEMS.map(item => {
+                    const on = (item.ids as readonly number[]).some(id => {
+                      const eq = allEquip.find((e: import('../types/farm').Equipment) => e.id === id);
+                      return eq && eq.status !== 'OFF';
+                    });
+                    return (
+                      <button
+                        key={item.label}
+                        className={`farm3d__equip-btn farm3d__equip-btn--inline${on ? ' farm3d__equip-btn--on' : ''}`}
+                        onClick={() => {
+                          const next = !on;
+                          (item.ids as readonly number[]).forEach(id => {
+                            toggleEquipmentStatus(id, next ? 'ON' : 'OFF');
+                            equipmentApi.control(id, next ? 'ON' : 'OFF').catch(console.error);
+                          });
+                        }}
+                      >
+                        <span className="farm3d__equip-btn-icon">{item.icon}</span>
+                        <span className="farm3d__equip-btn-label">{item.label}</span>
+                        <span className="farm3d__equip-btn-status">{on ? 'ON' : 'OFF'}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              );
+            }
+
+            // LED 3 수리중 여부 확인
+            const isMaintenance = btn.ledId != null &&
+              allEquip.find((e: import('../types/farm').Equipment) => e.id === btn.ledId)?.status === 'MAINTENANCE';
             // LED 버튼이면 localLed 상태, 아니면 equipmentGroups 상태
             let isOn: boolean;
             if (btn.ledId != null) {
               isOn = btn.ledId === 1 ? localLed1 : btn.ledId === 2 ? localLed2 : localLed3;
             } else {
-              const allEquip = equipmentGroups.flatMap((g: import('../types/farm').EquipmentGroup) => g.equipment);
               isOn = btn.equipmentIds.some(id => {
                 const eq = allEquip.find((e: import('../types/farm').Equipment) => e.id === id);
                 return eq && eq.status !== 'OFF';
@@ -1451,9 +1512,11 @@ export default function FarmModel3D({ led1On = false, led2On = false, led3On = f
             return (
               <button
                 key={btn.key}
-                className={`farm3d__equip-btn${isOn ? ' farm3d__equip-btn--on' : ''}`}
+                className={`farm3d__equip-btn${isOn && !isMaintenance ? ' farm3d__equip-btn--on' : ''}${isMaintenance ? ' farm3d__equip-btn--maintenance' : ''}`}
                 style={{ left: btn.x, top: btn.y }}
+                disabled={isMaintenance}
                 onClick={() => {
+                  if (isMaintenance) return;
                   const next = !isOn;
                   if (btn.ledId != null) {
                     const setFn = btn.ledId === 1 ? setLocalLed1 : btn.ledId === 2 ? setLocalLed2 : setLocalLed3;
@@ -1468,10 +1531,10 @@ export default function FarmModel3D({ led1On = false, led2On = false, led3On = f
                   }
                 }}
               >
-                <span className="farm3d__equip-btn-icon">{btn.icon}</span>
+                <span className="farm3d__equip-btn-icon">{isMaintenance ? '🔧' : btn.icon}</span>
                 <span className="farm3d__equip-btn-label">{btn.label}</span>
                 <span className="farm3d__equip-btn-status">
-                  {isOn ? 'ON' : 'OFF'}
+                  {isMaintenance ? '수리중' : isOn ? 'ON' : 'OFF'}
                 </span>
               </button>
             );

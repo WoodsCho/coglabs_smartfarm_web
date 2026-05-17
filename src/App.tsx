@@ -10,6 +10,7 @@ import LogsPage from './pages/LogsPage';
 import TodosPage from './pages/TodosPage';
 import MobilePage from './pages/MobilePage';
 import MobileLitePage from './pages/MobileLitePage';
+import MyPage from './pages/MyPage';
 import { FarmProvider } from './contexts/FarmContext';
 
 function App() {
@@ -30,20 +31,12 @@ function App() {
             <Route path="/social" element={<SocialPage />} />
             <Route path="/logs" element={<LogsPage />} />
             <Route path="/todos" element={<TodosPage />} />
-            <Route path="/mypage" element={<Placeholder title="마이페이지" />} />
+            <Route path="/mypage" element={<MyPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
     </FarmProvider>
-  );
-}
-
-function Placeholder({ title }: { title: string }) {
-  return (
-    <div style={{ padding: 32, color: '#6B7280', fontSize: 18 }}>
-      {title} — 준비 중입니다.
-    </div>
   );
 }
 

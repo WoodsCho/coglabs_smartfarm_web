@@ -271,6 +271,7 @@
   transition: color 0.2s;
 }
 .farmlite__equip-status--on { color: #1e293b; }
+.farmlite__equip-status--maintenance { color: #9ca3af; font-size: 11px; }
 
 /* ── Toggle switch ───────────────────────────────────────── */
 .farmlite__toggle {

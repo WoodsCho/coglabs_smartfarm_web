@@ -72,6 +72,10 @@
   overflow-y: auto;
   flex: 1;
   min-height: 0;
+  scrollbar-width: none; /* Firefox */
+}
+.eq-summary__list::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
 }
 
 /* ── 그룹 섹션 ───────────────────────────────────── */
@@ -97,6 +101,35 @@
   font-weight: 700;
   color: #374151;
   letter-spacing: 0.3px;
+}
+
+/* ── 센서 칩 ─────────────────────────────────────── */
+.eq-sensor-chips {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.eq-sensor-chip {
+  background: #f9fafb;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  padding: 5px 7px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.eq-sensor-chip__label {
+  font-size: 10px;
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+.eq-sensor-chip__val {
+  font-size: 12px;
+  font-weight: 700;
 }
 
 /* 카드 그리드: 컨테이너 너비에 맞게 자동 배치 */

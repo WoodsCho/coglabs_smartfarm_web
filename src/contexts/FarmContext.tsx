@@ -50,16 +50,16 @@ const DEFAULT_EQUIPMENT: EquipmentGroup[] = [
   {
     type: 'led', displayName: 'LED 조명', icon: 'bulb', color: '#ffc107',
     equipment: [
-      { id: 1, name: 'LED 1', status: 'ON', auto: true, envValue: 80, target: 80, unit: '%', envName: '조도' },
-      { id: 2, name: 'LED 2', status: 'ON', auto: true, envValue: 75, target: 80, unit: '%', envName: '조도' },
-      { id: 3, name: 'LED 3', status: 'OFF', auto: false },
+      { id: 1, name: 'LED 1', status: 'ON', auto: true },
+      { id: 2, name: 'LED 2', status: 'ON', auto: true },
+      { id: 3, name: 'LED 3', status: 'MAINTENANCE', auto: false },
     ],
   },
   {
-    type: 'fan', displayName: '환기팬', icon: 'sync', color: '#03a9f4',
+    type: 'heater', displayName: '냉난방기', icon: 'flame', color: '#f44336',
     equipment: [
-      { id: 4, name: '환기팬 1', status: 'RUNNING', auto: true, envValue: 24, target: 24, unit: '°C', envName: '온도' },
-      { id: 5, name: '환기팬 2', status: 'RUNNING', auto: true, envValue: 23.5, target: 24, unit: '°C', envName: '온도' },
+      { id: 8, name: '팬코일',   status: 'ON', auto: true },
+      { id: 9, name: '히트펌프', status: 'ON', auto: true, envValue: 23.5, target: 24, unit: '°C', envName: '온도' },
     ],
   },
   {
@@ -70,13 +70,6 @@ const DEFAULT_EQUIPMENT: EquipmentGroup[] = [
       { id: 13, name: '양액 A',   status: 'OFF', auto: false },
       { id: 12, name: '양액 B',   status: 'OFF', auto: false },
       { id: 11, name: 'Mixer',    status: 'OFF', auto: false },
-    ],
-  },
-  {
-    type: 'heater', displayName: '냉난방기', icon: 'flame', color: '#f44336',
-    equipment: [
-      { id: 8, name: '팬코일',   status: 'ON', auto: true, envValue: 24,   target: 24, unit: '°C', envName: '온도' },
-      { id: 9, name: '히트펌프', status: 'ON', auto: true, envValue: 23.5, target: 24, unit: '°C', envName: '온도' },
     ],
   },
   {
@@ -202,6 +195,10 @@ export function FarmProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const toggleEquipmentStatus = async (equipmentId: number, newStatus: string): Promise<void> => {
+    // MAINTENANCE 장비는 UI/API 모두 변경 불가
+    const currentGroup = equipmentGroups.flatMap(g => g.equipment).find(e => e.id === equipmentId);
+    if (currentGroup?.status === 'MAINTENANCE') return;
+
     const deviceId = REAL_DEVICE_MAP[equipmentId];
 
     if (!deviceId) {

@@ -130,13 +130,11 @@ const PLANT_CHECK_TARGET = new Vector3(8.45, 6.42, 0.36);
 
 // ── Camera controls ──────────────────────────────────────
 type AnimTarget = { toPos: Vector3; toTarget: Vector3 } | null;
-type CamDebugRef = React.MutableRefObject<{ pos: Vector3; target: Vector3 }>;
 
 function MobileCameraControls({
-  animRef, camDebugRef,
+  animRef,
 }: {
   animRef: React.MutableRefObject<AnimTarget>;
-  camDebugRef?: CamDebugRef;
 }) {
   const { camera, gl } = useThree();
   const ctrlRef = useRef<any>(null);
@@ -161,10 +159,6 @@ function MobileCameraControls({
       }
     }
     ctrl.update();
-    if (camDebugRef) {
-      camDebugRef.current.pos.copy(camera.position);
-      camDebugRef.current.target.copy(ctrl.target);
-    }
   });
   return null;
 }
@@ -708,23 +702,26 @@ const ALL_EQUIP_DEFS = [
 
 interface EquipFloatPanelProps {
   getIsOn: (d: EquipCtrl) => boolean;
+  getIsMaintenance: (d: EquipCtrl) => boolean;
   onToggle: (d: EquipCtrl) => void;
 }
-function EquipFloatPanel({ getIsOn, onToggle }: EquipFloatPanelProps) {
+function EquipFloatPanel({ getIsOn, getIsMaintenance, onToggle }: EquipFloatPanelProps) {
   return (
     <div className="farm3dm__equip-float">
       {ALL_EQUIP_DEFS.map(def => {
         const isOn = getIsOn(def);
+        const isMaint = getIsMaintenance(def);
         const color = EQUIP_COLORS[def.key] ?? '#94a3b8';
         return (
           <button key={def.key}
-            className={`farm3dm__equip-float-btn${isOn ? ' farm3dm__equip-float-btn--on' : ''}`}
-            style={isOn ? { borderColor: color, background: `${color}22` } : { borderColor: `${color}44` }}
-            onClick={() => onToggle(def)}
+            className={`farm3dm__equip-float-btn${isOn && !isMaint ? ' farm3dm__equip-float-btn--on' : ''}${isMaint ? ' farm3dm__equip-float-btn--maintenance' : ''}`}
+            style={isOn && !isMaint ? { borderColor: color, background: `${color}22` } : { borderColor: `${color}44` }}
+            onClick={() => !isMaint && onToggle(def)}
+            disabled={isMaint}
           >
-            <span className="farm3dm__equip-float-dot" style={{ background: color, boxShadow: `0 0 6px ${color}` }} />
-            <span className="farm3dm__equip-float-label">{def.icon} {def.label}</span>
-            <span className="farm3dm__equip-float-status" style={isOn ? { color } : {}}>{isOn ? 'ON' : 'OFF'}</span>
+            <span className="farm3dm__equip-float-dot" style={{ background: isMaint ? '#9ca3af' : color, boxShadow: isMaint ? 'none' : `0 0 6px ${color}` }} />
+            <span className="farm3dm__equip-float-label">{isMaint ? '🔧' : def.icon} {def.label}</span>
+            <span className="farm3dm__equip-float-status" style={isOn && !isMaint ? { color } : {}}>{isMaint ? '수리중' : isOn ? 'ON' : 'OFF'}</span>
           </button>
         );
       })}
@@ -951,8 +948,6 @@ export default function FarmModel3DMobile({
   const wrapRef = useRef<HTMLDivElement>(null);
   const farm2TimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTapRef = useRef<number>(0);
-  const camDebugRef = useRef({ pos: new Vector3(), target: new Vector3() });
-  const [camDebug, setCamDebug] = useState({ px: 0, py: 0, pz: 0, tx: 0, ty: 0, tz: 0 });
   const weather = useWeather();
   const skyInfo = useMemo(() => computeSkyInfo(weather), [weather]);
   const { toggleEquipmentStatus, equipmentGroups } = useFarm();
@@ -1020,14 +1015,6 @@ export default function FarmModel3DMobile({
 
   useEffect(() => () => { if (farm2TimerRef.current) clearTimeout(farm2TimerRef.current); }, []);
 
-  useEffect(() => {
-    const id = setInterval(() => {
-      const { pos, target } = camDebugRef.current;
-      setCamDebug({ px: pos.x, py: pos.y, pz: pos.z, tx: target.x, ty: target.y, tz: target.z });
-    }, 100);
-    return () => clearInterval(id);
-  }, []);
-
   // 팜1 진입
   const handleFarm1Click = () => {
     setShowGreenhouse(false);
@@ -1078,7 +1065,16 @@ export default function FarmModel3DMobile({
     });
   };
 
+  const getIsMaintenance = (btn: EquipCtrl): boolean => {
+    if (btn.ledId != null) {
+      const allEquip = equipmentGroups.flatMap(g => g.equipment);
+      return allEquip.find(e => e.id === btn.ledId)?.status === 'MAINTENANCE';
+    }
+    return false;
+  };
+
   const handleEquipClick = (btn: EquipCtrl) => {
+    if (getIsMaintenance(btn)) return;
     const next = !getIsOn(btn);
     if (btn.ledId != null) {
       const setFn = btn.ledId === 1 ? setLocalLed1 : btn.ledId === 2 ? setLocalLed2 : setLocalLed3;
@@ -1157,7 +1153,7 @@ export default function FarmModel3DMobile({
                   </>
                 )}
               </Suspense>
-              <MobileCameraControls animRef={animRef} camDebugRef={camDebugRef} />
+              <MobileCameraControls animRef={animRef} />
             </Canvas>
           )}
 
@@ -1169,15 +1165,6 @@ export default function FarmModel3DMobile({
           <div className="farm3dm__farmlabel">
             <span className="farm3dm__farmlabel-badge">{selectedFarm === 'farm1' ? 'FARM 1' : 'FARM 2'}</span>
             <span className="farm3dm__farmlabel-text">{selectedFarm === 'farm1' ? 'CogLabs 스마트팜 1호' : 'CogLabs 스마트팜 2호'}</span>
-          </div>
-
-          {/* ── 카메라 디버그 텍스트 (개발용) ── */}
-          <div className="farm3dm__cam-debug" onClick={() => {
-            const txt = `new Vector3(${camDebug.px.toFixed(2)}, ${camDebug.py.toFixed(2)}, ${camDebug.pz.toFixed(2)})\n// target: ${camDebug.tx.toFixed(2)}, ${camDebug.ty.toFixed(2)}, ${camDebug.tz.toFixed(2)}`;
-            navigator.clipboard.writeText(txt).catch(() => { });
-          }}>
-            P {camDebug.px.toFixed(1)} {camDebug.py.toFixed(1)} {camDebug.pz.toFixed(1)}{'  '}
-            T {camDebug.tx.toFixed(1)} {camDebug.ty.toFixed(1)} {camDebug.tz.toFixed(1)}
           </div>
 
           {/* ── 팜 탭 전환 (좌상단) ── */}
@@ -1230,7 +1217,7 @@ export default function FarmModel3DMobile({
 
           {/* ── Zoomed: 플로팅 장비 제어 버튼 ── */}
           {isZoomedInFarm1 && !isPlantCheckView && (
-            <EquipFloatPanel getIsOn={getIsOn} onToggle={handleEquipClick} />
+            <EquipFloatPanel getIsOn={getIsOn} getIsMaintenance={getIsMaintenance} onToggle={handleEquipClick} />
           )}
 
 

@@ -2,7 +2,9 @@ export interface EnvironmentData {
   temperature: number;
   humidity: number;
   co2: number;
-  light: number;
+  light1?: number;
+  light2?: number;
+  light3?: number;
   ph: number;
   ec: number;
   waterTemp: number;
@@ -35,7 +37,9 @@ export type SensorType =
   | 'temperature'
   | 'humidity'
   | 'co2'
-  | 'light'
+  | 'light1'
+  | 'light2'
+  | 'light3'
   | 'ph'
   | 'ec'
   | 'waterTemp'

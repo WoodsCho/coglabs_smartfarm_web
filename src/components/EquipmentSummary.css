@@ -223,6 +223,24 @@
 }
 
 /* 현재 → 목표 */
+.eq-card__lux {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 3px 6px;
+  background: #fffbeb;
+  border-radius: 4px;
+  margin-bottom: 4px;
+}
+.eq-card__lux-label {
+  font-size: 10px;
+  color: #92400e;
+}
+.eq-card__lux-val {
+  font-size: 12px;
+  font-weight: 600;
+}
+
 .eq-card__vals {
   display: flex;
   align-items: center;

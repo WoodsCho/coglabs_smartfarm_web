@@ -20,7 +20,9 @@ const SENSOR_META = [
   { type: 'temperature' as SensorType, label: '온도', unit: '°C', Icon: Thermometer, color: '#EF4444', optimal: [18, 26] as [number, number], decimals: 1 },
   { type: 'humidity' as SensorType, label: '습도', unit: '%', Icon: Droplets, color: '#3B82F6', optimal: [60, 80] as [number, number], decimals: 0 },
   { type: 'co2' as SensorType, label: 'CO₂', unit: 'ppm', Icon: Wind, color: '#10B981', optimal: [800, 1200] as [number, number], decimals: 0 },
-  { type: 'light' as SensorType, label: '조도', unit: '%', Icon: Sun, color: '#EAB308', optimal: [60, 100] as [number, number], decimals: 0 },
+  { type: 'light1' as SensorType, label: '조도1 (LED1)', unit: 'lux', Icon: Sun, color: '#EAB308', optimal: [500, 3000] as [number, number], decimals: 0 },
+  { type: 'light2' as SensorType, label: '조도2 (LED2)', unit: 'lux', Icon: Sun, color: '#F59E0B', optimal: [500, 3000] as [number, number], decimals: 0 },
+  { type: 'light3' as SensorType, label: '조도3 (LED3)', unit: 'lux', Icon: Sun, color: '#D97706', optimal: [500, 3000] as [number, number], decimals: 0 },
   { type: 'ph' as SensorType, label: 'pH', unit: '', Icon: FlaskConical, color: '#8B5CF6', optimal: [5.5, 6.5] as [number, number], decimals: 1 },
   { type: 'ec' as SensorType, label: 'EC', unit: 'dS/m', Icon: Zap, color: '#EC4899', optimal: [1.5, 2.5] as [number, number], decimals: 1 },
   { type: 'waterTemp' as SensorType, label: '수온', unit: '°C', Icon: Waves, color: '#F97316', optimal: [18, 24] as [number, number], decimals: 1 },
@@ -207,7 +209,7 @@ export default function MonitorPage() {
   /* ── Overall health ── */
   const overallHealth = useMemo(() => {
     const scores = SENSOR_META.map(m => {
-      const val = currentData[m.type];
+      const val = currentData[m.type] ?? 0;
       const [lo, hi] = thresholds[m.type];
       if (val >= lo && val <= hi) return 100;
       const margin = (hi - lo) * 0.5;
@@ -219,7 +221,7 @@ export default function MonitorPage() {
 
   const healthColor = overallHealth >= 90 ? '#10B981' : overallHealth >= 70 ? '#F59E0B' : '#EF4444';
   const ticks = useMemo(() => pickTicks(chartData), [chartData]);
-  const currentValue = currentData[selectedType];
+  const currentValue = currentData[selectedType] ?? 0;
   const status = getStatus(currentValue, threshold);
   const { Icon: SelectedIcon } = selectedMeta;
 
@@ -266,8 +268,8 @@ export default function MonitorPage() {
         </div>
 
         <div className="mon__header-right">
-          <span className={`mon__badge mon__badge--${getStatus(currentData[selectedType], threshold)}`}>
-            전체 {SENSOR_META.filter(m => getStatus(currentData[m.type], thresholds[m.type]) === 'optimal').length}/{SENSOR_META.length} 정상
+          <span className={`mon__badge mon__badge--${getStatus(currentData[selectedType] ?? 0, threshold)}`}>
+            전체 {SENSOR_META.filter(m => getStatus(currentData[m.type] ?? 0, thresholds[m.type]) === 'optimal').length}/{SENSOR_META.length} 정상
           </span>
         </div>
       </div>
@@ -275,7 +277,7 @@ export default function MonitorPage() {
       {/* ── Sensor strip ── */}
       <div className="mon__strip">
         {SENSOR_META.map(meta => {
-          const val = currentData[meta.type];
+          const val = currentData[meta.type] ?? 0;
           const st = getStatus(val, thresholds[meta.type]);
           const isSel = meta.type === selectedType;
           return (
@@ -523,7 +525,7 @@ export default function MonitorPage() {
               <SensorRow
                 key={meta.type}
                 meta={meta}
-                currentValue={currentData[meta.type]}
+                currentValue={currentData[meta.type] ?? 0}
                 isSelected={meta.type === selectedType}
                 onClick={() => setSelectedType(meta.type)}
                 threshold={thresholds[meta.type]}

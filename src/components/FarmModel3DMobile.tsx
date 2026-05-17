@@ -551,15 +551,17 @@ function FarmStatusPanel({ data }: { data: EnvironmentData }) {
   const [activeTab, setActiveTab] = useState<'env' | 'log'>('env');
 
   const envItems = useMemo(() => [
-    { key: 'temp', icon: '🌡️', label: '온도', value: `${data.temperature.toFixed(1)}°C`, color: '#e11d48' },
-    { key: 'hum', icon: '💧', label: '습도', value: `${data.humidity.toFixed(1)}%`, color: '#0284c7' },
-    { key: 'co2', icon: '💨', label: 'CO₂', value: `${data.co2.toFixed(0)} ppm`, color: '#7c3aed' },
-    { key: 'lux', icon: '☀️', label: '조도', value: `${data.light.toFixed(0)}%`, color: '#d97706' },
-    { key: 'ph', icon: '🧪', label: 'pH', value: data.ph.toFixed(1), color: '#059669' },
-    { key: 'ec', icon: '⚡', label: 'EC', value: `${data.ec.toFixed(1)} dS/m`, color: '#b45309' },
-    { key: 'wt', icon: '🌊', label: '수온', value: `${data.waterTemp.toFixed(1)}°C`, color: '#0891b2' },
-    { key: 'o2', icon: '🫧', label: '용존O₂', value: `${data.oxygenLevel.toFixed(1)} mg/L`, color: '#16a34a' },
-  ], [data.temperature, data.humidity, data.co2, data.light, data.ph, data.ec, data.waterTemp, data.oxygenLevel]);
+    { key: 'temp',   icon: '🌡️', label: '온도',      value: `${data.temperature.toFixed(1)}°C`,      color: '#e11d48' },
+    { key: 'hum',    icon: '💧', label: '습도',      value: `${data.humidity.toFixed(1)}%`,          color: '#0284c7' },
+    { key: 'co2',    icon: '💨', label: 'CO₂',       value: `${data.co2.toFixed(0)} ppm`,            color: '#7c3aed' },
+    { key: 'light1', icon: '☀️', label: 'LED 1',      value: `${(data.light1 ?? 0).toFixed(0)} lux`, color: '#d97706' },
+    { key: 'light2', icon: '☀️', label: 'LED 2',      value: `${(data.light2 ?? 0).toFixed(0)} lux`, color: '#ea580c' },
+    { key: 'light3', icon: '☀️', label: 'LED 3',      value: `${(data.light3 ?? 0).toFixed(0)} lux`, color: '#db2777' },
+    { key: 'ph',     icon: '🧪', label: 'pH',        value: data.ph.toFixed(1),                      color: '#059669' },
+    { key: 'ec',     icon: '⚡', label: 'EC',        value: `${data.ec.toFixed(1)} dS/m`,            color: '#b45309' },
+    { key: 'wt',     icon: '🌊', label: '수온',      value: `${data.waterTemp.toFixed(1)}°C`,        color: '#0891b2' },
+    { key: 'o2',     icon: '🫧', label: '용존O₂',   value: `${data.oxygenLevel.toFixed(1)} mg/L`,   color: '#16a34a' },
+  ], [data.temperature, data.humidity, data.co2, data.light1, data.light2, data.light3, data.ph, data.ec, data.waterTemp, data.oxygenLevel]);
 
   const equipSummary = useMemo(() => equipmentGroups.map(grp => {
     const on = grp.equipment.filter(e => e.status !== 'OFF').length;
@@ -938,7 +940,7 @@ function SettingsOverlay({ onClose }: { onClose: () => void }) {
 }
 
 const DEFAULT_SENSOR: EnvironmentData = {
-  temperature: 0, humidity: 0, co2: 0, light: 0, ph: 0, ec: 0, waterTemp: 0, oxygenLevel: 0,
+  temperature: 0, humidity: 0, co2: 0, ph: 0, ec: 0, waterTemp: 0, oxygenLevel: 0,
 };
 
 // ── Main component ───────────────────────────────────────
@@ -954,6 +956,8 @@ export default function FarmModel3DMobile({
   const wrapRef = useRef<HTMLDivElement>(null);
   const farm2TimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTapRef = useRef<number>(0);
+  // TODO: 캡처용 황혼 고정 — 확인 후 제거
+  // TODO: 캡처용 황혼 고정 — 확인 후 제거
   const weather = useWeather();
   const skyInfo = useMemo(() => computeSkyInfo(weather), [weather]);
   const { toggleEquipmentStatus, equipmentGroups } = useFarm();

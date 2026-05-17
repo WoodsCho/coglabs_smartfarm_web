@@ -1,7 +1,7 @@
 import type { SensorType, ChartDataPoint } from '../types/farm';
 import { environmentApi } from '../api/environment';
 
-// 실제 API와 연결된 센서 (Tuya 기기에서 실데이터 수신)
+// 실제 API와 연결된 센서 (Tuya / Zigbee 기기에서 실데이터 수신)
 const REAL_API_SENSORS = new Set<SensorType>([
   'temperature',
   'humidity',
@@ -9,12 +9,14 @@ const REAL_API_SENSORS = new Set<SensorType>([
   'ph',
   'ec',
   'oxygenLevel',
+  'light1',
+  'light2',
+  'light3',
 ]);
 
-// 미연결 센서 (co2: modbus 예정, light: TBD) — 임시 시뮬레이션 데이터 사용
+// 미연결 센서 (co2: modbus 예정) — 임시 시뮬레이션 데이터 사용
 const UNCONNECTED_SENSOR_RANGES: Record<string, { min: number; max: number; optimal: number }> = {
   co2: { min: 400, max: 1500, optimal: 950 },
-  light: { min: 50, max: 100, optimal: 80 },
 };
 
 function formatTime(kst: string, hours: number): string {
@@ -29,8 +31,8 @@ function generateTimeLabels(count: number, intervalMinutes: number): string[] {
   });
 }
 
-/** co2 / light 전용 시뮬레이션 데이터 생성 (실데이터 없음) */
-function generateUnconnectedData(sensorType: 'co2' | 'light', count: number, intervalMinutes: number): ChartDataPoint[] {
+/** co2 전용 시뮬레이션 데이터 생성 (실데이터 없음) */
+function generateUnconnectedData(sensorType: 'co2', count: number, intervalMinutes: number): ChartDataPoint[] {
   const range = UNCONNECTED_SENSOR_RANGES[sensorType];
   const labels = generateTimeLabels(count, intervalMinutes);
   let base = range.optimal;
@@ -62,6 +64,6 @@ export async function fetchSensorChartData(sensorType: SensorType, hours: number
     }
   }
 
-  // 미연결 센서 (co2, light): 시뮬레이션 데이터
-  return generateUnconnectedData(sensorType as 'co2' | 'light', hours, 60);
+  // 미연결 센서 (co2): 시뮬레이션 데이터
+  return generateUnconnectedData(sensorType as 'co2', hours, 60);
 }

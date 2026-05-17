@@ -37,7 +37,7 @@ function Co2OxygenChart() {
 }
 
 function WaterLightChart() {
-  const { primaryData, secondaryData, isLoading } = useCorrelatedChartData('waterTemp', 'light', 24);
+  const { primaryData, secondaryData, isLoading } = useCorrelatedChartData('waterTemp', 'light1', 24);
   if (isLoading) return <div className="dash-chart-loading">로딩 중...</div>;
   return (
     <DualAxisChart

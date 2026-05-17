@@ -25,7 +25,7 @@ const GROUP_FILTER_LABELS: Record<string, string> = {
   all: '전체', led: 'LED 조명', pump: '양액', heater: '냉난방기', co2: 'CO2 공급',
 };
 
-function EquipmentCard({ eq, liveEnvValue }: { eq: Equipment; liveEnvValue?: number }) {
+function EquipmentCard({ eq, liveEnvValue, illuminanceValue, illuminanceLabel }: { eq: Equipment; liveEnvValue?: number; illuminanceValue?: number; illuminanceLabel?: string }) {
   const { toggleEquipmentStatus, toggleEquipmentAuto, updateEquipmentTarget } = useFarm();
   const isActive = STATUS_ACTIVE.has(eq.status);
   const isMaintenance = eq.status === 'MAINTENANCE';
@@ -78,6 +78,14 @@ function EquipmentCard({ eq, liveEnvValue }: { eq: Equipment; liveEnvValue?: num
           </span>
         </div>
       </div>
+
+      {/* 조도센서 (LED 카드 전용) */}
+      {illuminanceValue != null && (
+        <div className="eq-card__lux">
+          <span className="eq-card__lux-label">{illuminanceLabel ?? '조도센서'}</span>
+          <span className="eq-card__lux-val" style={{ color: '#d97706' }}>{illuminanceValue.toFixed(0)} lux</span>
+        </div>
+      )}
 
       {/* 현재 → 목표 (없으면 빈 줄로 높이 맞춤) */}
       {hasVals ? (
@@ -153,7 +161,7 @@ const HEATER_SENSORS: { key: keyof EnvironmentData; label: string; unit: string;
   { key: 'temperature', label: '온도',   unit: '°C',   color: '#ef4444' },
   { key: 'humidity',    label: '습도',   unit: '%',    color: '#3b82f6' },
   { key: 'co2',         label: 'CO₂',   unit: 'ppm',  color: '#10b981' },
-  { key: 'light',       label: '조도',   unit: '%',    color: '#eab308' },
+  { key: 'light1',      label: '조도1',  unit: 'lux',  color: '#eab308' },
 ];
 
 const PUMP_SENSORS: { key: keyof EnvironmentData; label: string; unit: string; color: string }[] = [
@@ -170,7 +178,7 @@ function SensorChips({ sensors, data }: { sensors: typeof HEATER_SENSORS; data: 
         <div key={s.key} className="eq-sensor-chip">
           <span className="eq-sensor-chip__label">{s.label}</span>
           <span className="eq-sensor-chip__val" style={{ color: s.color }}>
-            {(data[s.key] as number).toFixed(1)}{s.unit}
+            {((data[s.key] as number) ?? 0).toFixed(1)}{s.unit}
           </span>
         </div>
       ))}
@@ -178,10 +186,22 @@ function SensorChips({ sensors, data }: { sensors: typeof HEATER_SENSORS; data: 
   );
 }
 
+const LED_ILLUMINANCE_MAP: Record<number, keyof EnvironmentData> = { 1: 'light1', 2: 'light2', 3: 'light3' };
+const LED_ILLUMINANCE_LABEL: Record<number, string> = { 1: '조도센서1 (3층)', 2: '조도센서2 (2층)', 3: '조도센서3 (1층)' };
+
 function GroupSection({ group, data }: { group: EqGroup; data: EnvironmentData }) {
   const getLiveEnv = (eq: Equipment): number | undefined => {
     if (group.type === 'heater' && eq.name === '히트펌프') return data.temperature;
     return undefined;
+  };
+  const getIlluminance = (eq: Equipment): number | undefined => {
+    if (group.type !== 'led') return undefined;
+    const key = LED_ILLUMINANCE_MAP[eq.id];
+    return key ? (data[key] as number | undefined) : undefined;
+  };
+  const getIlluminanceLabel = (eq: Equipment): string | undefined => {
+    if (group.type !== 'led') return undefined;
+    return LED_ILLUMINANCE_LABEL[eq.id];
   };
   return (
     <div className="eq-group">
@@ -192,7 +212,9 @@ function GroupSection({ group, data }: { group: EqGroup; data: EnvironmentData }
       {group.type === 'heater' && <SensorChips sensors={HEATER_SENSORS} data={data} />}
       {group.type === 'pump'   && <SensorChips sensors={PUMP_SENSORS}   data={data} />}
       <div className="eq-group__cards">
-        {group.equipment.map(eq => <EquipmentCard key={eq.id} eq={eq} liveEnvValue={getLiveEnv(eq)} />)}
+        {group.equipment.map(eq => (
+          <EquipmentCard key={eq.id} eq={eq} liveEnvValue={getLiveEnv(eq)} illuminanceValue={getIlluminance(eq)} illuminanceLabel={getIlluminanceLabel(eq)} />
+        ))}
       </div>
     </div>
   );

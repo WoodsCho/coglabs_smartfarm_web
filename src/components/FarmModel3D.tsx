@@ -941,16 +941,18 @@ function FarmStatusPanel({ data }: { data: EnvironmentData }) {
   const { equipmentGroups } = useFarm();
 
   const envItems = useMemo(() => [
-    { key: 'temp',  icon: '🌡️', label: '온도',     value: `${data.temperature.toFixed(1)}°C`,  color: '#fb7185' },
-    { key: 'hum',   icon: '💧', label: '습도',     value: `${data.humidity.toFixed(1)}%`,      color: '#38bdf8' },
-    { key: 'co2',   icon: '💨', label: 'CO₂',      value: `${data.co2.toFixed(0)} ppm`,        color: '#a78bfa' },
-    { key: 'light', icon: '☀️', label: '조도',     value: `${data.light.toFixed(0)}%`,         color: '#fbbf24' },
-    { key: 'ph',    icon: '🧪', label: 'pH',       value: data.ph.toFixed(1),                  color: '#34d399' },
-    { key: 'ec',    icon: '⚡', label: 'EC',       value: `${data.ec.toFixed(1)} dS/m`,        color: '#facc15' },
-    { key: 'wtemp', icon: '🌊', label: '수온',     value: `${data.waterTemp.toFixed(1)}°C`,    color: '#22d3ee' },
-    { key: 'o2',    icon: '🫧', label: '용존산소', value: `${data.oxygenLevel.toFixed(1)} mg/L`, color: '#86efac' },
+    { key: 'temp',  icon: '🌡️', label: '온도',         value: `${data.temperature.toFixed(1)}°C`,        color: '#fb7185' },
+    { key: 'hum',   icon: '💧', label: '습도',         value: `${data.humidity.toFixed(1)}%`,            color: '#38bdf8' },
+    { key: 'co2',   icon: '💨', label: 'CO₂',          value: `${data.co2.toFixed(0)} ppm`,              color: '#a78bfa' },
+    { key: 'light1', icon: '☀️', label: 'LED 1',       value: `${(data.light1 ?? 0).toFixed(0)} lux`,   color: '#fbbf24' },
+    { key: 'light2', icon: '☀️', label: 'LED 2',       value: `${(data.light2 ?? 0).toFixed(0)} lux`,   color: '#fb923c' },
+    { key: 'light3', icon: '☀️', label: 'LED 3',       value: `${(data.light3 ?? 0).toFixed(0)} lux`,   color: '#f472b6' },
+    { key: 'ph',    icon: '🧪', label: 'pH',           value: data.ph.toFixed(1),                        color: '#34d399' },
+    { key: 'ec',    icon: '⚡', label: 'EC',           value: `${data.ec.toFixed(1)} dS/m`,              color: '#facc15' },
+    { key: 'wtemp', icon: '🌊', label: '수온',         value: `${data.waterTemp.toFixed(1)}°C`,          color: '#22d3ee' },
+    { key: 'o2',    icon: '🫧', label: '용존산소',     value: `${data.oxygenLevel.toFixed(1)} mg/L`,     color: '#86efac' },
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  ], [data.temperature, data.humidity, data.co2, data.light, data.ph, data.ec, data.waterTemp, data.oxygenLevel]);
+  ], [data.temperature, data.humidity, data.co2, data.light1, data.light2, data.light3, data.ph, data.ec, data.waterTemp, data.oxygenLevel]);
 
   const equipSummary = useMemo(() => equipmentGroups.map(grp => {
     const on = grp.equipment.filter(e => e.status !== 'OFF').length;
@@ -1256,7 +1258,7 @@ function GreenhouseSpecPanel() {
 }
 // 기본 센서 데이터 (sensorData prop 없을 때 fallback)
 const DEFAULT_SENSOR: EnvironmentData = {
-  temperature: 0, humidity: 0, co2: 0, light: 0,
+  temperature: 0, humidity: 0, co2: 0,
   ph: 0, ec: 0, waterTemp: 0, oxygenLevel: 0,
 };
 

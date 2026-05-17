@@ -31,7 +31,7 @@ const SENSORS = [
   { key: 'temperature', label: 'TEMPERATURE', unit: '°C', color: '#dc2626', fmt: (v: number) => v.toFixed(1) },
   { key: 'humidity', label: 'HUMIDITY', unit: '%', color: '#2563eb', fmt: (v: number) => v.toFixed(1) },
   { key: 'co2', label: 'CO₂', unit: 'ppm', color: '#7c3aed', fmt: (v: number) => v.toFixed(0) },
-  { key: 'light', label: 'LIGHT', unit: '%', color: '#d97706', fmt: (v: number) => v.toFixed(0) },
+  { key: 'light1', label: 'LIGHT 1', unit: 'lux', color: '#d97706', fmt: (v: number) => v.toFixed(0) },
   { key: 'ph', label: 'pH', unit: '', color: '#059669', fmt: (v: number) => v.toFixed(1) },
   { key: 'ec', label: 'EC', unit: 'dS/m', color: '#0891b2', fmt: (v: number) => v.toFixed(1) },
   { key: 'waterTemp', label: 'WATER TEMP', unit: '°C', color: '#0284c7', fmt: (v: number) => v.toFixed(1) },
@@ -398,7 +398,7 @@ function LogScreen() {
 
 // ── Main ──────────────────────────────────────────────────
 const DEFAULT_SENSOR: EnvironmentData = {
-  temperature: 0, humidity: 0, co2: 0, light: 0, ph: 0, ec: 0, waterTemp: 0, oxygenLevel: 0,
+  temperature: 0, humidity: 0, co2: 0, ph: 0, ec: 0, waterTemp: 0, oxygenLevel: 0,
 };
 
 export interface FarmModelLiteProps {

@@ -29,10 +29,10 @@ export const CHART_GROUP_CONFIG: ChartGroupConfig[] = [
     secondary: { label: 'O₂',  color: '#06B6D4', unit: 'mg/L' },
   },
   {
-    title: '수온 & 조도', icon: 'sun',
-    primaryKey: 'waterTemp', secondaryKey: 'light',
+    title: '수온 & 조도(3층)', icon: 'sun',
+    primaryKey: 'waterTemp', secondaryKey: 'light1',
     primary:   { label: '수온', color: '#F97316', unit: '°C' },
-    secondary: { label: '조도', color: '#EAB308', unit: '%' },
+    secondary: { label: '조도1', color: '#EAB308', unit: 'lux' },
   },
   {
     title: 'pH & EC (양액)', icon: 'flask',

@@ -149,6 +149,54 @@ function SchedulerSection({
   );
 }
 
+const LED_LUX_KEY: Record<number, 'light1' | 'light2' | 'light3'> = { 1: 'light1', 2: 'light2', 3: 'light3' };
+const LED_SENSOR_LABEL: Record<number, string> = { 1: '조도센서1 (3층)', 2: '조도센서2 (2층)', 3: '조도센서3 (1층)' };
+
+/* ── Lux Target Control ──────────────────────────────────────── */
+function LuxTargetControl({ eqId: _eqId }: { eqId: number }) {
+  const [target, setTarget] = useState(2000);
+  const [editing, setEditing] = useState<string | null>(null);
+  const step = 100;
+
+  const dec = () => setTarget(t => Math.max(0, t - step));
+  const inc = () => setTarget(t => Math.min(10000, t + step));
+  const commit = () => {
+    if (editing === null) return;
+    const v = parseInt(editing);
+    if (!isNaN(v)) setTarget(Math.max(0, Math.min(10000, v)));
+    setEditing(null);
+  };
+
+  return (
+    <div className="ctrl-lux-target">
+      <span className="ctrl-lux-target__label">목표 lux</span>
+      <div className="ctrl-lux-target__ctrl">
+        <button className="ctrl-lux-target__btn" onClick={dec}>−</button>
+        {editing !== null ? (
+          <input
+            className="ctrl-lux-target__input"
+            type="number"
+            value={editing}
+            onChange={e => setEditing(e.target.value)}
+            onBlur={commit}
+            onKeyDown={e => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') setEditing(null); }}
+            autoFocus
+          />
+        ) : (
+          <span
+            className="ctrl-lux-target__val"
+            title="클릭하여 직접 입력"
+            onClick={() => setEditing(String(target))}
+          >
+            {target.toLocaleString()}
+          </span>
+        )}
+        <button className="ctrl-lux-target__btn" onClick={inc}>+</button>
+      </div>
+    </div>
+  );
+}
+
 /* ── Equipment Row ───────────────────────────────────────────── */
 function EquipmentRow({
   eq, groupColor, groupType,
@@ -179,6 +227,8 @@ function EquipmentRow({
     ? parseFloat((currentData.heatPumpPower / 1000).toFixed(2))
     : mockKwh(eq.id);
   const isSchedOpen = scheduleOpenId === eq.id;
+  const luxKey = groupType === 'led' ? LED_LUX_KEY[eq.id] : undefined;
+  const luxValue = luxKey ? currentData[luxKey] : undefined;
 
   const handleToggle = async () => {
     if (controlling) return;
@@ -209,16 +259,23 @@ function EquipmentRow({
           {st.label}
         </span>
 
-        {/* Env progress bar */}
+        {/* Env progress bar / 조도 */}
         {hasTarget && eq.envValue != null ? (
           <EnvProgress envValue={eq.envValue} target={eq.target!} unit={eq.unit!} />
+        ) : luxValue != null ? (
+          <div className="ctrl-row__lux">
+            <span style={{ fontSize: '10px', color: '#9ca3af' }}>{LED_SENSOR_LABEL[eq.id] ?? '조도센서'}</span>
+            <span style={{ fontSize: '12px', fontWeight: 600, color: '#d97706' }}>{luxValue.toFixed(0)} lux</span>
+          </div>
         ) : (
           <div className="ctrl-row__env-empty" />
         )}
 
-        {/* Target slider */}
+        {/* Target slider / lux 목표 */}
         {hasTarget ? (
           <TargetSlider eq={eq} onUpdate={v => updateEquipmentTarget(eq.id, v)} />
+        ) : luxKey ? (
+          <LuxTargetControl eqId={eq.id} />
         ) : (
           <div className="ctrl-row__slider-empty" />
         )}

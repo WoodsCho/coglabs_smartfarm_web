@@ -42,7 +42,7 @@ interface FarmContextType {
 const FarmContext = createContext<FarmContextType | undefined>(undefined);
 
 const DEFAULT_ENV: EnvironmentData = {
-  temperature: 23.5, humidity: 68, co2: 950, light: 80,
+  temperature: 23.5, humidity: 68, co2: 950,
   ph: 6.0, ec: 2.1, waterTemp: 21.5, oxygenLevel: 7.2,
 };
 
@@ -174,6 +174,9 @@ export function FarmProvider({ children }: { children: ReactNode }) {
           ...(apiData.ec != null && { ec: apiData.ec }),
           ...(apiData.oxygenLevel != null && { oxygenLevel: apiData.oxygenLevel }),
           ...(apiData.heatPumpPower != null && { heatPumpPower: apiData.heatPumpPower }),
+          ...(apiData.light1 != null && { light1: apiData.light1 }),
+          ...(apiData.light2 != null && { light2: apiData.light2 }),
+          ...(apiData.light3 != null && { light3: apiData.light3 }),
         }));
         if (apiData.equipment) {
           setEquipmentGroups(prev => prev.map(g => ({

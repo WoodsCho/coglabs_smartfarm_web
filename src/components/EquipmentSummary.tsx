@@ -25,12 +25,13 @@ const GROUP_FILTER_LABELS: Record<string, string> = {
   all: '전체', led: 'LED 조명', pump: '양액', heater: '냉난방기', co2: 'CO2 공급',
 };
 
-function EquipmentCard({ eq }: { eq: Equipment }) {
+function EquipmentCard({ eq, liveEnvValue }: { eq: Equipment; liveEnvValue?: number }) {
   const { toggleEquipmentStatus, toggleEquipmentAuto, updateEquipmentTarget } = useFarm();
   const isActive = STATUS_ACTIVE.has(eq.status);
   const isMaintenance = eq.status === 'MAINTENANCE';
   const st = STATUS_STYLE[eq.status] ?? DEFAULT_STYLE;
-  const hasVals = eq.envValue != null && eq.target != null;
+  const displayEnvValue = liveEnvValue ?? eq.envValue;
+  const hasVals = displayEnvValue != null && eq.target != null;
   const isVirtual = !REAL_EQUIPMENT_IDS.has(eq.id);
   const [editingTarget, setEditingTarget] = useState<string | null>(null);
   const [controlling, setControlling] = useState(false);
@@ -83,7 +84,7 @@ function EquipmentCard({ eq }: { eq: Equipment }) {
         <div className="eq-card__vals">
           <div className="eq-card__val-block">
             <span className="eq-card__val-label">현재</span>
-            <span className="eq-card__val" style={{ color: st.labelColor }}>{eq.envValue}{eq.unit}</span>
+            <span className="eq-card__val" style={{ color: st.labelColor }}>{displayEnvValue}{eq.unit}</span>
           </div>
           <span className="eq-card__arrow">→</span>
           <div className="eq-card__val-block">
@@ -178,6 +179,10 @@ function SensorChips({ sensors, data }: { sensors: typeof HEATER_SENSORS; data: 
 }
 
 function GroupSection({ group, data }: { group: EqGroup; data: EnvironmentData }) {
+  const getLiveEnv = (eq: Equipment): number | undefined => {
+    if (group.type === 'heater' && eq.name === '히트펌프') return data.temperature;
+    return undefined;
+  };
   return (
     <div className="eq-group">
       <div className="eq-group__header">
@@ -187,7 +192,7 @@ function GroupSection({ group, data }: { group: EqGroup; data: EnvironmentData }
       {group.type === 'heater' && <SensorChips sensors={HEATER_SENSORS} data={data} />}
       {group.type === 'pump'   && <SensorChips sensors={PUMP_SENSORS}   data={data} />}
       <div className="eq-group__cards">
-        {group.equipment.map(eq => <EquipmentCard key={eq.id} eq={eq} />)}
+        {group.equipment.map(eq => <EquipmentCard key={eq.id} eq={eq} liveEnvValue={getLiveEnv(eq)} />)}
       </div>
     </div>
   );

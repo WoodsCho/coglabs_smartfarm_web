@@ -226,6 +226,12 @@
   color: #9ca3af;
 }
 
+/* 양액 그룹 인라인 버튼 (position 오버라이드) */
+.farm3d__equip-btn--inline {
+  position: static;
+  transform: none;
+}
+
 /* 카메라 좌표 디버거 */
 .farm3d__cam-debug {
   position: absolute;

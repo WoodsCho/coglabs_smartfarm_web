@@ -375,10 +375,16 @@ export interface EquipButtonPos {
   x: number; y: number;
 }
 
+const PUMP_GROUP_ITEMS = [
+  { label: '양액 A',  icon: '🧪', ids: [13] },
+  { label: '양액 B',  icon: '🧫', ids: [12] },
+  { label: '믹서',    icon: '🔄', ids: [11] },
+  { label: '양액펌프', icon: '💧', ids: [6, 7] },
+] as const;
+
 const EQUIP_BUTTON_DEFS = [
   { key: 'fan_coil_button',   label: '팬코일',  icon: '❄️',  equipmentIds: [8]    },
   { key: 'heat_pump_button',  label: '히트펌프', icon: '🌡️', equipmentIds: [9]    },
-  { key: 'mixer_button',      label: '믹서',    icon: '🔄',  equipmentIds: [11]   },
   { key: 'water_pump_button', label: '양액펌프', icon: '💧',  equipmentIds: [6, 7] },
   { key: 'led1_button',       label: 'LED 3',   icon: '💡',  equipmentIds: [],    ledId: 3 },
   { key: 'led2_button',       label: 'LED 2',   icon: '💡',  equipmentIds: [],    ledId: 2 },
@@ -1445,6 +1451,51 @@ export default function FarmModel3D({ led1On = false, led2On = false, led3On = f
           {/* ── 장비/LED 버튼 오버레이 (Canvas 위 절대 위치 HTML) ── */}
           {isZoomedInFarm1 && !isPlantCheckView && equipBtnPositions.map(btn => {
             const allEquip = equipmentGroups.flatMap((g: import('../types/farm').EquipmentGroup) => g.equipment);
+
+            // 양액펌프 위치에 양액A/B/믹서/양액펌프 세로 그룹 렌더
+            if (btn.key === 'water_pump_button') {
+              return (
+                <div
+                  key={btn.key}
+                  style={{
+                    position: 'absolute',
+                    left: btn.x,
+                    top: btn.y,
+                    transform: 'translate(-50%, -50%)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 4,
+                    zIndex: 30,
+                    pointerEvents: 'auto',
+                  }}
+                >
+                  {PUMP_GROUP_ITEMS.map(item => {
+                    const on = (item.ids as readonly number[]).some(id => {
+                      const eq = allEquip.find((e: import('../types/farm').Equipment) => e.id === id);
+                      return eq && eq.status !== 'OFF';
+                    });
+                    return (
+                      <button
+                        key={item.label}
+                        className={`farm3d__equip-btn farm3d__equip-btn--inline${on ? ' farm3d__equip-btn--on' : ''}`}
+                        onClick={() => {
+                          const next = !on;
+                          (item.ids as readonly number[]).forEach(id => {
+                            toggleEquipmentStatus(id, next ? 'ON' : 'OFF');
+                            equipmentApi.control(id, next ? 'ON' : 'OFF').catch(console.error);
+                          });
+                        }}
+                      >
+                        <span className="farm3d__equip-btn-icon">{item.icon}</span>
+                        <span className="farm3d__equip-btn-label">{item.label}</span>
+                        <span className="farm3d__equip-btn-status">{on ? 'ON' : 'OFF'}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              );
+            }
+
             // LED 3 수리중 여부 확인
             const isMaintenance = btn.ledId != null &&
               allEquip.find((e: import('../types/farm').Equipment) => e.id === btn.ledId)?.status === 'MAINTENANCE';

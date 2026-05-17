@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<title>CogLabs SmartFarm Web — Architecture</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --panel: #1e293b;
+    --panel-2: #334155;
+    --line: #475569;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --accent: #22d3ee;
+    --green: #4ade80;
+    --yellow: #facc15;
+    --orange: #fb923c;
+    --pink: #f472b6;
+    --purple: #a78bfa;
+    --red: #f87171;
+    --blue: #60a5fa;
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: radial-gradient(circle at 20% 0%, #1e293b 0%, var(--bg) 60%);
+    color: var(--text);
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height: 100vh;
+  }
+
+  .wrap {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 40px 32px 80px;
+  }
+
+  header.top {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+  header.top h1 {
+    margin: 0 0 8px;
+    font-size: 32px;
+    background: linear-gradient(90deg, var(--accent), var(--green));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  header.top p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  /* ----- Layer (수평 큰 띠) ----- */
+  .layer {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 28px;
+    position: relative;
+  }
+  .layer__title {
+    position: absolute;
+    top: -12px;
+    left: 20px;
+    background: var(--bg);
+    padding: 2px 12px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+  }
+  .layer__title .badge {
+    margin-right: 6px;
+    font-size: 11px;
+  }
+
+  .row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    align-items: stretch;
+  }
+
+  /* ----- Block (작은 카드) ----- */
+  .block {
+    flex: 1 1 220px;
+    background: var(--panel-2);
+    border-radius: 12px;
+    padding: 14px 16px;
+    border-left: 4px solid var(--accent);
+    min-width: 200px;
+  }
+  .block h3 {
+    margin: 0 0 6px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .block ul {
+    margin: 6px 0 0;
+    padding-left: 18px;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.7;
+  }
+  .block code {
+    background: rgba(0,0,0,0.3);
+    padding: 1px 6px;
+    border-radius: 4px;
+    color: var(--accent);
+    font-size: 11px;
+  }
+
+  /* color variants */
+  .b-blue   { border-left-color: var(--blue); }
+  .b-green  { border-left-color: var(--green); }
+  .b-yellow { border-left-color: var(--yellow); }
+  .b-orange { border-left-color: var(--orange); }
+  .b-pink   { border-left-color: var(--pink); }
+  .b-purple { border-left-color: var(--purple); }
+  .b-red    { border-left-color: var(--red); }
+  .b-cyan   { border-left-color: var(--accent); }
+
+  /* ----- Arrow (다운) ----- */
+  .arrow {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin: -8px 0 20px;
+    color: var(--muted);
+    font-size: 11px;
+  }
+  .arrow::before, .arrow::after {
+    content: '';
+    flex: 0 0 60px;
+    height: 1px;
+    background: var(--line);
+  }
+  .arrow span {
+    padding: 2px 10px;
+    border: 1px dashed var(--line);
+    border-radius: 999px;
+    background: var(--bg);
+  }
+
+  /* ----- External services row ----- */
+  .ext-row .block {
+    background: #0b1220;
+    border: 1px solid var(--line);
+    border-left-width: 4px;
+  }
+
+  /* legend */
+  .legend {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-top: 24px;
+    justify-content: center;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .legend .dot {
+    display: inline-block;
+    width: 10px; height: 10px;
+    border-radius: 3px;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+
+  /* sub-grid for pages */
+  .grid-pages {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 10px;
+  }
+  .pill {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 12px;
+    text-align: center;
+  }
+  .pill small {
+    display: block;
+    color: var(--muted);
+    font-size: 10px;
+    margin-top: 2px;
+  }
+
+  /* tech stack chip */
+  .stack {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+  }
+  .chip {
+    background: rgba(34, 211, 238, 0.1);
+    color: var(--accent);
+    border: 1px solid rgba(34, 211, 238, 0.3);
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 10px;
+  }
+
+  .footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 11px;
+    margin-top: 30px;
+  }
+
+  /* arrow with label LR */
+  .lr-arrows {
+    display: flex;
+    justify-content: space-around;
+    margin: 8px 0 20px;
+    color: var(--muted);
+    font-size: 11px;
+  }
+  .lr-arrows span {
+    border: 1px dashed var(--line);
+    padding: 2px 12px;
+    border-radius: 999px;
+    background: var(--bg);
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <h1>🌱 CogLabs SmartFarm Web — Architecture</h1>
+    <p>React 18 + Vite + TypeScript · React Router v7 · AWS Amplify · Three.js (R3F) · Recharts</p>
+  </header>
+
+  <!-- ============ Layer 1: User / Devices ============ -->
+  <div class="layer">
+    <span class="layer__title">👤 USER LAYER</span>
+    <div class="row">
+      <div class="block b-cyan">
+        <h3>🖥️ Desktop Browser</h3>
+        <ul>
+          <li><code>/</code> Dashboard, Monitor, Control 등</li>
+          <li>Sidebar + Header 레이아웃</li>
+        </ul>
+      </div>
+      <div class="block b-cyan">
+        <h3>📱 Mobile Browser</h3>
+        <ul>
+          <li><code>/mobile</code> 풀스크린 3D</li>
+          <li><code>/mobile/lite</code> 경량 버전</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow"><span>HTTPS</span></div>
+
+  <!-- ============ Layer 2: Frontend ============ -->
+  <div class="layer">
+    <span class="layer__title">⚛️ FRONTEND (React SPA · Vite)</span>
+
+    <!-- Entry / Router -->
+    <div class="row">
+      <div class="block b-blue">
+        <h3>🚀 Entry</h3>
+        <ul>
+          <li><code>main.tsx</code> → <code>App.tsx</code></li>
+          <li><code>BrowserRouter</code> (react-router-dom v7)</li>
+          <li>전역 <code>&lt;FarmProvider&gt;</code> 래핑</li>
+        </ul>
+      </div>
+      <div class="block b-blue">
+        <h3>🧭 Routing</h3>
+        <ul>
+          <li><code>&lt;Layout/&gt;</code> 자식 라우트 (Outlet)</li>
+          <li>모바일은 Layout 없이 풀스크린</li>
+          <li>fallback → <code>Navigate to="/"</code></li>
+        </ul>
+      </div>
+      <div class="block b-blue">
+        <h3>🧩 Layout</h3>
+        <ul>
+          <li><code>Sidebar</code> (collapsible)</li>
+          <li><code>Header</code> (username, alerts)</li>
+          <li><code>&lt;Outlet/&gt;</code> 페이지 영역</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="arrow"><span>renders</span></div>
+
+    <!-- Pages -->
+    <h4 style="margin:6px 0 8px;color:var(--muted);font-size:12px;letter-spacing:0.5px;">📄 PAGES</h4>
+    <div class="grid-pages">
+      <div class="pill">DashboardPage<small>요약 KPI / 3D</small></div>
+      <div class="pill">MonitorPage<small>환경 모니터링</small></div>
+      <div class="pill">ControlPage<small>장비 제어</small></div>
+      <div class="pill">HarvestPage<small>수확 관리</small></div>
+      <div class="pill">ShipmentPage<small>출하 · 유통</small></div>
+      <div class="pill">SocialPage<small>이웃 농장</small></div>
+      <div class="pill">LogsPage<small>활동 로그</small></div>
+      <div class="pill">TodosPage<small>작업 관리</small></div>
+      <div class="pill">MobilePage<small>/mobile</small></div>
+      <div class="pill">MobileLitePage<small>/mobile/lite</small></div>
+    </div>
+
+    <div class="arrow"><span>uses</span></div>
+
+    <!-- Components / Hooks / Context -->
+    <div class="row">
+      <div class="block b-yellow">
+        <h3>🧱 Components</h3>
+        <ul>
+          <li><code>FarmModel3D</code> / <code>Mobile</code> / <code>Lite</code></li>
+          <li><code>KPICard</code>, <code>DualAxisChart</code></li>
+          <li><code>EquipmentSummary</code>, <code>TaskPanel</code></li>
+          <li><code>ActivityTimeline</code>, <code>NotificationCenter</code></li>
+          <li><code>Chatbot</code> (markdown)</li>
+        </ul>
+      </div>
+      <div class="block b-orange">
+        <h3>🎣 Hooks</h3>
+        <ul>
+          <li><code>useWeather</code> — 외부 날씨/시간</li>
+          <li><code>useSensorChartData</code> — 센서 차트</li>
+          <li><code>chartData</code> — 차트 변환 유틸</li>
+        </ul>
+      </div>
+      <div class="block b-pink">
+        <h3>🗂️ Global State</h3>
+        <ul>
+          <li><code>FarmContext</code> (Context API)</li>
+          <li>환경/장비/수확/출하/소셜/알림</li>
+          <li>API 호출 + 상태 캐싱</li>
+        </ul>
+      </div>
+      <div class="block b-purple">
+        <h3>📦 Types / Config</h3>
+        <ul>
+          <li><code>types/farm.ts</code></li>
+          <li><code>config/chartConfig.ts</code></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="stack" style="margin-top:18px;">
+      <span class="chip">React 18</span>
+      <span class="chip">TypeScript 5</span>
+      <span class="chip">Vite 7</span>
+      <span class="chip">React Router 7</span>
+      <span class="chip">@react-three/fiber</span>
+      <span class="chip">@react-three/drei</span>
+      <span class="chip">three.js</span>
+      <span class="chip">recharts</span>
+      <span class="chip">@dnd-kit</span>
+      <span class="chip">react-markdown</span>
+      <span class="chip">lucide-react</span>
+      <span class="chip">aws-amplify</span>
+    </div>
+  </div>
+
+  <div class="arrow"><span>fetch / REST</span></div>
+
+  <!-- ============ Layer 3: API Layer ============ -->
+  <div class="layer">
+    <span class="layer__title">🔌 API LAYER (src/api)</span>
+    <div class="row">
+      <div class="block b-green">
+        <h3>client.ts</h3>
+        <ul>
+          <li><code>ApiClient</code> 클래스 (singleton)</li>
+          <li>JWT 토큰 자동 첨부 (localStorage)</li>
+          <li><code>get / post / put</code> 래퍼</li>
+        </ul>
+      </div>
+      <div class="block b-green">
+        <h3>environment.ts</h3>
+        <ul>
+          <li><code>/environment/current</code></li>
+          <li><code>/environment/history</code></li>
+          <li><code>/environment/yesterday</code></li>
+        </ul>
+      </div>
+      <div class="block b-green">
+        <h3>equipment.ts</h3>
+        <ul>
+          <li><code>/equipment/groups</code></li>
+          <li><code>/equipment/:id/control</code></li>
+          <li>+ <code>controllerApi</code> (실 디바이스)</li>
+        </ul>
+      </div>
+      <div class="block b-green">
+        <h3>chat.ts</h3>
+        <ul>
+          <li><code>/chat</code> 세션 관리</li>
+          <li>create / send / list / history</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lr-arrows">
+    <span>↓ API Gateway</span>
+    <span>↓ Tailscale Direct</span>
+    <span>↓ OpenWeatherMap</span>
+    <span>↓ Amplify SDK</span>
+  </div>
+
+  <!-- ============ Layer 4: External ============ -->
+  <div class="layer ext-row">
+    <span class="layer__title">☁️ EXTERNAL SERVICES</span>
+    <div class="row">
+      <div class="block b-orange">
+        <h3>🛰️ AWS API Gateway</h3>
+        <ul>
+          <li><code>xr0u2z6sq4.execute-api…</code></li>
+          <li>ap-northeast-2 (Seoul)</li>
+          <li>Lambda + DynamoDB (추정)</li>
+          <li>JWT Bearer 인증</li>
+        </ul>
+      </div>
+      <div class="block b-red">
+        <h3>🤖 IoT Controller</h3>
+        <ul>
+          <li><code>k8s-worker01.tail63c20e.ts.net</code></li>
+          <li>Tailscale 사설 네트워크</li>
+          <li><code>POST /control</code> ON/OFF</li>
+          <li><code>GET /status/:id</code></li>
+          <li>실제 LED · 팬 · 양액 · 히트펌프</li>
+        </ul>
+      </div>
+      <div class="block b-yellow">
+        <h3>🌤️ OpenWeatherMap</h3>
+        <ul>
+          <li>장성군 좌표 기반</li>
+          <li>날씨 + 일출/일몰 → 3D 씬</li>
+          <li>API 키 없을 시 시간 기반 fallback</li>
+        </ul>
+      </div>
+      <div class="block b-purple">
+        <h3>🔐 AWS Amplify</h3>
+        <ul>
+          <li><code>amplify/backend.ts</code></li>
+          <li>Auth (Cognito)</li>
+          <li>Data (AppSync · GraphQL)</li>
+          <li>호스팅 (amplify.yml)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ Layer 5: Devices ============ -->
+  <div class="arrow"><span>MQTT / HTTP (서버측)</span></div>
+
+  <div class="layer">
+    <span class="layer__title">🏭 PHYSICAL FARM (장성 스마트팜)</span>
+    <div class="row">
+      <div class="block b-yellow">
+        <h3>💡 LED 조명</h3>
+        <ul><li>LED 1 · 2 · 3</li><li>조도 80% 타겟</li></ul>
+      </div>
+      <div class="block b-blue">
+        <h3>🌬️ 환기팬</h3>
+        <ul><li>환기팬 1 · 2</li><li>온도 24°C 타겟</li></ul>
+      </div>
+      <div class="block b-green">
+        <h3>💧 양액 시스템</h3>
+        <ul><li>회수 · 공급 · A · B · Mixer</li><li>pH 6.0 / EC 2.1</li></ul>
+      </div>
+      <div class="block b-red">
+        <h3>🔥 냉난방기</h3>
+        <ul><li>팬코일 · 히트펌프</li><li>전력량 모니터링</li></ul>
+      </div>
+      <div class="block b-cyan">
+        <h3>📡 센서</h3>
+        <ul><li>온도 · 습도 · CO₂ · 조도</li><li>pH · EC · 수온 · DO</li></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Legend -->
+  <div class="legend">
+    <div><span class="dot" style="background:var(--blue)"></span>Entry / Routing</div>
+    <div><span class="dot" style="background:var(--yellow)"></span>Components</div>
+    <div><span class="dot" style="background:var(--orange)"></span>Hooks</div>
+    <div><span class="dot" style="background:var(--pink)"></span>State</div>
+    <div><span class="dot" style="background:var(--green)"></span>API</div>
+    <div><span class="dot" style="background:var(--red)"></span>IoT 제어</div>
+    <div><span class="dot" style="background:var(--purple)"></span>AWS</div>
+  </div>
+
+  <p class="footer">© CogLabs · Generated from current codebase</p>
+</div>
+</body>
+</html>

@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<title>CogLabs SmartFarm — System Structure</title>
+<style>
+  :root {
+    --bg: #0b1220;
+    --bg-2: #0f172a;
+    --panel: #1e293b;
+    --panel-2: #273449;
+    --line: #475569;
+    --line-soft: #334155;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+
+    --aws: #ff9900;
+    --aws-soft: rgba(255, 153, 0, 0.12);
+    --edge: #22d3ee;
+    --edge-soft: rgba(34, 211, 238, 0.12);
+    --device: #4ade80;
+    --device-soft: rgba(74, 222, 128, 0.12);
+    --front: #a78bfa;
+    --front-soft: rgba(167, 139, 250, 0.12);
+    --mqtt: #f472b6;
+    --rest: #60a5fa;
+    --ws: #facc15;
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background:
+      radial-gradient(circle at 80% 10%, #1a2742 0%, var(--bg) 50%),
+      var(--bg);
+    color: var(--text);
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height: 100vh;
+  }
+  .wrap {
+    max-width: 1500px;
+    margin: 0 auto;
+    padding: 40px 32px 80px;
+  }
+
+  header.top {
+    text-align: center;
+    margin-bottom: 50px;
+  }
+  header.top h1 {
+    margin: 0 0 6px;
+    font-size: 30px;
+    letter-spacing: -0.5px;
+  }
+  header.top p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  /* ===== legend ===== */
+  .legend {
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin: 0 auto 36px;
+    padding: 12px 16px;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid var(--line-soft);
+    border-radius: 999px;
+    width: fit-content;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .legend .line-sample {
+    display: inline-block;
+    width: 28px;
+    height: 0;
+    border-top: 2px solid;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+  .legend .dashed { border-top-style: dashed; }
+  .legend .dotted { border-top-style: dotted; }
+
+  /* ===== Diagram canvas ===== */
+  .diagram {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px 80px;
+    align-items: start;
+  }
+
+  /* ===== Group box ===== */
+  .group {
+    background: var(--panel);
+    border-radius: 18px;
+    padding: 22px 22px 18px;
+    position: relative;
+    border: 1px solid var(--line-soft);
+  }
+  .group::before {
+    content: attr(data-label);
+    position: absolute;
+    top: -12px;
+    left: 22px;
+    background: var(--bg-2);
+    padding: 3px 14px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    border: 1px solid var(--line);
+  }
+
+  .group--frontend { border-top: 3px solid var(--front); }
+  .group--aws      { border-top: 3px solid var(--aws); }
+  .group--edge     { border-top: 3px solid var(--edge); }
+  .group--device   { border-top: 3px solid var(--device); }
+
+  .group h2 {
+    margin: 6px 0 14px;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .group h2 small {
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 400;
+  }
+
+  /* ===== Node card ===== */
+  .nodes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+  }
+  .node {
+    background: var(--panel-2);
+    border: 1px solid var(--line-soft);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  .node b {
+    display: block;
+    color: var(--text);
+    font-size: 13px;
+    margin-bottom: 3px;
+  }
+  .node small {
+    color: var(--muted);
+    font-size: 11px;
+  }
+  .node code {
+    background: rgba(0,0,0,0.35);
+    padding: 1px 6px;
+    border-radius: 4px;
+    color: #67e8f9;
+    font-size: 10px;
+  }
+
+  .node--aws    { border-left: 3px solid var(--aws); background: var(--aws-soft); }
+  .node--edge   { border-left: 3px solid var(--edge); background: var(--edge-soft); }
+  .node--device { border-left: 3px solid var(--device); background: var(--device-soft); }
+  .node--front  { border-left: 3px solid var(--front); background: var(--front-soft); }
+
+  /* ===== Flow lines section ===== */
+  .flow {
+    grid-column: 1 / -1;
+    background: rgba(15, 23, 42, 0.55);
+    border: 1px dashed var(--line);
+    border-radius: 16px;
+    padding: 22px;
+  }
+  .flow h3 {
+    margin: 0 0 14px;
+    font-size: 14px;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .flow-row {
+    display: grid;
+    grid-template-columns: 1.4fr auto 1.4fr auto 1.4fr;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px dashed var(--line-soft);
+  }
+  .flow-row:last-child { border-bottom: none; }
+
+  .endpoint {
+    background: var(--panel-2);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 12px;
+    border: 1px solid var(--line-soft);
+    text-align: center;
+  }
+  .endpoint b {
+    display: block;
+    font-size: 13px;
+    margin-bottom: 2px;
+  }
+  .endpoint small {
+    color: var(--muted);
+    font-size: 11px;
+  }
+  .ep-front  { border-top: 3px solid var(--front); }
+  .ep-aws    { border-top: 3px solid var(--aws); }
+  .ep-edge   { border-top: 3px solid var(--edge); }
+  .ep-device { border-top: 3px solid var(--device); }
+
+  .conn {
+    text-align: center;
+    color: var(--muted);
+    font-size: 11px;
+    position: relative;
+    padding: 0 4px;
+  }
+  .conn span {
+    display: inline-block;
+    padding: 3px 10px;
+    background: var(--bg-2);
+    border-radius: 999px;
+    border: 1px solid var(--line-soft);
+    margin-bottom: 4px;
+  }
+  .conn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -8px;
+    right: -8px;
+    height: 0;
+    border-top: 2px solid var(--rest);
+    z-index: -1;
+  }
+  .conn.mqtt::before  { border-top-color: var(--mqtt); border-top-style: dashed; }
+  .conn.ws::before    { border-top-color: var(--ws); border-top-style: dotted; }
+  .conn.https::before { border-top-color: var(--rest); }
+  .conn.tail::before  { border-top-color: var(--edge); border-top-style: dashed; }
+  .conn.iot::before   { border-top-color: var(--aws); border-top-style: dashed; }
+
+  /* full-width row */
+  .full {
+    grid-column: 1 / -1;
+  }
+
+  /* center column note */
+  .center-col {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    margin: 8px 0;
+  }
+  .arrow-down {
+    color: var(--muted);
+    font-size: 11px;
+  }
+  .arrow-down::before {
+    content: '↓';
+    display: block;
+    font-size: 20px;
+    color: var(--rest);
+    margin-bottom: 2px;
+  }
+
+  .footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 11px;
+    margin-top: 30px;
+  }
+
+  /* Note block */
+  .note {
+    grid-column: 1 / -1;
+    background: rgba(34, 211, 238, 0.06);
+    border: 1px solid rgba(34, 211, 238, 0.25);
+    border-radius: 12px;
+    padding: 14px 18px;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+  .note b { color: var(--edge); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <h1>🗺️ CogLabs SmartFarm — System Structure</h1>
+    <p>데이터 통신 경로 중심 다이어그램 · AWS · Edge(MiniPC) · IoT Devices</p>
+  </header>
+
+  <div class="legend">
+    <div><span class="line-sample" style="border-top-color:var(--rest);"></span>HTTPS / REST</div>
+    <div><span class="line-sample dashed" style="border-top-color:var(--mqtt);"></span>MQTT (Pub/Sub)</div>
+    <div><span class="line-sample dotted" style="border-top-color:var(--ws);"></span>WebSocket / Polling</div>
+    <div><span class="line-sample dashed" style="border-top-color:var(--edge);"></span>Tailscale VPN</div>
+    <div><span class="line-sample dashed" style="border-top-color:var(--aws);"></span>AWS IoT Rule</div>
+  </div>
+
+  <div class="diagram">
+
+    <!-- ============ Frontend ============ -->
+    <div class="group group--frontend full" data-label="① CLIENT (Browser)">
+      <h2>⚛️ Frontend — React SPA <small>(Vite · TypeScript · AWS Amplify Hosting)</small></h2>
+      <div class="nodes">
+        <div class="node node--front">
+          <b>Web Dashboard</b>
+          <small>Desktop · Mobile</small>
+          <small><code>FarmContext</code> 전역 상태</small>
+        </div>
+        <div class="node node--front">
+          <b>API Client</b>
+          <small><code>src/api/client.ts</code></small>
+          <small>JWT Bearer 첨부</small>
+        </div>
+        <div class="node node--front">
+          <b>3D Viewer</b>
+          <small>R3F · three.js</small>
+          <small>장비 상태 시각화</small>
+        </div>
+        <div class="node node--front">
+          <b>Chatbot UI</b>
+          <small>React</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ AWS Cloud (left) ============ -->
+    <div class="group group--aws" data-label="② AWS CLOUD">
+      <h2>☁️ AWS Backend <small>ap-northeast-2 (Seoul)</small></h2>
+      <div class="nodes">
+        <div class="node node--aws">
+          <b>API Gateway</b>
+          <small><code>xr0u2z6sq4.execute-api…</code></small>
+          <small>REST · JWT 검증</small>
+        </div>
+        <div class="node node--aws">
+          <b>Lambda</b>
+          <small>비즈니스 로직</small>
+          <small>/environment · /equipment · /chat</small>
+        </div>
+        <div class="node node--aws">
+          <b>DynamoDB</b>
+          <small>센서 시계열</small>
+          <small>장비 상태 / 챗 세션</small>
+        </div>
+        <div class="node node--aws">
+          <b>AWS IoT Core</b>
+          <small>MQTT Broker (TLS)</small>
+          <small>Topic Rule → Lambda</small>
+        </div>
+        <div class="node node--aws">
+          <b>Cognito</b>
+          <small>인증 (Amplify Auth)</small>
+        </div>
+        <div class="node node--aws">
+          <b>AWS Bedrock</b>
+          <small>커스텀 LLM</small>
+          <small>Chatbot 응답 생성</small>
+        </div>
+        <div class="node node--aws">
+          <b>Amplify Hosting</b>
+          <small>정적 빌드 배포</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ Edge (right) ============ -->
+    <div class="group group--edge" data-label="③ ON-PREMISE EDGE (장성 농장)">
+      <h2>🖧 MiniPC Edge Server <small>k8s-worker01 · Tailscale</small></h2>
+      <div class="nodes">
+        <div class="node node--edge">
+          <b>Control API</b>
+          <small><code>POST /control</code></small>
+          <small><code>GET /status/:id</code></small>
+        </div>
+        <div class="node node--edge">
+          <b>MQTT Broker</b>
+          <small>Mosquitto (로컬)</small>
+          <small>장비 ↔ 서버 Pub/Sub</small>
+        </div>
+        <div class="node node--edge">
+          <b>Bridge / Worker</b>
+          <small>센서 수집 · 명령 디스패치</small>
+          <small>→ AWS IoT Core 미러링</small>
+        </div>
+        <div class="node node--edge">
+          <b>Local DB (선택)</b>
+          <small>오프라인 버퍼링</small>
+          <small>네트워크 단절 대비</small>
+        </div>
+        <div class="node node--edge">
+          <b>Tailscale Node</b>
+          <small><code>tail63c20e.ts.net</code></small>
+          <small>사설망 VPN</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ Devices (bottom full) ============ -->
+    <div class="group group--device full" data-label="④ IoT DEVICES (실제 설비)">
+      <h2>🏭 Edge Devices <small>MQTT로만 통신 — AWS 직결 ❌</small></h2>
+      <div class="nodes">
+        <div class="node node--device">
+          <b>LED 조명 컨트롤러</b>
+          <small>LED 1 · 2 · 3</small>
+          <small>topic: <code>farm/led/+</code></small>
+        </div>
+        <div class="node node--device">
+          <b>환기팬 릴레이</b>
+          <small>FAN 1 · 2</small>
+          <small>topic: <code>farm/fan/+</code></small>
+        </div>
+        <div class="node node--device">
+          <b>양액 시스템</b>
+          <small>회수 · 공급 · A · B · Mixer</small>
+          <small>topic: <code>farm/nutrient/+</code></small>
+        </div>
+        <div class="node node--device">
+          <b>냉난방 (히트펌프 · 팬코일)</b>
+          <small>전력량 센서 포함</small>
+          <small>topic: <code>farm/hvac/+</code></small>
+        </div>
+        <div class="node node--device">
+          <b>환경 센서</b>
+          <small>온도/습도/CO₂/조도</small>
+          <small>pH · EC · 수온 · DO</small>
+        </div>
+        <div class="node node--device">
+          <b>4th2 채널 모듈</b>
+          <small>ch1 · ch2 · ch108 · ch109</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ Communication Paths ============ -->
+    <div class="flow full">
+      <h3>🔁 Communication Paths</h3>
+
+      <!-- 1. 브라우저 → AWS REST -->
+      <div class="flow-row">
+        <div class="endpoint ep-front">
+          <b>Browser (SPA)</b>
+          <small>React · FarmContext</small>
+        </div>
+        <div class="conn https">
+          <span>HTTPS / REST</span><br>
+          <small>JWT Bearer</small>
+        </div>
+        <div class="endpoint ep-aws">
+          <b>AWS API Gateway</b>
+          <small>+ Lambda</small>
+        </div>
+        <div class="conn https">
+          <span>SDK / Query</span>
+        </div>
+        <div class="endpoint ep-aws">
+          <b>DynamoDB</b>
+          <small>읽기/쓰기</small>
+        </div>
+      </div>
+
+      <!-- 2. 브라우저 → Edge 직결 (실시간 제어) -->
+      <div class="flow-row">
+        <div class="endpoint ep-front">
+          <b>Browser</b>
+          <small><code>controllerApi</code></small>
+        </div>
+        <div class="conn tail">
+          <span>HTTPS via Tailscale</span><br>
+          <small>k8s-worker01.tail63c20e.ts.net</small>
+        </div>
+        <div class="endpoint ep-edge">
+          <b>MiniPC Control API</b>
+          <small>POST /control · GET /status</small>
+        </div>
+        <div class="conn mqtt">
+          <span>MQTT Publish</span><br>
+          <small>farm/&lt;type&gt;/cmd</small>
+        </div>
+        <div class="endpoint ep-device">
+          <b>IoT Device</b>
+          <small>ON / OFF 수신</small>
+        </div>
+      </div>
+
+      <!-- 3. 디바이스 → Edge → AWS (센서 업링크) -->
+      <div class="flow-row">
+        <div class="endpoint ep-device">
+          <b>Sensors / Equipment</b>
+          <small>주기적 publish</small>
+        </div>
+        <div class="conn mqtt">
+          <span>MQTT Publish</span><br>
+          <small>farm/&lt;type&gt;/state</small>
+        </div>
+        <div class="endpoint ep-edge">
+          <b>MiniPC Broker + Bridge</b>
+          <small>Mosquitto · 수집/정제</small>
+        </div>
+        <div class="conn iot">
+          <span>MQTT (TLS) Bridge</span><br>
+          <small>→ AWS IoT Core</small>
+        </div>
+        <div class="endpoint ep-aws">
+          <b>AWS IoT Rule → Lambda → DynamoDB</b>
+          <small>시계열 적재</small>
+        </div>
+      </div>
+
+      <!-- 4. 환경 차트 조회 -->
+      <div class="flow-row">
+        <div class="endpoint ep-front">
+          <b>MonitorPage</b>
+          <small><code>useSensorChartData</code></small>
+        </div>
+        <div class="conn https">
+          <span>GET /environment/history</span>
+        </div>
+        <div class="endpoint ep-aws">
+          <b>Lambda</b>
+        </div>
+        <div class="conn https">
+          <span>Query</span>
+        </div>
+        <div class="endpoint ep-aws">
+          <b>DynamoDB</b>
+          <small>시계열 조회</small>
+        </div>
+      </div>
+
+      <!-- 5. 챗봇 -->
+      <div class="flow-row">
+        <div class="endpoint ep-front">
+          <b>Chatbot (React)</b>
+          <small><code>chatApi</code></small>
+        </div>
+        <div class="conn https">
+          <span>POST /chat</span>
+        </div>
+        <div class="endpoint ep-aws">
+          <b>Lambda</b>
+          <small>세션/컨텍스트 관리</small>
+        </div>
+        <div class="conn https">
+          <span>InvokeModel</span>
+        </div>
+        <div class="endpoint ep-aws">
+          <b>AWS Bedrock (Custom)</b>
+          <small>커스텀 LLM 응답</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div class="note">
+      <b>💡 핵심 원칙</b><br>
+      • <b>모든 IoT 디바이스는 AWS와 직접 통신하지 않습니다.</b> 반드시 MiniPC 엣지를 거쳐 MQTT로 송수신합니다.<br>
+      • <b>실시간 제어</b>는 Browser → (Tailscale) → MiniPC Control API → MQTT → Device 경로로 저지연 보장.<br>
+      • <b>이력 데이터</b>는 Device → MQTT → Edge Bridge → AWS IoT Core → Lambda → DynamoDB 경로로 적재되고, Browser는 REST(API Gateway)로 조회합니다.<br>
+      • <b>네트워크 단절 시</b> MiniPC가 로컬 브로커 + 로컬 DB로 자체 운영을 지속하고, 연결 복구 시 AWS로 백필합니다.
+    </div>
+
+  </div>
+
+  <p class="footer">© CogLabs · System Structure Diagram (data flow oriented)</p>
+</div>
+</body>
+</html>

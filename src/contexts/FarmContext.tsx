@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { environmentApi } from '../api/environment';
-import { controllerApi, REAL_DEVICE_MAP } from '../api/equipment';
+import { controllerApi, equipmentApi, REAL_DEVICE_MAP } from '../api/equipment';
 import type {
   EnvironmentData, EquipmentGroup, Equipment,
   Crop, HarvestRequest, HarvestLog, Shipment, MarketPrice,
@@ -223,6 +223,13 @@ export function FarmProvider({ children }: { children: ReactNode }) {
         eq.id === equipmentId ? { ...eq, status: result.state as Equipment['status'] } : eq
       ),
     })));
+
+    // 물리 제어 성공 후 DB(AWS)에도 동기화하여 폴링 시 상태 롤백 방지
+    try {
+      await equipmentApi.controlDevice(deviceId, result.state as 'ON' | 'OFF');
+    } catch {
+      // DB 동기화 실패는 무시 (UI 상태는 이미 반영됨)
+    }
   };
 
   const toggleEquipmentAuto = (equipmentId: number, newAuto: boolean) => {

@@ -280,11 +280,12 @@ interface StatusScreenProps {
   sensorData: EnvironmentData;
   getLedOn: (id: number) => boolean;
   toggleLed: (id: number) => void;
+  getLedMaintenance: (id: number) => boolean;
   getEquipOn: (ids: readonly number[]) => boolean;
   toggleEquip: (ids: readonly number[]) => void;
 }
 
-function StatusScreen({ sensorData, getLedOn, toggleLed, getEquipOn, toggleEquip }: StatusScreenProps) {
+function StatusScreen({ sensorData, getLedOn, toggleLed, getLedMaintenance, getEquipOn, toggleEquip }: StatusScreenProps) {
   return (
     <div className="farmlite__scroll">
       <div className="farmlite__card">
@@ -515,6 +516,7 @@ export default function FarmModelLite({
               sensorData={sensorData}
               getLedOn={getLedOn}
               toggleLed={toggleLed}
+              getLedMaintenance={getLedMaintenance}
               getEquipOn={getEquipOn}
               toggleEquip={toggleEquip}
             />

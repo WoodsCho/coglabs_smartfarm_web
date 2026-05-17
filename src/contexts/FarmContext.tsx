@@ -1,6 +1,6 @@
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import { environmentApi } from '../api/environment';
-import { controllerApi, equipmentApi, REAL_DEVICE_MAP } from '../api/equipment';
+import { controllerApi, REAL_DEVICE_MAP } from '../api/equipment';
 import type {
   EnvironmentData, EquipmentGroup, Equipment,
   Crop, HarvestRequest, HarvestLog, Shipment, MarketPrice,
@@ -144,6 +144,9 @@ export function FarmProvider({ children }: { children: ReactNode }) {
   const [neighbors, setNeighbors] = useState<NeighborFarm[]>(DEFAULT_NEIGHBORS);
   const [notifications, setNotifications] = useState<AppNotification[]>(DEFAULT_NOTIFS);
 
+  // 최근 수동 제어한 장비 ID → 만료 타임스탬프 (30초간 폴링 덮어쓰기 방지)
+  const recentlyControlled = useRef<Map<number, number>>(new Map());
+
   // 초기 로드 시 REAL_DEVICE_MAP 기기 실제 상태를 controllerApi로 직접 조회
   useEffect(() => {
     Object.entries(REAL_DEVICE_MAP).forEach(async ([idStr, deviceId]) => {
@@ -186,6 +189,9 @@ export function FarmProvider({ children }: { children: ReactNode }) {
               if (!deviceName) return eq;
               const newStatus = apiData.equipment![deviceName];
               if (newStatus == null) return eq;
+              // 최근 수동 제어한 장비는 폴링이 덮어쓰지 않음
+              const expiresAt = recentlyControlled.current.get(eq.id);
+              if (expiresAt && Date.now() < expiresAt) return eq;
               return { ...eq, status: newStatus as Equipment['status'] };
             }),
           })));
@@ -217,19 +223,16 @@ export function FarmProvider({ children }: { children: ReactNode }) {
 
     const state = (['ON', 'ACTIVE', 'RUNNING'] as string[]).includes(newStatus) ? 'ON' : 'OFF';
     const result = await controllerApi.control(deviceId, state);
+
+    // 제어 성공 시 30초간 폴링 덮어쓰기 방지
+    recentlyControlled.current.set(equipmentId, Date.now() + 30_000);
+
     setEquipmentGroups(prev => prev.map(g => ({
       ...g,
       equipment: g.equipment.map(eq =>
         eq.id === equipmentId ? { ...eq, status: result.state as Equipment['status'] } : eq
       ),
     })));
-
-    // 물리 제어 성공 후 DB(AWS)에도 동기화하여 폴링 시 상태 롤백 방지
-    try {
-      await equipmentApi.controlDevice(deviceId, result.state as 'ON' | 'OFF');
-    } catch {
-      // DB 동기화 실패는 무시 (UI 상태는 이미 반영됨)
-    }
   };
 
   const toggleEquipmentAuto = (equipmentId: number, newAuto: boolean) => {

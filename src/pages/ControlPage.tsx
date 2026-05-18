@@ -10,7 +10,8 @@ import {
 } from 'recharts';
 import { useFarm } from '../contexts/FarmContext';
 import { environmentApi } from '../api/environment';
-import type { Equipment, EquipmentGroup } from '../types/farm';
+import { controllerApi, REAL_DEVICE_MAP } from '../api/equipment';
+import type { AutoRule, Equipment, EquipmentGroup } from '../types/farm';
 import './ControlPage.css';
 
 /* ── Constants ───────────────────────────────────────────────── */
@@ -152,46 +153,352 @@ function SchedulerSection({
 const LED_LUX_KEY: Record<number, 'light1' | 'light2' | 'light3'> = { 1: 'light1', 2: 'light2', 3: 'light3' };
 const LED_SENSOR_LABEL: Record<number, string> = { 1: '조도센서1 (3층)', 2: '조도센서2 (2층)', 3: '조도센서3 (1층)' };
 
-/* ── Lux Target Control ──────────────────────────────────────── */
-function LuxTargetControl({ eqId: _eqId }: { eqId: number }) {
-  const [target, setTarget] = useState(2000);
-  const [editing, setEditing] = useState<string | null>(null);
-  const step = 100;
+const ALL_SENSOR_OPTIONS = [
+  { value: 'light1',      label: '조도 1 (3층)',  unit: 'lux'  },
+  { value: 'light2',      label: '조도 2 (2층)',  unit: 'lux'  },
+  { value: 'light3',      label: '조도 3 (1층)',  unit: 'lux'  },
+  { value: 'temperature', label: '온도',          unit: '°C'   },
+  { value: 'humidity',    label: '습도',          unit: '%'    },
+  { value: 'co2',         label: 'CO2',           unit: 'ppm'  },
+  { value: 'waterTemp',   label: '수온',          unit: '°C'   },
+  { value: 'ph',          label: 'pH',            unit: ''     },
+  { value: 'ec',          label: 'EC',            unit: 'dS/m' },
+  { value: 'oxygenLevel', label: '용존산소',      unit: 'mV'   },
+];
 
-  const dec = () => setTarget(t => Math.max(0, t - step));
-  const inc = () => setTarget(t => Math.min(10000, t + step));
-  const commit = () => {
-    if (editing === null) return;
-    const v = parseInt(editing);
-    if (!isNaN(v)) setTarget(Math.max(0, Math.min(10000, v)));
-    setEditing(null);
+const GROUP_SENSOR_KEYS: Record<string, string[]> = {
+  heater: ['temperature', 'humidity'],
+  fan:    ['temperature', 'humidity', 'co2'],
+  pump:   ['waterTemp', 'ph', 'ec', 'oxygenLevel'],
+  co2:    ['co2', 'temperature'],
+};
+
+function getSensorOptions(groupType: string) {
+  const keys = GROUP_SENSOR_KEYS[groupType];
+  if (!keys) return ALL_SENSOR_OPTIONS;
+  return ALL_SENSOR_OPTIONS.filter(o => keys.includes(o.value));
+}
+
+/* ── Auto Rule Modal ─────────────────────────────────────────── */
+function AutoRuleModal({
+  eq,
+  realDeviceId,
+  defaultSensorType,
+  groupType,
+  onClose,
+}: {
+  eq: Equipment;
+  realDeviceId: string;
+  defaultSensorType: string;
+  groupType: string;
+  onClose: () => void;
+}) {
+  const { setDeviceMode, deviceModes } = useFarm();
+  const sensorOptions = getSensorOptions(groupType);
+  // LED는 장비마다 대응 센서가 하나로 고정 (defaultSensorType = luxKey)
+  const fixedSensor = groupType === 'led'
+    ? (ALL_SENSOR_OPTIONS.find(o => o.value === defaultSensorType) ?? null)
+    : sensorOptions.length === 1 ? sensorOptions[0] : null;
+  const [rules, setRules] = useState<AutoRule[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activating, setActivating] = useState(false);
+  const [ruleTypeTab, setRuleTypeTab] = useState<'threshold' | 'schedule'>('threshold');
+  const [sensorType, setSensorType] = useState(fixedSensor?.value ?? defaultSensorType);
+  const [thresholdOn, setThresholdOn] = useState('');
+  const [thresholdOff, setThresholdOff] = useState('');
+  const [durH, setDurH] = useState('');
+  const [durM, setDurM] = useState('');
+  const [durS, setDurS] = useState('');
+  const [startHour, setStartHour] = useState('6');
+  const [endHour, setEndHour] = useState('18');
+  const [scheduleAction, setScheduleAction] = useState<'ON' | 'OFF'>('ON');
+  const [cooldown, setCooldown] = useState('60');
+  const [addError, setAddError] = useState('');
+
+  const modeConfig = deviceModes[realDeviceId];
+  const isCurrentlyAuto = modeConfig?.mode === 'auto';
+
+  useEffect(() => {
+    setLoading(true);
+    controllerApi.getRules(realDeviceId)
+      .then(setRules)
+      .catch(() => setRules([]))
+      .finally(() => setLoading(false));
+  }, [realDeviceId]);
+
+  const currentSensorOption = sensorOptions.find(o => o.value === sensorType);
+
+  const handleAddRule = async (): Promise<boolean> => {
+    if (ruleTypeTab === 'threshold') {
+      if (!thresholdOn && !thresholdOff) {
+        setAddError('ON 또는 OFF 임계값 중 하나는 입력해야 합니다.');
+        return false;
+      }
+    } else {
+      if (!startHour || !endHour) {
+        setAddError('시작·종료 시간을 모두 입력해야 합니다.');
+        return false;
+      }
+      if (Number(startHour) >= Number(endHour)) {
+        setAddError('시작 시간은 종료 시간보다 앞서야 합니다.');
+        return false;
+      }
+    }
+    setAddError('');
+    try {
+      const common = { equipment_id: realDeviceId, cooldown_sec: Number(cooldown) || 60, enabled: true as const };
+      const newRule = ruleTypeTab === 'threshold'
+        ? await controllerApi.createRule({
+            ...common, rule_type: 'threshold' as const, sensor_type: sensorType,
+            ...(thresholdOn  ? { threshold_on:  Number(thresholdOn)  } : {}),
+            ...(thresholdOff ? { threshold_off: Number(thresholdOff) } : {}),
+            ...(() => { const d = (Number(durH)||0)*3600 + (Number(durM)||0)*60 + (Number(durS)||0); return d > 0 ? { duration_sec: d } : {}; })(),
+          })
+        : await controllerApi.createRule({
+            ...common, rule_type: 'schedule' as const, sensor_type: '',
+            start_hour: Number(startHour), end_hour: Number(endHour), schedule_action: scheduleAction,
+          });
+      setRules(prev => [...prev, newRule]);
+      setThresholdOn(''); setThresholdOff(''); setDurH(''); setDurM(''); setDurS('');
+      return true;
+    } catch {
+      setAddError('규칙 저장에 실패했습니다.');
+      return false;
+    }
+  };
+
+  const handleDeleteRule = async (ruleId: number) => {
+    try {
+      await controllerApi.deleteRule(realDeviceId, ruleId);
+      setRules(prev => prev.filter(r => r.rule_id !== ruleId));
+    } catch { /* ignore */ }
+  };
+
+  const handleToggleMode = async () => {
+    setActivating(true);
+    try {
+      if (!isCurrentlyAuto) {
+        const hasPendingThreshold = ruleTypeTab === 'threshold' && (thresholdOn || thresholdOff);
+        const hasPendingSchedule = ruleTypeTab === 'schedule' && startHour && endHour;
+        if (hasPendingThreshold || hasPendingSchedule) {
+          const saved = await handleAddRule();
+          if (!saved) {
+            setActivating(false);
+            return;
+          }
+        } else if (rules.length === 0) {
+          setAddError('규칙을 하나 이상 입력한 뒤 활성화하세요.');
+          setActivating(false);
+          return;
+        }
+      }
+      await setDeviceMode(realDeviceId, isCurrentlyAuto ? 'manual' : 'auto');
+      onClose();
+    } catch {
+      setActivating(false);
+    }
   };
 
   return (
-    <div className="ctrl-lux-target">
-      <span className="ctrl-lux-target__label">목표 lux</span>
-      <div className="ctrl-lux-target__ctrl">
-        <button className="ctrl-lux-target__btn" onClick={dec}>−</button>
-        {editing !== null ? (
-          <input
-            className="ctrl-lux-target__input"
-            type="number"
-            value={editing}
-            onChange={e => setEditing(e.target.value)}
-            onBlur={commit}
-            onKeyDown={e => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') setEditing(null); }}
-            autoFocus
-          />
-        ) : (
-          <span
-            className="ctrl-lux-target__val"
-            title="클릭하여 직접 입력"
-            onClick={() => setEditing(String(target))}
+    <div className="auto-modal-overlay" onClick={onClose}>
+      <div className="auto-modal" onClick={e => e.stopPropagation()}>
+        <div className="auto-modal__head">
+          <div className="auto-modal__head-left">
+            <span className="auto-modal__title">자동 제어 설정</span>
+            <span className="auto-modal__device">{eq.name}</span>
+          </div>
+          <button className="auto-modal__close" onClick={onClose}><X size={14} /></button>
+        </div>
+
+        <div className="auto-modal__body">
+          {isCurrentlyAuto && modeConfig && (
+            <div className="auto-modal__status">
+              <span className="auto-modal__status-badge">자동 모드 활성</span>
+              {modeConfig.last_auto_triggered > 0 && (
+                <span className="auto-modal__last-triggered">
+                  <Clock size={10} />
+                  마지막 제어: {new Date(modeConfig.last_auto_triggered * 1000).toLocaleString('ko-KR', {
+                    month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric',
+                  })}
+                  {modeConfig.last_auto_action && ` (${modeConfig.last_auto_action})`}
+                </span>
+              )}
+            </div>
+          )}
+
+          <div className="auto-modal__section">
+            <span className="auto-modal__section-title">등록된 규칙</span>
+            {loading ? (
+              <span className="auto-modal__loading">불러오는 중...</span>
+            ) : rules.length === 0 ? (
+              <span className="auto-modal__empty">등록된 규칙이 없습니다.</span>
+            ) : (
+              <div className="auto-modal__rule-list">
+                {rules.map(r => {
+                  const sOpt = ALL_SENSOR_OPTIONS.find(o => o.value === r.sensor_type);
+                  const isSched = r.rule_type === 'schedule';
+                  return (
+                    <div key={r.rule_id} className="auto-modal__rule">
+                      <div className="auto-modal__rule-info">
+                        <span className="auto-modal__rule-sensor">
+                          {isSched ? '시간 스케줄' : (sOpt?.label ?? r.sensor_type)}
+                        </span>
+                        <div className="auto-modal__rule-conds">
+                          {isSched ? (
+                            <>
+                              <span className="auto-modal__cond auto-modal__cond--cd">
+                                {String(r.start_hour ?? 0).padStart(2, '0')}:00 ~ {String(r.end_hour ?? 0).padStart(2, '0')}:00
+                              </span>
+                              <span className={`auto-modal__cond ${r.schedule_action === 'ON' ? 'auto-modal__cond--on' : 'auto-modal__cond--off'}`}>
+                                기간 중 {r.schedule_action}
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              {r.threshold_on != null && (
+                                <span className="auto-modal__cond auto-modal__cond--on">{r.threshold_on}{sOpt?.unit} 미만 → ON</span>
+                              )}
+                              {r.threshold_off != null && (
+                                <span className="auto-modal__cond auto-modal__cond--off">{r.threshold_off}{sOpt?.unit} 초과 → OFF</span>
+                              )}
+                              {(r.duration_sec ?? 0) > 0 && (() => {
+                                const total = r.duration_sec!;
+                                const h = Math.floor(total / 3600);
+                                const m = Math.floor((total % 3600) / 60);
+                                const s = total % 60;
+                                const parts = [h && `${h}시간`, m && `${m}분`, s && `${s}초`].filter(Boolean);
+                                return <span className="auto-modal__cond auto-modal__cond--dur">{parts.join(' ')} 유지</span>;
+                              })()}
+                            </>
+                          )}
+                          <span className="auto-modal__cond auto-modal__cond--cd">쿨다운 {r.cooldown_sec}s</span>
+                        </div>
+                      </div>
+                      <button className="auto-modal__rule-del" onClick={() => handleDeleteRule(r.rule_id)} title="규칙 삭제">
+                        <X size={11} />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <div className="auto-modal__section">
+            <span className="auto-modal__section-title">규칙 추가</span>
+
+            <div className="auto-modal__tabs">
+              <button
+                className={`auto-modal__tab${ruleTypeTab === 'threshold' ? ' auto-modal__tab--active' : ''}`}
+                onClick={() => { setRuleTypeTab('threshold'); setAddError(''); }}
+              >임계값 기반</button>
+              <button
+                className={`auto-modal__tab${ruleTypeTab === 'schedule' ? ' auto-modal__tab--active' : ''}`}
+                onClick={() => { setRuleTypeTab('schedule'); setAddError(''); }}
+              >시간 스케줄</button>
+            </div>
+
+            <div className="auto-modal__form">
+              {ruleTypeTab === 'threshold' ? (
+                <>
+                  <div className="auto-modal__form-row">
+                    <label className="auto-modal__label">
+                      센서
+                      {fixedSensor ? (
+                        <span className="auto-modal__sensor-fixed">{fixedSensor.label}</span>
+                      ) : (
+                        <select className="auto-modal__select" value={sensorType} onChange={e => setSensorType(e.target.value)}>
+                          {sensorOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                        </select>
+                      )}
+                    </label>
+                    <label className="auto-modal__label">
+                      쿨다운 (초)
+                      <input className="auto-modal__input" type="number" min="10" value={cooldown} onChange={e => setCooldown(e.target.value)} />
+                    </label>
+                  </div>
+                  <div className="auto-modal__form-row">
+                    <label className="auto-modal__label">
+                      ON 임계값
+                      <span className="auto-modal__unit">({currentSensorOption?.unit}) 미만 → ON</span>
+                      <input className="auto-modal__input" type="number" placeholder="미사용" value={thresholdOn} onChange={e => setThresholdOn(e.target.value)} />
+                    </label>
+                    <label className="auto-modal__label">
+                      OFF 임계값
+                      <span className="auto-modal__unit">({currentSensorOption?.unit}) 초과 → OFF</span>
+                      <input className="auto-modal__input" type="number" placeholder="미사용" value={thresholdOff} onChange={e => setThresholdOff(e.target.value)} />
+                    </label>
+                  </div>
+                  <label className="auto-modal__label">
+                    유지 시간
+                    <span className="auto-modal__unit">트리거 후 설정 시간 유지 → 자동 복귀 (모두 빈칸 = 사용 안 함)</span>
+                    <div className="auto-modal__dur-row">
+                      <div className="auto-modal__dur-field">
+                        <input className="auto-modal__input" type="number" min="0" placeholder="0" value={durH} onChange={e => setDurH(e.target.value)} />
+                        <span className="auto-modal__dur-unit">시간</span>
+                      </div>
+                      <div className="auto-modal__dur-field">
+                        <input className="auto-modal__input" type="number" min="0" max="59" placeholder="0" value={durM} onChange={e => setDurM(e.target.value)} />
+                        <span className="auto-modal__dur-unit">분</span>
+                      </div>
+                      <div className="auto-modal__dur-field">
+                        <input className="auto-modal__input" type="number" min="0" max="59" placeholder="0" value={durS} onChange={e => setDurS(e.target.value)} />
+                        <span className="auto-modal__dur-unit">초</span>
+                      </div>
+                    </div>
+                  </label>
+                </>
+              ) : (
+                <>
+                  <div className="auto-modal__form-row">
+                    <label className="auto-modal__label">
+                      시작 시간
+                      <span className="auto-modal__unit">0 – 23시</span>
+                      <input className="auto-modal__input" type="number" min="0" max="23" value={startHour} onChange={e => setStartHour(e.target.value)} />
+                    </label>
+                    <label className="auto-modal__label">
+                      종료 시간
+                      <span className="auto-modal__unit">0 – 23시</span>
+                      <input className="auto-modal__input" type="number" min="0" max="23" value={endHour} onChange={e => setEndHour(e.target.value)} />
+                    </label>
+                  </div>
+                  <div className="auto-modal__form-row">
+                    <label className="auto-modal__label">
+                      기간 중 동작
+                      <div className="auto-modal__action-btns">
+                        <button type="button"
+                          className={`auto-modal__action-btn${scheduleAction === 'ON' ? ' auto-modal__action-btn--on' : ''}`}
+                          onClick={() => setScheduleAction('ON')}>ON</button>
+                        <button type="button"
+                          className={`auto-modal__action-btn${scheduleAction === 'OFF' ? ' auto-modal__action-btn--off' : ''}`}
+                          onClick={() => setScheduleAction('OFF')}>OFF</button>
+                      </div>
+                    </label>
+                    <label className="auto-modal__label">
+                      쿨다운 (초)
+                      <input className="auto-modal__input" type="number" min="10" value={cooldown} onChange={e => setCooldown(e.target.value)} />
+                    </label>
+                  </div>
+                  <span className="auto-modal__hint">
+                    예: 06:00 ~ 18:00 → ON 이면, 해당 시간대에는 켜고 그 외에는 끕니다.
+                  </span>
+                </>
+              )}
+              {addError && <span className="auto-modal__error">{addError}</span>}
+            </div>
+          </div>
+        </div>
+
+        <div className="auto-modal__footer">
+          <button className="auto-modal__cancel" onClick={onClose}>닫기</button>
+          <button
+            className={isCurrentlyAuto ? 'auto-modal__deactivate' : 'auto-modal__activate'}
+            onClick={handleToggleMode}
+            disabled={activating}
           >
-            {target.toLocaleString()}
-          </span>
-        )}
-        <button className="ctrl-lux-target__btn" onClick={inc}>+</button>
+            {activating ? '처리 중...' : isCurrentlyAuto ? '수동 모드로 전환' : '자동 모드 활성화'}
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -216,9 +523,11 @@ function EquipmentRow({
 }) {
   const { toggleEquipmentStatus, toggleEquipmentAuto, updateEquipmentTarget, currentData } = useFarm();
   const [controlling, setControlling] = useState(false);
+  const [autoModalOpen, setAutoModalOpen] = useState(false);
 
   const isActive = STATUS_ACTIVE.has(eq.status);
   const isVirtual = !REAL_EQUIPMENT_IDS.has(eq.id);
+  const realDeviceId = REAL_DEVICE_MAP[eq.id];
   const st = STATUS_LABEL[eq.status] ?? DEFAULT_STATUS_META;
   const hasTarget = eq.target != null && eq.unit != null;
   const errors = mockErrors(eq.id);
@@ -235,6 +544,14 @@ function EquipmentRow({
     setControlling(true);
     try { await toggleEquipmentStatus(eq.id, isActive ? 'OFF' : 'ON'); }
     finally { setControlling(false); }
+  };
+
+  const handleModeToggle = () => {
+    if (!realDeviceId) {
+      toggleEquipmentAuto(eq.id, !eq.auto);
+      return;
+    }
+    setAutoModalOpen(true);
   };
 
   return (
@@ -271,11 +588,9 @@ function EquipmentRow({
           <div className="ctrl-row__env-empty" />
         )}
 
-        {/* Target slider / lux 목표 */}
+        {/* Target slider */}
         {hasTarget ? (
           <TargetSlider eq={eq} onUpdate={v => updateEquipmentTarget(eq.id, v)} />
-        ) : luxKey ? (
-          <LuxTargetControl eqId={eq.id} />
         ) : (
           <div className="ctrl-row__slider-empty" />
         )}
@@ -296,7 +611,7 @@ function EquipmentRow({
         {/* Mode toggle */}
         <button
           className={`ctrl-row__mode${eq.auto ? ' ctrl-row__mode--auto' : ' ctrl-row__mode--manual'}`}
-          onClick={() => toggleEquipmentAuto(eq.id, !eq.auto)}
+          onClick={handleModeToggle}
         >
           {eq.auto ? '자동' : '수동'}
         </button>
@@ -342,6 +657,17 @@ function EquipmentRow({
           onToggle={onToggleSchedule}
         />
       )}
+
+      {/* Auto rule modal */}
+      {autoModalOpen && realDeviceId != null && (
+        <AutoRuleModal
+          eq={eq}
+          realDeviceId={realDeviceId}
+          defaultSensorType={luxKey ?? 'temperature'}
+          groupType={groupType}
+          onClose={() => setAutoModalOpen(false)}
+        />
+      )}
     </>
   );
 }
@@ -359,7 +685,7 @@ function GroupCard({
   onOpenHistory: (eq: Equipment) => void;
   heatPumpTodayKwh: number | null;
 }) {
-  const { toggleEquipmentStatus, toggleEquipmentAuto } = useFarm();
+  const { toggleEquipmentStatus, toggleEquipmentAuto, setDeviceMode } = useFarm();
   const [collapsed, setCollapsed] = useState(false);
   const [bulking, setBulking] = useState(false);
 
@@ -373,7 +699,12 @@ function GroupCard({
     try {
       for (const eq of group.equipment) {
         if (action === 'auto') {
-          toggleEquipmentAuto(eq.id, true);
+          const deviceId = REAL_DEVICE_MAP[eq.id];
+          if (deviceId) {
+            await setDeviceMode(deviceId, 'auto').catch(() => {});
+          } else {
+            toggleEquipmentAuto(eq.id, true);
+          }
         } else {
           await toggleEquipmentStatus(eq.id, action === 'on' ? 'ON' : 'OFF');
         }

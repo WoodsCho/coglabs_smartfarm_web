@@ -3,6 +3,7 @@ import { environmentApi } from '../api/environment';
 import { controllerApi, REAL_DEVICE_MAP } from '../api/equipment';
 import type {
   EnvironmentData, EquipmentGroup, Equipment,
+  DeviceModeConfig,
   Crop, HarvestRequest, HarvestLog, Shipment, MarketPrice,
   StoryEvent, NeighborFarm, AppNotification, QualityGrade,
 } from '../types/farm';
@@ -13,6 +14,8 @@ interface FarmContextType {
   toggleEquipmentStatus: (id: number, newStatus: string) => Promise<void>;
   toggleEquipmentAuto: (id: number, newAuto: boolean) => void;
   updateEquipmentTarget: (id: number, newTarget: number) => void;
+  deviceModes: Record<string, DeviceModeConfig>;
+  setDeviceMode: (realDeviceId: string, mode: 'auto' | 'manual') => Promise<void>;
 
   // 재배 · 수확
   crops: Crop[];
@@ -134,6 +137,7 @@ const DEFAULT_NOTIFS: AppNotification[] = [
 export function FarmProvider({ children }: { children: ReactNode }) {
   const [currentData, setCurrentData] = useState<EnvironmentData>(DEFAULT_ENV);
   const [equipmentGroups, setEquipmentGroups] = useState<EquipmentGroup[]>(DEFAULT_EQUIPMENT);
+  const [deviceModes, setDeviceModes] = useState<Record<string, DeviceModeConfig>>({});
 
   const [crops, setCrops] = useState<Crop[]>(DEFAULT_CROPS);
   const [harvestRequests, setHarvestRequests] = useState<HarvestRequest[]>([]);
@@ -196,6 +200,19 @@ export function FarmProvider({ children }: { children: ReactNode }) {
             }),
           })));
         }
+        if (apiData.device_modes) {
+          setDeviceModes(apiData.device_modes);
+          setEquipmentGroups(prev => prev.map(g => ({
+            ...g,
+            equipment: g.equipment.map(eq => {
+              const deviceId = REAL_DEVICE_MAP[eq.id];
+              if (!deviceId) return eq;
+              const modeConfig = apiData.device_modes![deviceId];
+              if (!modeConfig) return eq;
+              return { ...eq, auto: modeConfig.mode === 'auto' };
+            }),
+          })));
+        }
       } catch { /* 네트워크 오류 시 기존 값 유지 */ }
     };
     poll();
@@ -248,6 +265,25 @@ export function FarmProvider({ children }: { children: ReactNode }) {
       equipment: g.equipment.map(eq => eq.id === equipmentId ? { ...eq, target: newTarget } : eq),
     })));
   };
+
+  const setDeviceMode = useCallback(async (realDeviceId: string, mode: 'auto' | 'manual') => {
+    await controllerApi.setMode(realDeviceId, mode);
+    setDeviceModes(prev => ({
+      ...prev,
+      [realDeviceId]: {
+        mode,
+        last_auto_triggered: prev[realDeviceId]?.last_auto_triggered ?? 0,
+        last_auto_action: prev[realDeviceId]?.last_auto_action ?? null,
+      },
+    }));
+    setEquipmentGroups(prev => prev.map(g => ({
+      ...g,
+      equipment: g.equipment.map(eq => {
+        if (REAL_DEVICE_MAP[eq.id] !== realDeviceId) return eq;
+        return { ...eq, auto: mode === 'auto' };
+      }),
+    })));
+  }, []);
 
   /* ── 알림 ─────────────────────────── */
   const markNotificationRead = useCallback((id: string) => {
@@ -327,6 +363,7 @@ export function FarmProvider({ children }: { children: ReactNode }) {
     <FarmContext.Provider value={{
       currentData, equipmentGroups,
       toggleEquipmentStatus, toggleEquipmentAuto, updateEquipmentTarget,
+      deviceModes, setDeviceMode,
       crops, harvestRequests, harvestLogs,
       requestHarvest, completeHarvest,
       shipments, marketPrices, reserveShipment, handoffShipment,

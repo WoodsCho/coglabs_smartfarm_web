@@ -5,7 +5,10 @@
       "Bash(npx expo *)",
       "Bash(npm install *)",
       "Bash(npm run *)",
-      "Bash(git fetch *)"
+      "Bash(git fetch *)",
+      "Bash(git *)",
+      "Bash(Get-ChildItem -Recurse \"C:\\\\Users\\\\rlqja\\\\Desktop\" -Filter \"aggregator*\")",
+      "Bash(Select-Object FullName)"
     ]
   }
 }

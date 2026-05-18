@@ -1,8 +1,9 @@
 import { apiClient } from './client';
-import type { EnvironmentData } from '../types/farm';
+import type { EnvironmentData, DeviceModeConfig } from '../types/farm';
 
 export interface CurrentDataResponse extends EnvironmentData {
   equipment?: Record<string, string>;
+  device_modes?: Record<string, DeviceModeConfig>;
   updatedAt?: string;
   timestamp?: number;
 }

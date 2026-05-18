@@ -1,5 +1,5 @@
 import { apiClient } from './client';
-import type { EquipmentGroup, Equipment } from '../types/farm';
+import type { EquipmentGroup, Equipment, AutoRule, DeviceModeConfig } from '../types/farm';
 
 export const REAL_DEVICE_MAP: Record<number, string> = {
   1:  'solenoid_valve',
@@ -14,16 +14,48 @@ export const REAL_DEVICE_MAP: Record<number, string> = {
 
 const CONTROLLER_BASE = 'https://k8s-worker01.tail63c20e.ts.net';
 
+const cFetch = (path: string, init?: RequestInit) =>
+  fetch(`${CONTROLLER_BASE}${path}`, init).then(r => {
+    if (!r.ok) throw new Error(`${init?.method ?? 'GET'} ${path} failed: ${r.status}`);
+    return r;
+  });
+
 export const controllerApi = {
+  // ── 기존 ──────────────────────────────────────────────────
   control: (deviceId: string, state: 'ON' | 'OFF'): Promise<{ deviceId: string; state: string }> =>
-    fetch(`${CONTROLLER_BASE}/control`, {
+    cFetch('/control', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ deviceId, state }),
     }).then(r => r.json()),
 
   getStatus: (deviceId: string): Promise<{ deviceId: string; state: string }> =>
-    fetch(`${CONTROLLER_BASE}/status/${deviceId}`).then(r => r.json()),
+    cFetch(`/status/${deviceId}`).then(r => r.json()),
+
+  // ── 모드 관리 ──────────────────────────────────────────────
+  getConfig: (): Promise<Record<string, DeviceModeConfig>> =>
+    cFetch('/config').then(r => r.json()),
+
+  setMode: (deviceId: string, mode: 'auto' | 'manual'): Promise<{ equipment_id: string; mode: string }> =>
+    cFetch(`/config/${deviceId}/mode`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode }),
+    }).then(r => r.json()),
+
+  // ── 규칙 관리 ──────────────────────────────────────────────
+  getRules: (deviceId: string): Promise<AutoRule[]> =>
+    cFetch(`/rules/${deviceId}`).then(r => r.json()),
+
+  createRule: (rule: Omit<AutoRule, 'rule_id'>): Promise<AutoRule> =>
+    cFetch('/rules', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(rule),
+    }).then(r => r.json()),
+
+  deleteRule: (deviceId: string, ruleId: number): Promise<void> =>
+    cFetch(`/rules/${deviceId}/${ruleId}`, { method: 'DELETE' }).then(() => undefined),
 };
 
 export const equipmentApi = {

@@ -1,3 +1,26 @@
+export interface AutoRule {
+  equipment_id: string;
+  rule_id: number;                    // Unix milliseconds (SK)
+  rule_type: 'threshold' | 'schedule';
+  // threshold fields
+  sensor_type: string;
+  threshold_on?: number;              // 센서값 미만 → ON
+  threshold_off?: number;             // 센서값 초과 → OFF
+  duration_sec?: number;              // 트리거 후 N초 유지, 이후 자동 복귀
+  cooldown_sec: number;
+  enabled: boolean;
+  // schedule fields
+  start_hour?: number;                // 0–23
+  end_hour?: number;                  // 0–23
+  schedule_action?: 'ON' | 'OFF';    // 기간 중 동작
+}
+
+export interface DeviceModeConfig {
+  mode: 'auto' | 'manual';
+  last_auto_triggered: number;  // Unix timestamp (0 = 미작동)
+  last_auto_action: string | null;
+}
+
 export interface EnvironmentData {
   temperature: number;
   humidity: number;

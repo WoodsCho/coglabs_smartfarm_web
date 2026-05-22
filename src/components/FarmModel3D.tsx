@@ -1243,15 +1243,15 @@ function GreenhouseSpecPanel() {
       <div className="farm3d__gh-spec-section-label">구독 정보</div>
       <div className="farm3d__gh-spec-row">
         <span className="farm3d__gh-spec-key">구독 기간</span>
-        <span className="farm3d__gh-spec-val">5/14 ~ 7/14</span>
+        <span className="farm3d__gh-spec-val">5/27 ~ 9/27</span>
       </div>
       <div className="farm3d__gh-spec-row">
         <span className="farm3d__gh-spec-key">계약 식물</span>
-        <span className="farm3d__gh-spec-val highlight">바질 214모종</span>
+        <span className="farm3d__gh-spec-val highlight">딸기 214모종</span>
       </div>
       <div className="farm3d__gh-spec-row">
         <span className="farm3d__gh-spec-key">정식 예정일</span>
-        <span className="farm3d__gh-spec-val">5월 20일</span>
+        <span className="farm3d__gh-spec-val">5월 26일</span>
       </div>
     </div>
   );

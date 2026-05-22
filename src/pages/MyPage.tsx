@@ -50,19 +50,19 @@ function SubscriptionCard() {
         <div className="mypage-info-grid">
           <div className="mypage-info-item">
             <span className="mypage-info-label">구독 기간</span>
-            <span className="mypage-info-val">2026. 5. 14 ~ 2026. 7. 14</span>
+            <span className="mypage-info-val">2026. 5. 27 ~ 2026. 9. 27</span>
           </div>
           <div className="mypage-info-item">
             <span className="mypage-info-label">남은 기간</span>
-            <span className="mypage-info-val mypage-info-val--accent">58일</span>
+            <span className="mypage-info-val mypage-info-val--accent">128일</span>
           </div>
           <div className="mypage-info-item">
             <span className="mypage-info-label">계약 식물</span>
-            <span className="mypage-info-val mypage-info-val--highlight">바질 214모종</span>
+            <span className="mypage-info-val mypage-info-val--highlight">딸기 214모종</span>
           </div>
           <div className="mypage-info-item">
             <span className="mypage-info-label">정식 예정일</span>
-            <span className="mypage-info-val">2026. 5. 20</span>
+            <span className="mypage-info-val">2026. 5. 26</span>
           </div>
         </div>
 
@@ -114,7 +114,7 @@ function SubscriptionCard() {
               <div className="mypage-preview">
                 연장 후 만료일: <strong>
                   {(() => {
-                    const d = new Date('2026-07-14');
+                    const d = new Date('2026-09-27');
                     d.setMonth(d.getMonth() + selectedMonths);
                     return `${d.getFullYear()}. ${d.getMonth() + 1}. ${d.getDate()}`;
                   })()}

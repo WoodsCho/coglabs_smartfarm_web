@@ -1251,7 +1251,7 @@ function GreenhouseSpecPanel() {
       </div>
       <div className="farm3d__gh-spec-row">
         <span className="farm3d__gh-spec-key">정식 예정일</span>
-        <span className="farm3d__gh-spec-val">5월 26일</span>
+        <span className="farm3d__gh-spec-val">5월 30일</span>
       </div>
     </div>
   );

@@ -62,7 +62,7 @@ function SubscriptionCard() {
           </div>
           <div className="mypage-info-item">
             <span className="mypage-info-label">정식 예정일</span>
-            <span className="mypage-info-val">2026. 5. 26</span>
+            <span className="mypage-info-val">2026. 5. 30</span>
           </div>
         </div>
 

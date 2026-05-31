@@ -138,7 +138,7 @@ function WelcomeModal({ onClose }: { onClose: () => void }) {
                 </div>
                 <div className="dash-modal__row">
                   <span className="dash-modal__key">정식 예정일</span>
-                  <span className="dash-modal__val">2026. 5. 30</span>
+                  <span className="dash-modal__val">2026. 6. 15</span>
                 </div>
                 <div className="dash-modal__action-row">
                   <button className="dash-modal__action-btn" onClick={() => setView('extend')}>📅 구독기간 연장</button>

@@ -127,6 +127,16 @@ function WelcomeModal({ onClose }: { onClose: () => void }) {
           <>
             <div className="dash-modal__body">
               <div className="dash-modal__section">
+                <div className="dash-modal__section-title">📢 공지사항</div>
+                <div className="dash-modal__notice">
+                  <span className="dash-modal__notice-date">2026. 5. 31</span>
+                  <span className="dash-modal__notice-text">환풍팬 2대 설치 완료 — 3D 모델 반영 및 스위치 연동 작업 <strong>6월 7일</strong> 예정</span>
+                </div>
+              </div>
+
+              <div className="dash-modal__divider" />
+
+              <div className="dash-modal__section">
                 <div className="dash-modal__section-title">구독 정보</div>
                 <div className="dash-modal__row">
                   <span className="dash-modal__key">구독 기간</span>
